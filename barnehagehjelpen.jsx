@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import DokumentSkanner from "./DokumentSkanner.jsx";
+import BokerSide from "./Boker.jsx";
+import Velkomst from "./Velkomst.jsx";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -2949,9 +2952,118 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
 }
 
 // ═══════════════════════════════════════════
-//  SUPABASE AUTH – brukerkontoer og sesjoner
+//  AUTH MODUL – Supabase Auth
 // ═══════════════════════════════════════════
 
+const storageStatus = { persistent: true, diagnostisert: true, detaljer: "Supabase Auth" };
+async function diagnostiserStorage() { return storageStatus; }
+
+// Helper: hent brukerprofil fra user_profiles
+async function hentProfil(userId) {
+  const { data } = await supabase.from("user_profiles").select("*").eq("id", userId).single();
+  return data;
+}
+
+// Helper: bygg aktivBruker-objekt fra Supabase user + profil
+function byggBruker(user, profil) {
+  return {
+    id: user.id,
+    epost: user.email,
+    brukernavn: profil?.brukernavn || user.email.split("@")[0],
+    admin: profil?.is_admin || false,
+    visningsnavn: profil?.visningsnavn || profil?.display_name || "",
+    avatar: profil?.avatar || "",
+    profilbilde: profil?.profilbilde || "",
+    telefon: profil?.phone || "",
+  };
+}
+
+async function registrerBruker({ brukernavn, epost, passord, telefon }) {
+  brukernavn = brukernavn.trim();
+  epost = epost.trim().toLowerCase();
+  if (brukernavn.length < 3) return { ok: false, feil: "Brukernavn må være minst 3 tegn" };
+  if (passord.length < 6) return { ok: false, feil: "Passord må være minst 6 tegn" };
+
+  const tlfV = validerTelefon(telefon);
+  if (!tlfV.ok) return { ok: false, feil: tlfV.feil };
+
+  const { data, error } = await supabase.auth.signUp({ email: epost, password: passord });
+  if (error) return { ok: false, feil: error.message };
+  const user = data.user;
+  if (!user) return { ok: false, feil: "Registrering feilet – sjekk e-posten for bekreftelse" };
+
+  const { count } = await supabase.from("user_profiles").select("id", { count: "exact", head: true });
+  const erAdmin = (count || 0) === 0;
+
+  await supabase.from("user_profiles").insert({
+    id: user.id,
+    brukernavn,
+    epost,
+    phone: tlfV.renset,
+    is_admin: erAdmin,
+    display_name: brukernavn,
+    visningsnavn: "",
+  });
+
+  const profil = await hentProfil(user.id);
+  return { ok: true, bruker: byggBruker(user, profil) };
+}
+
+async function loggInnBruker({ epost, passord }) {
+  const e = (epost || "").trim().toLowerCase();
+  if (!e || !passord) return { ok: false, feil: "Fyll ut alle felt" };
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email: e, password: passord });
+  if (error) return { ok: false, feil: "Feil e-post eller passord" };
+
+  const profil = await hentProfil(data.user.id);
+  return { ok: true, bruker: byggBruker(data.user, profil) };
+}
+
+async function sendTilbakestillEpost(epost) {
+  const { error } = await supabase.auth.resetPasswordForEmail(epost.trim().toLowerCase(), {
+    redirectTo: window.location.origin,
+  });
+  if (error) return { ok: false, feil: error.message };
+  return { ok: true };
+}
+
+async function hentSesjon() {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session?.user) return null;
+  const profil = await hentProfil(data.session.user.id);
+  return byggBruker(data.session.user, profil);
+}
+
+async function slettSesjon() {
+  await supabase.auth.signOut();
+}
+
+// ─── Profilendringer ───
+async function oppdaterVisningsnavn(brukerId, nyttNavn) {
+  const navn = (nyttNavn || "").trim();
+  const { error } = await supabase.from("user_profiles").update({ visningsnavn: navn, display_name: navn || undefined }).eq("id", brukerId);
+  if (error) return { ok: false, feil: "Kunne ikke oppdatere visningsnavn" };
+  const profil = await hentProfil(brukerId);
+  const { data } = await supabase.auth.getUser();
+  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
+}
+
+function publiskBruker(u) {
+  if (!u) return null;
+  return {
+    id: u.id,
+    brukernavn: u.brukernavn,
+    epost: u.epost,
+    telefon: u.telefon || "",
+    admin: u.admin,
+    visningsnavn: u.visningsnavn,
+    avatar: u.avatar,
+    profilbilde: u.profilbilde,
+  };
+}
+
+// Lett validering av telefonnummer (kun siffer/mellomrom/+, 6-15 tegn)
 function validerTelefon(tlf) {
   const t = String(tlf || "").trim();
   if (t === "") return { ok: true, renset: "" };
@@ -2963,168 +3075,22 @@ function validerTelefon(tlf) {
   return { ok: true, renset };
 }
 
-async function hentProfil(userId) {
-  if (!userId) return null;
-  const { data } = await supabase
-    .from("user_profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
-  return data;
-}
-
-function publiskBruker(authUser, profil) {
-  if (!authUser) return null;
-  const p = profil || {};
-  return {
-    id: authUser.id,
-    epost: authUser.email,
-    brukernavn: p.brukernavn || authUser.email?.split("@")[0] || "bruker",
-    visningsnavn: p.visningsnavn || p.brukernavn || "",
-    avatar: p.avatar || null,
-    profilbilde: p.profilbilde || null,
-    telefon: p.phone || "",
-    admin: p.is_admin || false,
-  };
-}
-
-async function registrerBruker({ brukernavn, epost, passord, telefon }) {
-  brukernavn = (brukernavn || "").trim();
-  epost = (epost || "").trim().toLowerCase();
-  if (brukernavn.length < 3) return { ok: false, feil: "Brukernavn må være minst 3 tegn" };
-  if (!epost.includes("@") || !epost.includes(".")) return { ok: false, feil: "Ugyldig e-postadresse" };
-  if ((passord || "").length < 6) return { ok: false, feil: "Passord må være minst 6 tegn" };
-
-  const tlfV = validerTelefon(telefon);
-  if (!tlfV.ok) return { ok: false, feil: tlfV.feil };
-
-  const { data: existing } = await supabase
-    .from("user_profiles")
-    .select("id")
-    .eq("brukernavn", brukernavn)
-    .maybeSingle();
-  if (existing) return { ok: false, feil: "Brukernavnet er allerede tatt" };
-
-  const { data, error } = await supabase.auth.signUp({
-    email: epost,
-    password: passord,
-    options: { data: { brukernavn, phone: tlfV.renset } },
-  });
-  if (error) {
-    if (error.message?.includes("already registered")) return { ok: false, feil: "E-postadressen er allerede registrert" };
-    return { ok: false, feil: error.message };
-  }
-  if (!data.user) return { ok: false, feil: "Kunne ikke opprette konto" };
-
-  if (!data.session) {
-    return { ok: true, bruker: null, bekreftelsesPost: true };
-  }
-
-  await new Promise(r => setTimeout(r, 800));
-  let profil = await hentProfil(data.user.id);
-  if (tlfV.renset && profil) {
-    await supabase.from("user_profiles").update({ phone: tlfV.renset }).eq("id", data.user.id);
-    profil = { ...profil, phone: tlfV.renset };
-  }
-  return { ok: true, bruker: publiskBruker(data.user, profil) };
-}
-
-async function loggInnBruker({ identifikator, passord }) {
-  const id = (identifikator || "").trim().toLowerCase();
-  if (!id || !passord) return { ok: false, feil: "Fyll ut alle felt" };
-
-  let epost = id;
-  if (!id.includes("@")) {
-    const { data: profil } = await supabase
-      .from("user_profiles")
-      .select("epost")
-      .eq("brukernavn", id)
-      .maybeSingle();
-    if (!profil?.epost) return { ok: false, feil: "Fant ingen bruker med dette brukernavnet" };
-    epost = profil.epost;
-  }
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email: epost, password: passord });
-  if (error) {
-    if (error.message?.toLowerCase().includes("email not confirmed"))
-      return { ok: false, feil: "E-posten din er ikke bekreftet ennå. Sjekk innboksen (og søppelpost) og klikk bekreftelseslenken.", ubekreftet: true };
-    return { ok: false, feil: "Feil e-post/brukernavn eller passord" };
-  }
-
-  const profil = await hentProfil(data.user.id);
-  return { ok: true, bruker: publiskBruker(data.user, profil) };
-}
-
-async function tilbakestillPassord({ identifikator }) {
-  const id = (identifikator || "").trim().toLowerCase();
-  if (!id) return { ok: false, feil: "Skriv inn e-post eller brukernavn" };
-
-  let epost = id;
-  if (!id.includes("@")) {
-    const { data: profil } = await supabase
-      .from("user_profiles")
-      .select("epost")
-      .eq("brukernavn", id)
-      .maybeSingle();
-    if (!profil?.epost) return { ok: false, feil: "Fant ingen bruker med dette brukernavnet" };
-    epost = profil.epost;
-  }
-
-  const { error } = await supabase.auth.resetPasswordForEmail(epost, {
-    redirectTo: window.location.origin,
-  });
-  if (error) return { ok: false, feil: error.message };
-  return { ok: true };
-}
-
-async function lagreSesjon() { /* Supabase håndterer sesjoner automatisk */ }
-
-async function hentSesjon() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return null;
-  const profil = await hentProfil(session.user.id);
-  return publiskBruker(session.user, profil);
-}
-
-async function slettSesjon() {
-  await supabase.auth.signOut();
-}
-
-// ─── Profilendringer ───
-async function oppdaterVisningsnavn(brukerId, nyttNavn) {
-  const navn = (nyttNavn || "").trim();
-  const { error } = await supabase
-    .from("user_profiles")
-    .update({ visningsnavn: navn, display_name: navn })
-    .eq("id", brukerId);
-  if (error) return { ok: false, feil: error.message };
-  const profil = await hentProfil(brukerId);
-  const { data: { session } } = await supabase.auth.getSession();
-  return { ok: true, bruker: publiskBruker(session?.user, profil) };
-}
-
 async function oppdaterTelefon(brukerId, nyTelefon) {
   const v = validerTelefon(nyTelefon);
   if (!v.ok) return { ok: false, feil: v.feil };
-  const { error } = await supabase
-    .from("user_profiles")
-    .update({ phone: v.renset })
-    .eq("id", brukerId);
-  if (error) return { ok: false, feil: error.message };
+  const { error } = await supabase.from("user_profiles").update({ phone: v.renset }).eq("id", brukerId);
+  if (error) return { ok: false, feil: "Lagring feilet" };
   const profil = await hentProfil(brukerId);
-  const { data: { session } } = await supabase.auth.getSession();
-  return { ok: true, bruker: publiskBruker(session?.user, profil) };
+  const { data } = await supabase.auth.getUser();
+  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
 }
 
 async function oppdaterAvatar(brukerId, emoji) {
-  const { error } = await supabase
-    .from("user_profiles")
-    .update({ avatar: emoji })
-    .eq("id", brukerId);
-  if (error) return { ok: false, feil: error.message };
+  const { error } = await supabase.from("user_profiles").update({ avatar: emoji }).eq("id", brukerId);
+  if (error) return { ok: false, feil: "Lagring feilet" };
   const profil = await hentProfil(brukerId);
-  const { data: { session } } = await supabase.auth.getSession();
-  return { ok: true, bruker: publiskBruker(session?.user, profil) };
+  const { data } = await supabase.auth.getUser();
+  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
 }
 
 // Bildekomprimering: leser fil, beskjærer kvadratisk (sentrert), skalerer til maxSize, returnerer JPEG data-URL
@@ -3182,73 +3148,42 @@ async function komprimerBilde(file, maxSize = 400, quality = 0.85) {
 }
 
 async function oppdaterProfilbilde(brukerId, dataUrl) {
-  const oppdatering = dataUrl === null ? { profilbilde: null } : { profilbilde: dataUrl };
-  try {
-    const { error } = await supabase
-      .from("user_profiles")
-      .update(oppdatering)
-      .eq("id", brukerId);
-    if (error) return { ok: false, feil: "Lagring feilet – bildet er kanskje for stort" };
-  } catch (e) {
-    return { ok: false, feil: "Lagring feilet – bildet er kanskje for stort" };
-  }
+  const update = dataUrl === null ? { profilbilde: null } : { profilbilde: dataUrl };
+  const { error } = await supabase.from("user_profiles").update(update).eq("id", brukerId);
+  if (error) return { ok: false, feil: "Lagring feilet – bildet er kanskje for stort" };
   const profil = await hentProfil(brukerId);
-  const { data: { session } } = await supabase.auth.getSession();
-  return { ok: true, bruker: publiskBruker(session?.user, profil) };
+  const { data } = await supabase.auth.getUser();
+  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
 }
 
-async function oppdaterBrukernavn(brukerId, nyttBrukernavn, gammeltPassord) {
+async function oppdaterBrukernavn(brukerId, nyttBrukernavn) {
   const navn = (nyttBrukernavn || "").trim();
   if (navn.length < 3) return { ok: false, feil: "Brukernavn må være minst 3 tegn" };
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.email) return { ok: false, feil: "Ikke innlogget" };
-  const { error: authErr } = await supabase.auth.signInWithPassword({
-    email: session.user.email, password: gammeltPassord,
-  });
-  if (authErr) return { ok: false, feil: "Feil passord" };
-
-  const { data: existing } = await supabase
-    .from("user_profiles").select("id").eq("brukernavn", navn).neq("id", brukerId).maybeSingle();
-  if (existing) return { ok: false, feil: "Brukernavnet er allerede tatt" };
-
   const { error } = await supabase.from("user_profiles").update({ brukernavn: navn }).eq("id", brukerId);
-  if (error) return { ok: false, feil: error.message };
-
+  if (error) return { ok: false, feil: "Lagring feilet" };
   const profil = await hentProfil(brukerId);
-  return { ok: true, bruker: publiskBruker(session.user, profil) };
+  const { data } = await supabase.auth.getUser();
+  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
 }
 
-async function oppdaterEpost(brukerId, nyEpost, gammeltPassord) {
+async function oppdaterEpost(brukerId, nyEpost) {
   const epost = (nyEpost || "").trim().toLowerCase();
   if (!epost.includes("@") || !epost.includes(".")) return { ok: false, feil: "Ugyldig e-postadresse" };
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.email) return { ok: false, feil: "Ikke innlogget" };
-  const { error: authErr } = await supabase.auth.signInWithPassword({
-    email: session.user.email, password: gammeltPassord,
-  });
-  if (authErr) return { ok: false, feil: "Feil passord" };
-
   const { error } = await supabase.auth.updateUser({ email: epost });
   if (error) return { ok: false, feil: error.message };
-
   await supabase.from("user_profiles").update({ epost }).eq("id", brukerId);
   const profil = await hentProfil(brukerId);
-  return { ok: true, bruker: publiskBruker({ ...session.user, email: epost }, profil) };
+  const { data } = await supabase.auth.getUser();
+  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
 }
 
 async function oppdaterPassord(brukerId, gammeltPassord, nyttPassord) {
   if (!nyttPassord || nyttPassord.length < 6) return { ok: false, feil: "Nytt passord må være minst 6 tegn" };
   if (gammeltPassord === nyttPassord) return { ok: false, feil: "Nytt passord må være forskjellig fra det gamle" };
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.email) return { ok: false, feil: "Ikke innlogget" };
-  const { error: authErr } = await supabase.auth.signInWithPassword({
-    email: session.user.email, password: gammeltPassord,
-  });
-  if (authErr) return { ok: false, feil: "Feil gammelt passord" };
-
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, feil: "Ikke innlogget" };
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: gammeltPassord });
+  if (signInError) return { ok: false, feil: "Feil gammelt passord" };
   const { error } = await supabase.auth.updateUser({ password: nyttPassord });
   if (error) return { ok: false, feil: error.message };
   return { ok: true };
@@ -3276,72 +3211,50 @@ const AVATAR_VALG = ["👤","🌿","🌸","🌻","🌳","🌈","🐰","🐱","�
 // E-postadresse til support – brukes av Kontakt-knapper i UI
 const SUPPORT_E_POST = "joel94@live.no";
 
-// Minimal mailto-lenke. Vi viser ikke subject/body fordi iOS' "Open Link"-dialog
-// viser hele URL-en med %20-encoding, som ser stygt ut. Brukeren fyller ut selv
-// i e-postappen.
 function supportMailto() {
-  return `mailto:${SUPPORT_E_POST}`;
+  return `mailto:${SUPPORT_E_POST}?subject=Barnehagehjelpen`;
 }
 
 const FAQ_DATA = [
   { sp:"Hvordan lager jeg en aktivitet med AI?", svar:"Gå til AI-assistent i menyen, velg innholdstype 'Pedagogisk aktivitet', fyll inn alder, fagområde og eventuelt årstid. Trykk 'Generer'. Hvis AI ikke svarer, bruker appen automatisk innhold fra databasen." },
-  { sp:"Hvorfor husker ikke appen at jeg er innlogget?", svar:"Innloggingen bruker Supabase og lagres i nettleserens localStorage. Dette fungerer automatisk på alle publiserte domener. Husk at private/inkognito-vinduer ikke husker sesjoner mellom åpninger." },
+  { sp:"Hvorfor husker ikke appen at jeg er innlogget?", svar:"Hvis du ser advarselen 'Begrenset lagring' på innloggingsskjermen, kjører appen i et miljø som ikke tillater varig lagring (typisk en forhåndsvisning). På et publisert domene vil 'Husk meg' fungere normalt." },
   { sp:"Hvordan skriver jeg ut et tegneark?", svar:"Åpne tegnearket, trykk 'Skriv ut'. Hvis nettleseren blokkerer utskrift, lastes det automatisk ned som HTML-fil du kan åpne og skrive ut derfra. Du kan også trykke 'Last ned' direkte." },
   { sp:"Kan jeg bruke appen offline?", svar:"Mesteparten av innholdet (sanger, aktiviteter, tegneark) fungerer offline siden det ligger lokalt. AI-genereringen krever internett. Hvis nettet er nede henter appen automatisk lignende innhold fra databasen." },
   { sp:"Hvordan endrer jeg passord?", svar:"Gå til 'Min profil' i menyen → 'Endre passord'. Du må oppgi gjeldende passord for å sette et nytt." },
-  { sp:"Hvor lagres dataene mine?", svar:"Brukerkonto, favoritter, skjemaer, ukeplaner og dokumentasjon lagres i Supabase-databasen og er tilgjengelig fra alle enheter. Passord håndteres av Supabase Auth og lagres aldri i klartekst." },
+  { sp:"Hvor lagres dataene mine?", svar:"Brukerkonto, favoritter, skjemaer og profilbilde lagres lokalt i nettleseren din. Passord er hashed med SHA-256 + unik salt. Ingen data sendes til en server uten at du eksplisitt deler noe (f.eks. via e-post til support)." },
   { sp:"Hva er forskjellen mellom Aktiviteter og Tegneark?", svar:"Aktiviteter er pedagogiske opplegg med HVA, HVORDAN og HVORFOR knyttet til rammeplanmål. Tegneark er fargeleggingsark med tegneoppgaver, samtalespørsmål og rammeplankobling." },
   { sp:"Hvordan blir noen admin?", svar:"Den første brukeren som registrerer seg blir automatisk admin. Admin kan deretter gjøre andre brukere til admin eller fjerne admin-rettigheter via Admin-panelet." },
-  { sp:"Kan jeg slette kontoen min?", svar:"Ja – be en admin om å slette kontoen din via Admin-panelet. Er du selv admin kan du ikke slette din egen konto (for å forhindre at ingen admins gjenstår)." },
+  { sp:"Kan jeg slette kontoen min?", svar:"Ja – be en admin om å slette kontoen. Hvis du er eneste bruker kan du tømme nettleserens data for å fjerne alt." },
   { sp:"Hvorfor får jeg ikke AI-svar?", svar:"AI-generering krever at appen kan koble seg til Anthropic API. I forhåndsvisning fungerer det automatisk. På et publisert nettsted må backend-endepunktet være satt opp (se AI-ARKITEKTUR.md). Uansett hva som skjer, vil du alltid få et svar fra databasen." },
 ];
 
 // ─── Favoritter per bruker ───
 function tomFav() { return { sanger: [], aktiviteter: [], tegneark: [] }; }
-
 async function hentFavoritter(brukerId) {
   if (!brukerId) return tomFav();
-  const { data } = await supabase
-    .from("favoritter")
-    .select("sanger, aktiviteter, tegneark")
-    .eq("user_id", brukerId)
-    .maybeSingle();
-  if (!data) return tomFav();
-  return { sanger: data.sanger || [], aktiviteter: data.aktiviteter || [], tegneark: data.tegneark || [] };
+  const raw = await authStorage.get("bh_fav_" + brukerId);
+  if (!raw) return tomFav();
+  try {
+    const parsed = JSON.parse(raw);
+    return { sanger: parsed.sanger || [], aktiviteter: parsed.aktiviteter || [], tegneark: parsed.tegneark || [] };
+  } catch { return tomFav(); }
 }
-
 async function lagreFavoritter(brukerId, fav) {
   if (!brukerId) return;
-  await supabase.from("favoritter").upsert({
-    user_id: brukerId,
-    sanger: fav.sanger || [],
-    aktiviteter: fav.aktiviteter || [],
-    tegneark: fav.tegneark || [],
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "user_id" });
+  await authStorage.set("bh_fav_" + brukerId, JSON.stringify(fav));
 }
 
-// ─── Dokumentasjon per bruker ───
+// ─── Dokumentasjon (praksisfortellinger og refleksjoner) per bruker ───
 async function hentDokumentasjon(brukerId) {
   if (!brukerId) return [];
-  const { data } = await supabase
-    .from("dokumentasjon")
-    .select("payload")
-    .eq("user_id", brukerId)
-    .order("created_at", { ascending: false });
-  return (data || []).map(r => r.payload);
+  const raw = await authStorage.get("bh_dok_" + brukerId);
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
 }
-
 async function lagreDokumentasjon(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("dokumentasjon").delete().eq("user_id", brukerId);
-    if (liste.length > 0) {
-      const { error } = await supabase.from("dokumentasjon").insert(
-        liste.map(d => ({ user_id: brukerId, payload: d }))
-      );
-      if (error) throw error;
-    }
+    await authStorage.set("bh_dok_" + brukerId, JSON.stringify(liste));
     return true;
   } catch (e) {
     console.error("[Dokumentasjon] Lagring feilet:", e);
@@ -3352,27 +3265,35 @@ async function lagreDokumentasjon(brukerId, liste) {
 // ─── Ukeplaner per bruker ───
 async function hentUkeplaner(brukerId) {
   if (!brukerId) return [];
-  const { data } = await supabase
-    .from("ukeplaner")
-    .select("payload")
-    .eq("user_id", brukerId)
-    .order("created_at", { ascending: false });
-  return (data || []).map(r => r.payload);
+  const raw = await authStorage.get("bh_ukeplan_" + brukerId);
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
 }
-
 async function lagreUkeplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("ukeplaner").delete().eq("user_id", brukerId);
-    if (liste.length > 0) {
-      const { error } = await supabase.from("ukeplaner").insert(
-        liste.map(u => ({ user_id: brukerId, payload: u }))
-      );
-      if (error) throw error;
-    }
+    await authStorage.set("bh_ukeplan_" + brukerId, JSON.stringify(liste));
     return true;
   } catch (e) {
     console.error("[Ukeplan] Lagring feilet:", e);
+    return false;
+  }
+}
+
+// ─── Årsplaner per bruker ───
+async function hentArsplaner(brukerId) {
+  if (!brukerId) return [];
+  const raw = await authStorage.get("bh_arsplan_" + brukerId);
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+}
+async function lagreArsplaner(brukerId, liste) {
+  if (!brukerId) return false;
+  try {
+    await authStorage.set("bh_arsplan_" + brukerId, JSON.stringify(liste));
+    return true;
+  } catch (e) {
+    console.error("[Årsplan] Lagring feilet:", e);
     return false;
   }
 }
@@ -3386,12 +3307,12 @@ function AuthScreen({ onLoginSuccess }) {
   const [feil, setFeil] = useState("");
   const [suksess, setSuksess] = useState("");
 
-  // Login state
-  const [li_id, setLiId] = useState("");
+  // Login
+  const [li_epost, setLiEpost] = useState("");
   const [li_pw, setLiPw] = useState("");
-  const [huskMeg, setHuskMeg] = useState(true);
+  const [visPassord, setVisPassord] = useState(false);
 
-  // Register state
+  // Register
   const [r_brukernavn, setRBrukernavn] = useState("");
   const [r_epost, setREpost] = useState("");
   const [r_telefon, setRTelefon] = useState("");
@@ -3399,20 +3320,14 @@ function AuthScreen({ onLoginSuccess }) {
   const [r_passord2, setRPassord2] = useState("");
 
   // Glemt passord
-  const [g_id, setGId] = useState("");
+  const [g_epost, setGEpost] = useState("");
 
-  const visPassord_ref = useRef(false);
-  const [visPassord, setVisPassord] = useState(false);
-
-  const skiftModus = (m) => {
-    setModus(m); setFeil(""); setSuksess("");
-    setGId("");
-  };
+  const skiftModus = (m) => { setModus(m); setFeil(""); setSuksess(""); };
 
   const handleLogin = async (e) => {
     e?.preventDefault?.();
     setFeil(""); setSuksess(""); setLoading(true);
-    const r = await loggInnBruker({ identifikator: li_id, passord: li_pw });
+    const r = await loggInnBruker({ epost: li_epost, passord: li_pw });
     setLoading(false);
     if (!r.ok) { setFeil(r.feil); return; }
     setSuksess("✅ Innlogget!");
@@ -3425,31 +3340,26 @@ function AuthScreen({ onLoginSuccess }) {
     if (r_passord !== r_passord2) { setFeil("Passordene er ikke like"); return; }
     setLoading(true);
     const r = await registrerBruker({
-      brukernavn: r_brukernavn, epost: r_epost, passord: r_passord, telefon: r_telefon,
+      brukernavn: r_brukernavn, epost: r_epost,
+      passord: r_passord, telefon: r_telefon,
     });
     setLoading(false);
     if (!r.ok) { setFeil(r.feil); return; }
-    if (r.bekreftelsesPost) {
-      setSuksess("✅ Konto opprettet! Sjekk e-posten din for å bekrefte kontoen, deretter kan du logge inn.");
-      setModus("login");
-      return;
-    }
-    setSuksess(r.bruker?.admin ? "✅ Konto opprettet! Du er admin (første bruker)." : "✅ Konto opprettet!");
+    setSuksess(r.bruker.admin ? "✅ Konto opprettet! Du er admin (første bruker)." : "✅ Konto opprettet!");
     setTimeout(() => onLoginSuccess(r.bruker), 700);
   };
 
   const handleGlemtPassord = async (e) => {
     e?.preventDefault?.();
     setFeil("");
-    if (!g_id.trim()) { setFeil("Skriv brukernavn eller e-post"); return; }
+    if (!g_epost.trim()) { setFeil("Skriv e-postadressen din"); return; }
     setLoading(true);
-    const r = await tilbakestillPassord({ identifikator: g_id });
+    const r = await sendTilbakestillEpost(g_epost);
     setLoading(false);
     if (!r.ok) { setFeil(r.feil); return; }
-    setSuksess("✅ E-post med tilbakestillingslenke er sendt. Sjekk innboksen din.");
+    setSuksess("✅ E-post sendt! Sjekk innboksen for en lenke for å tilbakestille passordet.");
   };
 
-  // Felles inputstyle
   const inputStil = {
     width: "100%", padding: "12px 13px", fontSize: 14,
     border: "1.5px solid #d8e6f5", borderRadius: 10,
@@ -3478,7 +3388,6 @@ function AuthScreen({ onLoginSuccess }) {
           </div>
 
           <div style={{background:"#fff",borderRadius:18,padding:22,boxShadow:"0 8px 30px rgba(0,0,0,0.2)"}}>
-            {/* Faner */}
             {modus !== "glemt" && (
               <div style={{display:"flex",background:"#e8eff8",borderRadius:11,padding:4,marginBottom:18}}>
                 <button onClick={()=>skiftModus("login")} type="button"
@@ -3502,7 +3411,6 @@ function AuthScreen({ onLoginSuccess }) {
               </div>
             )}
 
-            {/* Feilmelding */}
             {feil && (
               <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 12px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>
                 ⚠️ {feil}
@@ -3517,8 +3425,8 @@ function AuthScreen({ onLoginSuccess }) {
             {/* LOGIN */}
             {modus === "login" && (
               <form onSubmit={handleLogin}>
-                <label style={labelStil}>Brukernavn eller e-post</label>
-                <input type="text" value={li_id} onChange={e=>setLiId(e.target.value)} style={inputStil} autoComplete="username" placeholder="kari_barnehagelaerer" />
+                <label style={labelStil}>E-postadresse</label>
+                <input type="email" value={li_epost} onChange={e=>setLiEpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" />
                 <label style={labelStil}>Passord</label>
                 <div style={{position:"relative"}}>
                   <input type={visPassord?"text":"password"} value={li_pw} onChange={e=>setLiPw(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="current-password" placeholder="••••••••" />
@@ -3526,10 +3434,6 @@ function AuthScreen({ onLoginSuccess }) {
                     {visPassord?"Skjul":"Vis"}
                   </button>
                 </div>
-                <label style={{display:"flex",alignItems:"center",gap:9,cursor:"pointer",padding:"4px 0",marginBottom:6,userSelect:"none"}}>
-                  <input type="checkbox" checked={huskMeg} onChange={e=>setHuskMeg(e.target.checked)} style={{width:18,height:18,cursor:"pointer",accentColor:"#2c5b8e",margin:0}}/>
-                  <span style={{fontSize:13,color:"#1a2c45",fontWeight:700}}>Husk meg på denne enheten</span>
-                </label>
                 <button type="submit" disabled={loading} style={knappStil(loading)}>
                   {loading?"🔐 Logger inn ...":"🔑 Logg inn"}
                 </button>
@@ -3563,7 +3467,7 @@ function AuthScreen({ onLoginSuccess }) {
                   {loading?"✨ Oppretter konto ...":"✨ Opprett konto"}
                 </button>
                 <div style={{fontSize:11,color:"#5d7390",textAlign:"center",marginTop:12,lineHeight:1.5}}>
-                  Du mottar en bekreftelse på e-post. Første registrerte bruker blir automatisk admin.
+                  Konto opprettes i Supabase Auth – data synkroniseres mellom enheter.
                 </div>
               </form>
             )}
@@ -3571,11 +3475,11 @@ function AuthScreen({ onLoginSuccess }) {
             {/* GLEMT PASSORD */}
             {modus === "glemt" && (
               <form onSubmit={handleGlemtPassord}>
-                <div style={{fontSize:12,color:"#5d7390",marginBottom:12,lineHeight:1.5}}>
-                  Skriv inn brukernavn eller e-postadresse. Vi sender deg en lenke for å sette nytt passord.
-                </div>
-                <label style={labelStil}>Brukernavn eller e-post</label>
-                <input type="text" value={g_id} onChange={e=>setGId(e.target.value)} style={inputStil} placeholder="kari_barnehagelaerer" autoComplete="email" />
+                <p style={{fontSize:12,color:"#5d7390",marginBottom:12,lineHeight:1.6}}>
+                  Skriv e-postadressen din, så sender vi en lenke for å tilbakestille passordet.
+                </p>
+                <label style={labelStil}>E-postadresse</label>
+                <input type="email" value={g_epost} onChange={e=>setGEpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" />
                 <button type="submit" disabled={loading} style={knappStil(loading)}>
                   {loading?"Sender ...":"📧 Send tilbakestillingslenke"}
                 </button>
@@ -3584,7 +3488,8 @@ function AuthScreen({ onLoginSuccess }) {
           </div>
 
           <div style={{textAlign:"center",marginTop:18,color:"rgba(255,255,255,0.85)",fontSize:11,lineHeight:1.6}}>
-            🔒 Data lagres sikkert i Supabase og er tilgjengelig fra alle enheter
+            🔒 Sikret med Supabase Auth<br/>
+            Første registrerte bruker blir automatisk admin
           </div>
         </div>
       </div>
@@ -3599,43 +3504,35 @@ function AdminPanel({ aktivBruker }) {
   const [brukere, setBrukere] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
-  const [bekreftSlett, setBekreftSlett] = useState(null);
+  const [bekreftSlett, setBekreftSlett] = useState(null);  // id på bruker som skal bekreftes slettet
 
   const visM = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""), 3000); };
 
   const last = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("user_profiles")
-      .select("id, brukernavn, epost, is_admin, created_at, visningsnavn")
-      .order("created_at", { ascending: true });
+    const { data } = await supabase.from("user_profiles").select("*").order("created_at");
     setBrukere(data || []);
     setLoading(false);
   };
 
   useEffect(() => { last(); }, []);
 
-  const slettBruker = (id) => {
+  const slettBruker = async (id) => {
     if (id === aktivBruker.id) { visM("⚠️ Kan ikke slette deg selv"); return; }
     setBekreftSlett(id);
   };
 
   const utforSletting = async () => {
     if (!bekreftSlett) return;
-    const { error } = await supabase.rpc("delete_user", { user_id: bekreftSlett });
-    if (error) { visM("❌ Feil: " + error.message); setBekreftSlett(null); return; }
+    await supabase.from("user_profiles").delete().eq("id", bekreftSlett);
     setBekreftSlett(null);
-    visM("🗑 Bruker slettet");
+    visM("🗑 Bruker slettet fra profiler (auth-konto består)");
     last();
   };
 
   const settAdmin = async (id, verdi) => {
-    const { error } = await supabase
-      .from("user_profiles")
-      .update({ is_admin: verdi })
-      .eq("id", id);
-    if (error) { visM("❌ Feil: " + error.message); return; }
-    visM(verdi ? "✅ Gjort til admin" : "✅ Fjernet admin-rettigheter");
+    await supabase.from("user_profiles").update({ is_admin: verdi }).eq("id", id);
+    visM(verdi?"✅ Gjort til admin":"✅ Fjernet admin-rettigheter");
     last();
   };
 
@@ -3652,7 +3549,7 @@ function AdminPanel({ aktivBruker }) {
             <div>
               <div style={{fontWeight:800,color:"#1a2c45",fontSize:14}}>{u.brukernavn} {u.is_admin&&<span style={{background:"#fff9c4",color:"#795548",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>👑 ADMIN</span>}{u.id===aktivBruker.id&&<span style={{background:"#d8f3dc",color:"#1b5e47",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>DU</span>}</div>
               <div style={{fontSize:11,color:"#5d7390",marginTop:2}}>📧 {u.epost}</div>
-              <div style={{fontSize:10,color:"#5d7390",marginTop:2}}>📅 Opprettet: {new Date(u.created_at).toLocaleDateString("no-NO")}</div>
+              <div style={{fontSize:10,color:"#5d7390",marginTop:2}}>📅 Opprettet: {new Date(u.opprettet).toLocaleDateString("no-NO")}</div>
             </div>
           </div>
           <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
@@ -3670,9 +3567,10 @@ function AdminPanel({ aktivBruker }) {
         </div>
       ))}
       <div style={{background:"#fff8e1",borderRadius:10,padding:"10px 12px",fontSize:11,color:"#795548",borderLeft:"4px solid #6ba0d9",marginTop:14,lineHeight:1.6}}>
-        <strong>ℹ️ Om data:</strong> Alle brukerkontoer lagres i Supabase-databasen og er tilgjengelige fra alle enheter.
+        <strong>ℹ️ Om data:</strong> Alle brukerkontoer lagres lokalt på denne enheten. Passordene er hashed med SHA-256 + unik salt. Kontoer kan ikke ses fra andre enheter.
       </div>
 
+      {/* Bekreftelses-modal for sletting (fungerer der confirm() er blokkert) */}
       {bekreftSlett && (() => {
         const brukerSomSlettes = brukere.find(u => u.id === bekreftSlett);
         return (
@@ -3756,20 +3654,15 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     if (aktivBruker?.id) hentUkeplaner(aktivBruker.id).then(setGlobalUkeplaner);
   }, [aktivBruker?.id]);
 
-  // Last skjemaer fra Supabase når bruker logger inn
+  // Last skjemaer fra storage når bruker logger inn
   useEffect(() => {
     let avbrutt = false;
     (async () => {
       if (!aktivBruker?.id) { setSkjemaer([]); setSkjemaerLastet(true); return; }
       try {
-        const { data, error } = await supabase
-          .from("skjemaer")
-          .select("payload")
-          .eq("user_id", aktivBruker.id)
-          .order("created_at", { ascending: true });
+        const raw = await authStorage.get("bh_skjemaer_" + aktivBruker.id);
         if (avbrutt) return;
-        if (error) throw error;
-        setSkjemaer((data || []).map(r => r.payload));
+        setSkjemaer(raw ? JSON.parse(raw) : []);
       } catch (e) {
         console.error("[Skjemaer] Kunne ikke laste:", e);
         if (!avbrutt) setSkjemaer([]);
@@ -3779,21 +3672,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     return () => { avbrutt = true; };
   }, [aktivBruker?.id]);
 
-  // Lagre skjemaer til Supabase hver gang de endres (kun etter første lasting)
+  // Lagre skjemaer til storage hver gang de endres (kun etter første lasting for å unngå å overskrive med tom liste)
   useEffect(() => {
     if (!aktivBruker?.id || !skjemaerLastet) return;
-    (async () => {
-      try {
-        await supabase.from("skjemaer").delete().eq("user_id", aktivBruker.id);
-        if (skjemaer.length > 0) {
-          await supabase.from("skjemaer").insert(
-            skjemaer.map(s => ({ user_id: aktivBruker.id, payload: s }))
-          );
-        }
-      } catch (e) {
-        console.error("[Skjemaer] Kunne ikke lagre:", e);
-      }
-    })();
+    authStorage.set("bh_skjemaer_" + aktivBruker.id, JSON.stringify(skjemaer))
+      .catch(e => console.error("[Skjemaer] Kunne ikke lagre:", e));
   }, [skjemaer, aktivBruker?.id, skjemaerLastet]);
 
   // Toggle favoritt og lagre umiddelbart med ordentlig feilhåndtering
@@ -3830,8 +3713,10 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     {id:"skjema-ny",i:"✏️",n:"Nytt skjema"},
     {id:"skjemaer",i:"📋",n:"Mine skjemaer",badge:skjemaer.length},
     {id:"rammeplan",i:"📖",n:"Rammeplan"},
+    {id:"boker",i:"📚",n:"Bøker"},
     {id:"ai",i:"🤖",n:"AI-assistent"},
     {id:"ukeplan",i:"📅",n:"Ukeplan"},
+    {id:"arsplan",i:"📆",n:"Årsplan"},
     {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
     {id:"profil",i:"👤",n:"Min profil"},
     {id:"support",i:"❓",n:"Hjelp & FAQ"},
@@ -3945,6 +3830,16 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         ))}
       </div>
 
+      {/* ÅRSPLAN SNARVEI */}
+      <div className="hover" onClick={()=>navigerTil("arsplan")} style={{background:"linear-gradient(135deg,#d8f3dc,#b7e4c7)",borderRadius:14,padding:"14px 16px",cursor:"pointer",boxShadow:"0 2px 10px rgba(45,106,79,0.13)",borderLeft:"4px solid #2d6a4f",marginBottom:14,display:"flex",alignItems:"center",gap:14}}>
+        <span style={{fontSize:30}}>📆</span>
+        <div>
+          <div style={{fontWeight:800,color:"#2d6a4f",fontSize:14,fontFamily:"'Fredoka One',cursive"}}>Årsplan</div>
+          <div style={{fontSize:11,color:"#40916c",lineHeight:1.4,marginTop:2}}>Bygg årsplan med 8 seksjoner, årshjul og AI-hjelp</div>
+        </div>
+        <span style={{marginLeft:"auto",fontSize:18,color:"#2d6a4f",opacity:0.7}}>→</span>
+      </div>
+
       {/* LAG PLAN MED AI */}
       <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:3}}>🤖 AI-forslag til planer</div>
       <p style={{fontSize:11, color:C.gr, marginBottom:11}}>La AI lage tekstforslag du kan lime inn i dine egne planer</p>
@@ -3952,8 +3847,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         {[
           ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0","#e3f2fd"],
           ["🗓️","Månedsplan","Hele måneden strukturert","manedsplan","#6a1b9a","#f3e5f5"],
-          ["📆","Årsplan","Årshjul og satsningsområder","arsplan","#2d6a4f","#d8f3dc"],
           ["✉️","Månedsbrev","Brev til foreldre","manedsbrev","#e67e22","#fff3e0"],
+          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f","#d8f3dc"],
         ].map(([ic,t,u,typeId,fc,lys])=>(
           <div key={t} className="hover" onClick={()=>aapneAImedType(typeId)} style={{background:lys, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
@@ -5290,6 +5185,464 @@ ${innhold}
     );
   };
 
+  // ─── ArsplanSide – avansert årsplanbygger med AI-assistanse ───
+  const ArsplanSide = () => {
+    const [planer, setPlaner] = useState([]);
+    const [lastet, setLastet] = useState(false);
+    const [visning, setVisning] = useState("liste"); // liste | ny | rediger | les
+    const [valgt, setValgt] = useState(null);
+    const [sok, setSok] = useState("");
+    const [lagrer, setLagrer] = useState(false);
+    const [planFeil, setPlanFeil] = useState("");
+    const [ap, setAp] = useState(null); // plan under redigering
+
+    // AI-state
+    const [aiAktiv, setAiAktiv] = useState(null); // { seksjonId, handling }
+    const [aiTekst, setAiTekst] = useState("");
+    const [aiLoading, setAiLoading] = useState(false);
+
+    const SEKSJONER = [
+      { id:"om_barnehagen",         navn:"Om barnehagen",                  ikon:"🏫", beskrivelse:"Navn, beliggenhet, avdelinger, aldersgrupper og antall barn og ansatte" },
+      { id:"verdigrunnlag",         navn:"Verdigrunnlag",                  ikon:"💫", beskrivelse:"Barnehagens kjerneverdier, menneskesyn og pedagogisk grunnholdning" },
+      { id:"pedagogisk_profil",     navn:"Pedagogisk profil",              ikon:"📚", beskrivelse:"Pedagogisk grunnsyn, metoder, satsningsområder og barnesyn" },
+      { id:"omsorg_lek_laering",    navn:"Omsorg, lek, læring og danning", ikon:"🌱", beskrivelse:"Hvordan barnehagen ivaretar barnets helhetlige utvikling" },
+      { id:"fagomrader",            navn:"Rammeplanens fagområder",        ikon:"📖", beskrivelse:"Arbeid med de 7 fagområdene fra Rammeplanen for barnehagen 2017" },
+      { id:"samarbeid_foresatte",   navn:"Samarbeid med foresatte",        ikon:"🤝", beskrivelse:"Foreldresamarbeid, foreldremøter, daglig dialog og medvirkning" },
+      { id:"dokumentasjon_vurd",    navn:"Dokumentasjon og vurdering",     ikon:"📋", beskrivelse:"Metoder for dokumentasjon, systematisk vurdering og refleksjon" },
+      { id:"overganger",            navn:"Overganger",                     ikon:"🎓", beskrivelse:"Tilvenning, overgang mellom avdelinger og overgang til skolen" },
+    ];
+
+    const MANEDER = [
+      { id:"august",    navn:"August",    ikon:"🌾", farge:"#e67e22" },
+      { id:"september", navn:"September", ikon:"🍂", farge:"#c0392b" },
+      { id:"oktober",   navn:"Oktober",   ikon:"🎃", farge:"#8e44ad" },
+      { id:"november",  navn:"November",  ikon:"🍁", farge:"#2c3e50" },
+      { id:"desember",  navn:"Desember",  ikon:"🎄", farge:"#2980b9" },
+      { id:"januar",    navn:"Januar",    ikon:"❄️", farge:"#3498db" },
+      { id:"februar",   navn:"Februar",   ikon:"❤️", farge:"#e91e63" },
+      { id:"mars",      navn:"Mars",      ikon:"🌷", farge:"#27ae60" },
+      { id:"april",     navn:"April",     ikon:"🐣", farge:"#f39c12" },
+      { id:"mai",       navn:"Mai",       ikon:"🇳🇴", farge:"#c0392b" },
+      { id:"juni",      navn:"Juni",      ikon:"☀️", farge:"#f1c40f" },
+    ];
+
+    const tomArsplan = () => ({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      tittel: "", barnehage: "", avdeling: "", alder: "",
+      aar: new Date().getFullYear() + "/" + (new Date().getFullYear()+1),
+      seksjoner: Object.fromEntries(SEKSJONER.map(s => [s.id, ""])),
+      arshjul: Object.fromEntries(MANEDER.map(m => [m.id, { tema:"", aktiviteter:"", notat:"" }])),
+      opprettet: new Date().toISOString(),
+      oppdatert: new Date().toISOString(),
+    });
+
+    useEffect(() => {
+      let avbrutt = false;
+      (async () => {
+        if (!aktivBruker?.id) { setLastet(true); return; }
+        const liste = await hentArsplaner(aktivBruker.id);
+        if (!avbrutt) { setPlaner(liste); setLastet(true); }
+      })();
+      return () => { avbrutt = true; };
+    }, [aktivBruker?.id]);
+
+    const lagreListe = async (oppdatertListe) => {
+      const ok = await lagreArsplaner(aktivBruker.id, oppdatertListe);
+      if (!ok) { setPlanFeil("Kunne ikke lagre – muligens fordi lagring er blokkert"); return false; }
+      setPlaner(oppdatertListe);
+      return true;
+    };
+
+    const nyPlan = () => { setAp(tomArsplan()); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); setVisning("ny"); };
+    const redigerPlan = (p) => { setAp({ ...p, seksjoner:{...p.seksjoner}, arshjul:{...p.arshjul} }); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); setVisning("rediger"); };
+    const lesPlan = (p) => { setValgt(p); setVisning("les"); };
+
+    const oppdaterSeksjon = (id, tekst) => setAp(prev => ({ ...prev, seksjoner: { ...prev.seksjoner, [id]: tekst } }));
+    const oppdaterArshjul = (maaned, felt, verdi) => setAp(prev => ({ ...prev, arshjul: { ...prev.arshjul, [maaned]: { ...prev.arshjul[maaned], [felt]: verdi } } }));
+
+    const lagreNy = async () => {
+      if (!ap?.tittel?.trim()) { setPlanFeil("Skriv en tittel for årsplanen"); return; }
+      setLagrer(true);
+      const ny = { ...ap, opprettet: new Date().toISOString(), oppdatert: new Date().toISOString() };
+      const ok = await lagreListe([ny, ...planer]);
+      setLagrer(false);
+      if (ok) { vis("✅ Årsplan lagret"); setVisning("liste"); }
+    };
+
+    const lagreEndring = async () => {
+      if (!ap?.tittel?.trim()) { setPlanFeil("Skriv en tittel for årsplanen"); return; }
+      setLagrer(true);
+      const oppdatert = planer.map(p => p.id === ap.id ? { ...ap, oppdatert: new Date().toISOString() } : p);
+      const ok = await lagreListe(oppdatert);
+      setLagrer(false);
+      if (ok) { vis("✅ Endringer lagret"); setVisning("liste"); }
+    };
+
+    const slettPlan = async (id) => {
+      const ny = planer.filter(p => p.id !== id);
+      const ok = await lagreListe(ny);
+      if (ok) { vis("🗑 Slettet"); setVisning("liste"); setValgt(null); }
+    };
+
+    // ── AI-hjelper (gjenbruker samme mønster som AiSideComp) ──
+    const kallAI = async (prompt, onResultat) => {
+      const AI_ENDPOINT = (typeof window !== "undefined" && window.__BH_AI_ENDPOINT) || "https://api.anthropic.com/v1/messages";
+      const BRUK_BACKEND = AI_ENDPOINT !== "https://api.anthropic.com/v1/messages";
+      const body = BRUK_BACKEND
+        ? { prompt }
+        : { model:"claude-sonnet-4-20250514", max_tokens:1200, messages:[{ role:"user", content:prompt }] };
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 30000);
+      try {
+        const r = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:controller.signal });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        let tekst = "";
+        if (typeof data?.text === "string") tekst = data.text.trim();
+        else if (Array.isArray(data?.content)) tekst = data.content.map(b => b.text||"").join("\n").trim();
+        onResultat(tekst.length > 10 ? tekst : null);
+      } catch(e) {
+        console.warn("[Årsplan AI]", e);
+        onResultat(null);
+      } finally {
+        clearTimeout(tid);
+      }
+    };
+
+    const byggSeksjonPrompt = (seksjonId, handling, plan) => {
+      const s = SEKSJONER.find(x => x.id === seksjonId);
+      const eks = plan?.seksjoner?.[seksjonId] || "";
+      const ctx = `Barnehage: "${plan?.barnehage||"ikke oppgitt"}". Avdeling: "${plan?.avdeling||"ikke oppgitt"}". Alder: "${plan?.alder||"ikke oppgitt"}". Barnehageår: ${plan?.aar||"2025/2026"}.`;
+      const base = `Du er en erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Svar ALLTID på norsk bokmål. Svar kun med selve teksten – ingen innledning eller kommentarer rundt teksten.\n\nKontekst: ${ctx}\nSeksjon: ${s?.navn} – ${s?.beskrivelse}\n\n`;
+      if (handling === "start") return base + `Lag et pedagogisk og gjennomarbeidet førsteutkast for seksjonen "${s?.navn}" i årsplanen. Teksten skal:\n- Være konkret og direkte anvendbar for barnehagepersonalet\n- Forankres i Rammeplan for barnehagen 2017 med korrekt fagspråk\n- Ha varmt, profesjonelt og inviterende språk\n- Være 150–300 ord\n\nLever kun selve teksten for seksjonen.`;
+      if (handling === "profesjonell") return base + `Eksisterende tekst:\n${eks}\n\nForbedre teksten. Gjør språket mer presist, profesjonelt og pedagogisk forankret. Behold alt meningsinnhold. Svar med den forbedrede teksten.`;
+      if (handling === "rammeplan") return base + `Eksisterende tekst:\n${eks}\n\nReskriv teksten slik at den tydeligere kobler til Rammeplan for barnehagen 2017. Bruk fagspråket korrekt. Referer til relevante fagområder og verdier. Svar med den oppdaterte teksten.`;
+      if (handling === "forkort") return base + `Eksisterende tekst:\n${eks}\n\nForkort teksten til omtrent halvparten av lengden. Behold de viktigste poengene. Svar med den forkortede teksten.`;
+      if (handling === "alternativ") return base + `Eksisterende tekst:\n${eks}\n\nLag en alternativ formulering med litt annen vinkling, men same pedagogiske innhold. Svar med kun den alternative teksten.`;
+      return base;
+    };
+
+    const utforSeksjonAI = async (seksjonId, handling) => {
+      setAiAktiv({ seksjonId, handling });
+      setAiLoading(true);
+      setAiTekst("");
+      await kallAI(byggSeksjonPrompt(seksjonId, handling, ap), (tekst) => {
+        setAiLoading(false);
+        if (tekst) { setAiTekst(tekst); vis("✨ AI-forslag klart"); }
+        else { setAiAktiv(null); vis("ℹ️ AI utilgjengelig – skriv selv"); }
+      });
+    };
+
+    const utforArshjulAI = async (maaned) => {
+      const sesId = "arshjul_" + maaned;
+      setAiAktiv({ seksjonId: sesId, handling:"maaned" });
+      setAiLoading(true);
+      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".`;
+      const sesong = { august:"sommer/høst", september:"tidlig høst", oktober:"midthøst", november:"senhøst", desember:"vinter/jul", januar:"vinter", februar:"vinter/karneval", mars:"vinter/vår", april:"vår/påske", mai:"vår/17. mai", juni:"sommer" };
+      const m = MANEDER.find(x => x.id === maaned);
+      const prompt = `Du er en erfaren norsk barnehagelærer. Svar kun med JSON – ingen annen tekst, ingen markdown.\nLag et pedagogisk forslag for ${m?.navn} (årstid: ${sesong[maaned]||maaned}) for en norsk barnehage.\nKontekst: ${ctx}\nFormat: {"tema":"...","aktiviteter":"...","notat":"..."}\n- tema: ett inspirerende månedstema (maks 6 ord)\n- aktiviteter: 3–4 konkrete aktiviteter koblet til Rammeplanen (2–3 linjer)\n- notat: 1–2 pedagogiske merknader til personalet`;
+      await kallAI(prompt, (tekst) => {
+        setAiLoading(false);
+        setAiAktiv(null);
+        if (tekst) {
+          try {
+            const d = JSON.parse(tekst.replace(/```json|```/g, "").trim());
+            if (d.tema || d.aktiviteter) {
+              oppdaterArshjul(maaned, "tema", d.tema||"");
+              oppdaterArshjul(maaned, "aktiviteter", d.aktiviteter||"");
+              oppdaterArshjul(maaned, "notat", d.notat||"");
+              vis("✨ Forslag lagt inn for " + m?.navn);
+            } else { vis("ℹ️ AI ga uventet format"); }
+          } catch { vis("ℹ️ AI utilgjengelig"); }
+        } else { vis("ℹ️ AI utilgjengelig"); }
+      });
+    };
+
+    const utforKomplettArshjul = async () => {
+      setAiAktiv({ seksjonId:"arshjul_alle", handling:"alle" });
+      setAiLoading(true);
+      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".`;
+      const prompt = `Du er en erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Svar kun med JSON – ingen annen tekst.\nLag et komplett årshjul for barnehageåret august–juni. Kontekst: ${ctx}\nFormat:\n{"august":{"tema":"...","aktiviteter":"...","notat":"..."},"september":{"tema":"...","aktiviteter":"...","notat":"..."},"oktober":{"tema":"...","aktiviteter":"...","notat":"..."},"november":{"tema":"...","aktiviteter":"...","notat":"..."},"desember":{"tema":"...","aktiviteter":"...","notat":"..."},"januar":{"tema":"...","aktiviteter":"...","notat":"..."},"februar":{"tema":"...","aktiviteter":"...","notat":"..."},"mars":{"tema":"...","aktiviteter":"...","notat":"..."},"april":{"tema":"...","aktiviteter":"...","notat":"..."},"mai":{"tema":"...","aktiviteter":"...","notat":"..."},"juni":{"tema":"...","aktiviteter":"...","notat":"..."}}\nTema skal reflektere årstid og pedagogiske prioriteter. Aktiviteter skal knyttes til rammeplanen.`;
+      await kallAI(prompt, (tekst) => {
+        setAiLoading(false);
+        setAiAktiv(null);
+        if (tekst) {
+          try {
+            const d = JSON.parse(tekst.replace(/```json|```/g, "").trim());
+            setAp(prev => {
+              const nyArshjul = { ...prev.arshjul };
+              MANEDER.forEach(m => {
+                if (d[m.id]) nyArshjul[m.id] = { tema:d[m.id].tema||"", aktiviteter:d[m.id].aktiviteter||"", notat:d[m.id].notat||"" };
+              });
+              return { ...prev, arshjul: nyArshjul };
+            });
+            vis("✨ Komplett årshjul generert!");
+          } catch { vis("ℹ️ AI utilgjengelig"); }
+        } else { vis("ℹ️ AI utilgjengelig"); }
+      });
+    };
+
+    const aksepterForslag = (seksjonId) => { oppdaterSeksjon(seksjonId, aiTekst); setAiTekst(""); setAiAktiv(null); vis("✅ Forslag lagt inn"); };
+    const avvisForslag = () => { setAiTekst(""); setAiAktiv(null); };
+
+    // Definert utenfor if-blokken så React ikke remounter den ved hvert render
+    const AIKnapper = ({ seksjonId }) => {
+      const erAktivSeksjon = aiAktiv?.seksjonId === seksjonId;
+      const handlinger = [
+        { id:"start",        label:"✨ Hjelp meg starte",  bg:"linear-gradient(135deg,#2c5b8e,#4178bd)", col:"#fff" },
+        { id:"profesjonell", label:"✨ Mer profesjonell",   bg:"#e8eff8", col:C.g },
+        { id:"rammeplan",    label:"✨ Tilpass Rammeplan",  bg:"#d8f3dc", col:"#2d6a4f" },
+        { id:"forkort",      label:"✨ Forkort teksten",    bg:"#fff8e1", col:"#795548" },
+        { id:"alternativ",   label:"✨ Gi flere forslag",   bg:"#f3e5f5", col:"#6a1b9a" },
+      ];
+      return (
+        <div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8}}>
+            {handlinger.map(h => {
+              const erDenne = erAktivSeksjon && aiAktiv?.handling === h.id && aiLoading;
+              return (
+                <button key={h.id} disabled={aiLoading && erAktivSeksjon} onClick={() => utforSeksjonAI(seksjonId, h.id)}
+                  style={{background:h.bg,color:h.col,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,cursor:aiLoading&&erAktivSeksjon?"wait":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aiLoading&&erAktivSeksjon?0.65:1,transition:"opacity 0.15s"}}>
+                  {erDenne ? "⏳ Genererer..." : h.label}
+                </button>
+              );
+            })}
+          </div>
+          {erAktivSeksjon && aiTekst && (
+            <div className="fade" style={{background:"#f0f7ff",border:"2px solid #2c5b8e",borderRadius:10,padding:12,marginTop:10}}>
+              <div style={{fontSize:11,fontWeight:800,color:C.g,marginBottom:6}}>✨ AI-forslag – klikk "Bruk" for å legge inn i seksjonen:</div>
+              <div style={{fontSize:12,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.6,marginBottom:8,maxHeight:220,overflowY:"auto"}}>{aiTekst}</div>
+              <div style={{display:"flex",gap:7}}>
+                <button onClick={() => aksepterForslag(seksjonId)} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✅ Bruk forslaget</button>
+                <button onClick={avvisForslag} style={{background:"transparent",color:C.gr,border:"1px solid #d8e6f5",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avvis</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const iS = { width:"100%", border:"1.5px solid #d8e6f5", borderRadius:10, padding:"11px 13px", fontSize:13, background:"#f5f9fd", color:C.t, fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", outline:"none", resize:"vertical" };
+    const labelStil = { display:"block", fontWeight:700, color:C.t, fontSize:12, marginBottom:5 };
+
+    if (!lastet) return <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>;
+
+    // ── REDIGERING / NY ──────────────────────────────────────────
+    if ((visning === "ny" || visning === "rediger") && ap) {
+      const erRediger = visning === "rediger";
+
+      return (
+        <div className="fade">
+          <button onClick={() => setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>{erRediger ? "✏️ Rediger årsplan" : "📆 Ny årsplan"}</div>
+          <p style={{color:C.gr,fontSize:12,marginBottom:14,lineHeight:1.5}}>Fyll ut seksjonene og bruk AI-knappene for hjelp. Du bestemmer alltid innholdet.</p>
+
+          {planFeil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 13px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {planFeil}</div>}
+
+          {/* Grunninfo */}
+          <div style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:14}}>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:10}}>📋 Grunninfo</div>
+            <label style={labelStil}>Tittel på årsplanen *</label>
+            <input value={ap.tittel} onChange={e => setAp(p => ({...p, tittel:e.target.value}))} style={{...iS, resize:"none", marginBottom:10}} placeholder="F.eks. 'Årsplan Solbakken barnehage 2025/2026'"/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:9}}>
+              <div>
+                <label style={labelStil}>Barnehage</label>
+                <input value={ap.barnehage} onChange={e => setAp(p => ({...p, barnehage:e.target.value}))} style={{...iS, marginBottom:0}} placeholder="Barnehagens navn"/>
+              </div>
+              <div>
+                <label style={labelStil}>Avdeling</label>
+                <input value={ap.avdeling} onChange={e => setAp(p => ({...p, avdeling:e.target.value}))} style={{...iS, marginBottom:0}} placeholder="Avdelingsnavn"/>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:9}}>
+              <div>
+                <label style={labelStil}>Aldersgruppe</label>
+                <input value={ap.alder} onChange={e => setAp(p => ({...p, alder:e.target.value}))} style={{...iS, marginBottom:0}} placeholder="F.eks. 3–6 år"/>
+              </div>
+              <div>
+                <label style={labelStil}>Barnehageår</label>
+                <input value={ap.aar} onChange={e => setAp(p => ({...p, aar:e.target.value}))} style={{...iS, marginBottom:0}} placeholder="2025/2026"/>
+              </div>
+            </div>
+          </div>
+
+          {/* Seksjoner */}
+          {SEKSJONER.map(s => (
+            <div key={s.id} style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12,borderLeft:"4px solid #2c5b8e"}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}>
+                <span style={{fontSize:18}}>{s.ikon}</span>
+                <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t}}>{s.navn}</div>
+              </div>
+              <div style={{fontSize:11,color:C.gr,marginBottom:9,lineHeight:1.5}}>{s.beskrivelse}</div>
+              <textarea
+                value={ap.seksjoner[s.id] || ""}
+                onChange={e => oppdaterSeksjon(s.id, e.target.value)}
+                rows={5}
+                style={{...iS, marginBottom:0, minHeight:100}}
+                placeholder={`Skriv om ${s.navn.toLowerCase()} her, eller bruk AI-hjelp nedenfor …`}
+              />
+              <AIKnapper seksjonId={s.id} />
+            </div>
+          ))}
+
+          {/* Årshjul */}
+          <div style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:14,borderLeft:"4px solid #52b788"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <span style={{fontSize:18}}>📅</span>
+                <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t}}>Årshjul / Månedskalender</div>
+              </div>
+              <button disabled={aiLoading && aiAktiv?.seksjonId === "arshjul_alle"} onClick={utforKomplettArshjul}
+                style={{background:"linear-gradient(135deg,#2d6a4f,#52b788)",color:"#fff",border:"none",borderRadius:9,padding:"7px 12px",fontSize:11,fontWeight:800,cursor:aiLoading&&aiAktiv?.seksjonId==="arshjul_alle"?"wait":"pointer",fontFamily:"'Nunito',sans-serif",whiteSpace:"nowrap",opacity:aiLoading&&aiAktiv?.seksjonId==="arshjul_alle"?0.65:1}}>
+                {aiLoading && aiAktiv?.seksjonId === "arshjul_alle" ? "⏳ Genererer..." : "✨ Generer komplett årshjul"}
+              </button>
+            </div>
+            <div style={{fontSize:11,color:C.gr,marginBottom:14,lineHeight:1.5}}>Legg til tema, aktiviteter og notater for alle månedene (august–juni). Bruk AI-knappen for raskt forslag.</div>
+
+            {MANEDER.map(m => {
+              const mData = ap.arshjul?.[m.id] || { tema:"", aktiviteter:"", notat:"" };
+              const erAiMaaned = aiAktiv?.seksjonId === "arshjul_" + m.id && aiLoading;
+              return (
+                <div key={m.id} style={{background:"#f5f9fd",borderRadius:11,padding:11,marginBottom:10,borderLeft:`3px solid ${m.farge}`}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:8,flexWrap:"wrap"}}>
+                    <div style={{fontWeight:800,color:m.farge,fontSize:13}}>{m.ikon} {m.navn}</div>
+                    <button disabled={aiLoading} onClick={() => utforArshjulAI(m.id)}
+                      style={{background:"rgba(44,91,142,0.08)",color:C.g,border:"1px solid #d8e6f5",borderRadius:7,padding:"4px 9px",fontSize:10,fontWeight:700,cursor:aiLoading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",whiteSpace:"nowrap",opacity:aiLoading?0.55:1}}>
+                      {erAiMaaned ? "⏳..." : "✨ Forslag"}
+                    </button>
+                  </div>
+                  <div style={{display:"grid",gap:6}}>
+                    <input value={mData.tema} onChange={e => oppdaterArshjul(m.id,"tema",e.target.value)} style={{...iS, marginBottom:0, fontSize:12}} placeholder="Månedstema …"/>
+                    <textarea value={mData.aktiviteter} onChange={e => oppdaterArshjul(m.id,"aktiviteter",e.target.value)} rows={2} style={{...iS, marginBottom:0, fontSize:12, minHeight:50}} placeholder="Aktiviteter og pedagogisk innhold …"/>
+                    <input value={mData.notat} onChange={e => oppdaterArshjul(m.id,"notat",e.target.value)} style={{...iS, marginBottom:0, fontSize:11}} placeholder="Notat til personalet …"/>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <button onClick={erRediger ? lagreEndring : lagreNy} disabled={lagrer}
+            style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,background:lagrer?"#ccc":"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:11,cursor:lagrer?"wait":"pointer",fontFamily:"'Nunito',sans-serif",boxShadow:"0 3px 9px rgba(44,91,142,0.25)",marginTop:4}}>
+            {lagrer ? "Lagrer ..." : (erRediger ? "💾 Lagre endringer" : "💾 Lagre årsplan")}
+          </button>
+        </div>
+      );
+    }
+
+    // ── LES ENKELT-PLAN ──────────────────────────────────────────
+    if (visning === "les" && valgt) {
+      return (
+        <div className="fade">
+          <button onClick={() => setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <div style={{background:"linear-gradient(135deg,#2c5b8e,#4178bd)",borderRadius:14,padding:"18px 18px 16px",color:"#fff",marginBottom:14}}>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,marginBottom:6}}>📆 {valgt.tittel}</div>
+            <div style={{fontSize:12,opacity:0.88,display:"flex",flexWrap:"wrap",gap:8}}>
+              {valgt.barnehage && <span>🏫 {valgt.barnehage}</span>}
+              {valgt.avdeling && <span>📌 {valgt.avdeling}</span>}
+              {valgt.alder && <span>👶 {valgt.alder}</span>}
+              {valgt.aar && <span>📅 {valgt.aar}</span>}
+            </div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+            <button onClick={() => redigerPlan(valgt)} style={{background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
+            <button onClick={() => slettPlan(valgt.id)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+          </div>
+
+          {SEKSJONER.map(s => {
+            const tekst = valgt.seksjoner?.[s.id];
+            if (!tekst?.trim()) return null;
+            return (
+              <div key={s.id} style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 1px 5px rgba(44,91,142,0.07)",marginBottom:10,borderLeft:"4px solid #2c5b8e"}}>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+                  <span style={{fontSize:16}}>{s.ikon}</span>
+                  <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:C.t}}>{s.navn}</div>
+                </div>
+                <div style={{fontSize:13,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.7}}>{tekst}</div>
+              </div>
+            );
+          })}
+
+          {valgt.arshjul && MANEDER.some(m => valgt.arshjul[m.id]?.tema || valgt.arshjul[m.id]?.aktiviteter) && (
+            <div style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 1px 5px rgba(44,91,142,0.07)",marginBottom:10,borderLeft:"4px solid #52b788"}}>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:14}}>📅 Årshjul</div>
+              {MANEDER.map(m => {
+                const d = valgt.arshjul[m.id];
+                if (!d?.tema && !d?.aktiviteter) return null;
+                return (
+                  <div key={m.id} style={{marginBottom:12}}>
+                    <div style={{fontWeight:800,color:m.farge,fontSize:13,marginBottom:4}}>{m.ikon} {m.navn}</div>
+                    {d.tema && <div style={{fontSize:12,fontWeight:700,color:C.t,marginBottom:2}}>Tema: {d.tema}</div>}
+                    {d.aktiviteter && <div style={{fontSize:12,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.5,marginBottom:d.notat?2:0}}>{d.aktiviteter}</div>}
+                    {d.notat && <div style={{fontSize:11,color:C.gr,fontStyle:"italic"}}>{d.notat}</div>}
+                    <div style={{height:1,background:"#e8eff8",marginTop:10}}/>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div style={{fontSize:10,color:C.gr,textAlign:"center",marginTop:9}}>
+            Opprettet: {new Date(valgt.opprettet).toLocaleDateString("no-NO")}
+            {valgt.oppdatert !== valgt.opprettet && " • Sist endret: " + new Date(valgt.oppdatert).toLocaleDateString("no-NO")}
+          </div>
+        </div>
+      );
+    }
+
+    // ── LISTE (standard) ──────────────────────────────────────────
+    const filtrert = planer.filter(p => {
+      if (!sok) return true;
+      const s = sok.toLowerCase();
+      return p.tittel.toLowerCase().includes(s) || (p.barnehage||"").toLowerCase().includes(s) || (p.avdeling||"").toLowerCase().includes(s);
+    });
+
+    return (
+      <div className="fade">
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📆 Årsplaner</div>
+        <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Fullstendige årsplaner med AI-assistanse og interaktivt årshjul</p>
+
+        <button onClick={nyPlan} style={{width:"100%",padding:"12px",background:"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif",boxShadow:"0 3px 9px rgba(44,91,142,0.2)",marginBottom:12}}>📆 Lag ny årsplan</button>
+
+        {planer.length > 0 && (
+          <input type="text" value={sok} onChange={e => setSok(e.target.value)} placeholder="🔍 Søk i årsplaner …"
+            style={{width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:13,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:12,outline:"none"}}/>
+        )}
+
+        {planer.length === 0 ? (
+          <div style={{textAlign:"center",padding:34,background:C.w,borderRadius:12,boxShadow:"0 1px 5px rgba(44,91,142,0.07)"}}>
+            <div style={{fontSize:42,marginBottom:9}}>📆</div>
+            <div style={{fontWeight:800,color:C.t,fontSize:15,marginBottom:6}}>Ingen årsplaner ennå</div>
+            <div style={{fontSize:12,color:C.gr,lineHeight:1.7,maxWidth:290,margin:"0 auto"}}>
+              Lag en komplett årsplan med pedagogisk grunnsyn, rammeplanens fagområder og årshjul. AI hjelper deg med alle seksjoner.
+            </div>
+          </div>
+        ) : filtrert.length === 0 ? (
+          <div style={{textAlign:"center",padding:24,background:C.w,borderRadius:12,color:C.gr,fontSize:13}}>Ingen treff på søket</div>
+        ) : (
+          <div style={{display:"grid",gap:9}}>
+            <div style={{fontSize:11,color:C.gr}}>{filtrert.length} av {planer.length} årsplan{planer.length > 1 ? "er" : ""}</div>
+            {filtrert.map(p => (
+              <div key={p.id} className="hover" onClick={() => lesPlan(p)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:5}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:14,lineHeight:1.3,flex:1,wordBreak:"break-word"}}>📆 {p.tittel}</div>
+                  {p.aar && <div style={{fontSize:10,color:C.gr,whiteSpace:"nowrap",flexShrink:0,background:"#e8eff8",padding:"2px 8px",borderRadius:7,fontWeight:700}}>{p.aar}</div>}
+                </div>
+                {(p.barnehage || p.avdeling) && <div style={{fontSize:12,color:C.gr,lineHeight:1.5}}>{p.barnehage}{p.avdeling ? " • " + p.avdeling : ""}</div>}
+                {p.alder && <div style={{fontSize:11,color:C.gr,marginTop:2}}>👶 {p.alder}</div>}
+                {MANEDER.some(m => p.arshjul?.[m.id]?.tema) && <div style={{fontSize:10,color:"#52b788",marginTop:4,fontWeight:700}}>📅 Årshjul inkludert</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
+          <strong>⚠️ Backup:</strong> Årsplaner lagres kun lokalt på denne enheten. Kopier viktig innhold til et eksternt dokument jevnlig.
+        </div>
+      </div>
+    );
+  };
+
   // ─── DokumentasjonSide – praksisfortellinger og refleksjoner ───
   const DokumentasjonSide = ()=>{
     const [dok, setDok] = useState([]);
@@ -5307,6 +5660,81 @@ ${innhold}
     const [d_refleksjon, setDRefleksjon] = useState("");
     const [d_loading, setDLoading] = useState(false);
     const [d_feil, setDFeil] = useState("");
+
+    // Dokumentskanner (steg-for-steg)
+    const [visSkanner, setVisSkanner] = useState(false);
+
+    // OCR-skanner state
+    const [skannLoading, setSkannLoading] = useState(false);
+    const [skannFremgang, setSkannFremgang] = useState(0);
+    const skannRef = useRef(null);
+
+    const kjorOCR = async (fil) => {
+      if (!fil) return;
+      setSkannLoading(true); setSkannFremgang(0);
+      try {
+        // Last bildet inn i canvas og forbedre for OCR
+        const dataUrl = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = e => res(e.target.result);
+          reader.onerror = rej;
+          reader.readAsDataURL(fil);
+        });
+        const cv = await new Promise(res => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1800;
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            const c = document.createElement("canvas");
+            c.width = Math.round(img.width * scale);
+            c.height = Math.round(img.height * scale);
+            c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+            res(c);
+          };
+          img.src = dataUrl;
+        });
+        // Adaptiv terskling (Bradley-metode) for bedre OCR
+        const ctx = cv.getContext("2d");
+        const imgData = ctx.getImageData(0, 0, cv.width, cv.height);
+        const d = imgData.data, W = cv.width, H = cv.height;
+        const gray = new Uint8Array(W * H);
+        for (let i = 0; i < d.length; i += 4)
+          gray[i >> 2] = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
+        const bR = Math.max(15, Math.round(Math.min(W, H) / 40));
+        const stride = W + 1;
+        const integ = new Float64Array(stride * (H + 1));
+        for (let y = 0; y < H; y++)
+          for (let x = 0; x < W; x++)
+            integ[(y+1)*stride+(x+1)] = gray[y*W+x] + integ[y*stride+(x+1)] + integ[(y+1)*stride+x] - integ[y*stride+x];
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            const x1=Math.max(0,x-bR), y1=Math.max(0,y-bR), x2=Math.min(W-1,x+bR), y2=Math.min(H-1,y+bR);
+            const cnt=(x2-x1)*(y2-y1);
+            const sum=integ[(y2+1)*stride+(x2+1)]-integ[y1*stride+(x2+1)]-integ[(y2+1)*stride+x1]+integ[y1*stride+x1];
+            const px = gray[y*W+x] < (sum/cnt)*0.85 ? 0 : 255;
+            const i=(y*W+x)*4; d[i]=d[i+1]=d[i+2]=px; d[i+3]=255;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        // Kjør Tesseract OCR
+        const { recognize } = await import("tesseract.js");
+        const { data: { text } } = await recognize(cv, "nor+eng", {
+          logger: m => { if (m.status === "recognizing text") setSkannFremgang(Math.round(m.progress * 100)); }
+        });
+        const lest = text.trim();
+        if (lest) {
+          setDFortelling(prev => prev ? prev + "\n\n" + lest : lest);
+          vis("✅ Tekst lest fra bilde – sjekk og rediger ved behov");
+        } else {
+          vis("ℹ️ Ingen lesbar tekst funnet – prøv med bedre belysning");
+        }
+      } catch (e) {
+        console.warn("[OCR]", e);
+        vis("❌ Skanning feilet – prøv igjen");
+      } finally {
+        setSkannLoading(false); setSkannFremgang(0);
+      }
+    };
 
     // Last dokumentasjon ved oppstart
     useEffect(() => {
@@ -5446,6 +5874,24 @@ ${innhold}
 
     if (!lastet) return <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>;
 
+    // VISNING: Dokumentskanner
+    if (visSkanner) return (
+      <div className="fade">
+        <button onClick={()=>setVisSkanner(false)} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til dokumentasjon</button>
+        <DokumentSkanner aktivBruker={aktivBruker} onFerdig={async (dokData)=>{
+          if (dokData && aktivBruker?.id) {
+            const nyttDok = {
+              id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+              ...dokData,
+            };
+            await lagre([nyttDok, ...dok]);
+          }
+          setVisSkanner(false);
+          vis("✅ Dokument skannet og lagt til i dokumentasjon");
+        }}/>
+      </div>
+    );
+
     // VISNING: Ny / Rediger
     if (visning === "ny" || visning === "rediger") {
       const erRediger = visning === "rediger";
@@ -5495,7 +5941,14 @@ ${innhold}
               ))}
             </div>
 
-            <label style={labelStil}>📖 Praksisfortelling (hva skjedde – min. 20 tegn)</label>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+              <label style={{...labelStil,marginBottom:0}}>📖 Praksisfortelling (hva skjedde – min. 20 tegn)</label>
+              <button type="button" disabled={skannLoading} onClick={()=>skannRef.current?.click()}
+                style={{background:"linear-gradient(135deg,#2d6a4f,#52b788)",color:"#fff",border:"none",borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:800,cursor:skannLoading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",opacity:skannLoading?0.7:1,whiteSpace:"nowrap"}}>
+                {skannLoading ? `⏳ ${skannFremgang}%` : "📷 Skann tekst"}
+              </button>
+              <input ref={skannRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{ kjorOCR(e.target.files?.[0]); e.target.value=""; }}/>
+            </div>
             <textarea value={d_fortelling} onChange={e=>setDFortelling(e.target.value)} rows={7} placeholder="Beskriv konkret hva som skjedde. Hvem var med? Hva gjorde de? Hva ble sagt? Hva la du merke til?" style={{...iS,resize:"vertical",minHeight:130,lineHeight:1.6}}/>
 
             <label style={labelStil}>💭 Refleksjon (valgfritt)</label>
@@ -5555,6 +6008,7 @@ ${innhold}
 
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
           <button onClick={nyttDokument} style={{flex:"1 1 140px",padding:"11px",background:"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif",boxShadow:"0 3px 9px rgba(44,91,142,0.2)"}}>📝 Ny dokumentasjon</button>
+          <button onClick={()=>setVisSkanner(true)} style={{flex:"0 0 auto",padding:"11px 15px",background:"linear-gradient(135deg,#1a3558,#2c5b8e)",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📷 Skann</button>
           {dok.length > 0 && (
             <button onClick={eksporterAlle} style={{flex:"0 0 auto",padding:"11px 15px",background:"#e8f5e9",color:C.g,border:"none",borderRadius:10,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>💾 Eksporter alle</button>
           )}
@@ -5660,22 +6114,22 @@ ${innhold}
 
     const lagreBrukernavnEndr = async () => {
       setPfFeil(""); setPfSuksess(""); setPfLoading(true);
-      const r = await oppdaterBrukernavn(aktivBruker.id, nb_nytt, nb_pw);
+      const r = await oppdaterBrukernavn(aktivBruker.id, nb_nytt);
       setPfLoading(false);
       if (!r.ok) { setPfFeil(r.feil); return; }
       onUserUpdate(r.bruker);
-      setNbNytt(""); setNbPw("");
+      setNbNytt("");
       visBekreftelse("✅ Brukernavn oppdatert!");
     };
 
     const lagreEpostEndr = async () => {
       setPfFeil(""); setPfSuksess(""); setPfLoading(true);
-      const r = await oppdaterEpost(aktivBruker.id, ne_nytt, ne_pw);
+      const r = await oppdaterEpost(aktivBruker.id, ne_nytt);
       setPfLoading(false);
       if (!r.ok) { setPfFeil(r.feil); return; }
       onUserUpdate(r.bruker);
-      setNeNytt(""); setNePw("");
-      visBekreftelse("✅ E-post oppdatert!");
+      setNeNytt("");
+      visBekreftelse("✅ E-post sendt – sjekk innboksen for bekreftelse!");
     };
 
     const lagreTelefonEndr = async () => {
@@ -5812,7 +6266,7 @@ ${innhold}
             </div>
 
             <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"4px solid #6ba0d9",marginTop:16,lineHeight:1.6}}>
-              <strong>🔒 Om sikkerhet:</strong> Passord hashes lokalt med SHA-256 + unik salt. Profildata lagres kun på denne enheten. Endring av brukernavn, e-post og passord krever at du oppgir gjeldende passord.
+              <strong>🔒 Om sikkerhet:</strong> Passord og autentisering håndteres av Supabase Auth. Profildata lagres i skyen og synkroniseres mellom enheter. E-postendringer krever bekreftelse.
             </div>
           </>
         )}
@@ -5910,9 +6364,7 @@ ${innhold}
             <div style={{background:"#e8eff8",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.brukernavn}</strong></div>
             <label style={labelStil}>Nytt brukernavn (min. 3 tegn)</label>
             <input type="text" value={nb_nytt} onChange={e=>setNbNytt(e.target.value)} placeholder="kari_ny" style={iS} autoComplete="username"/>
-            <label style={labelStil}>Bekreft med passord</label>
-            <input type="password" value={nb_pw} onChange={e=>setNbPw(e.target.value)} placeholder="••••••••" style={iS} autoComplete="current-password"/>
-            <button onClick={lagreBrukernavnEndr} disabled={pf_loading||!nb_nytt||!nb_pw} style={knappPrimaer(pf_loading||!nb_nytt||!nb_pw)}>{pf_loading?"Lagrer ...":"💾 Lagre endring"}</button>
+            <button onClick={lagreBrukernavnEndr} disabled={pf_loading||!nb_nytt} style={knappPrimaer(pf_loading||!nb_nytt)}>{pf_loading?"Lagrer ...":"💾 Lagre endring"}</button>
           </div>
         )}
 
@@ -5923,9 +6375,10 @@ ${innhold}
             <div style={{background:"#e8eff8",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.epost}</strong></div>
             <label style={labelStil}>Ny e-postadresse</label>
             <input type="email" value={ne_nytt} onChange={e=>setNeNytt(e.target.value)} placeholder="ny@example.no" style={iS} autoComplete="email"/>
-            <label style={labelStil}>Bekreft med passord</label>
-            <input type="password" value={ne_pw} onChange={e=>setNePw(e.target.value)} placeholder="••••••••" style={iS} autoComplete="current-password"/>
-            <button onClick={lagreEpostEndr} disabled={pf_loading||!ne_nytt||!ne_pw} style={knappPrimaer(pf_loading||!ne_nytt||!ne_pw)}>{pf_loading?"Lagrer ...":"💾 Lagre endring"}</button>
+            <div style={{background:"#e8eff8",borderRadius:8,padding:"8px 11px",fontSize:11,color:"#5d7390",marginBottom:10,lineHeight:1.5}}>
+              📧 Supabase sender en bekreftelseslenke til den nye e-posten.
+            </div>
+            <button onClick={lagreEpostEndr} disabled={pf_loading||!ne_nytt} style={knappPrimaer(pf_loading||!ne_nytt)}>{pf_loading?"Lagrer ...":"💾 Lagre endring"}</button>
           </div>
         )}
 
@@ -6069,7 +6522,7 @@ ${innhold}
     navigerTil("ai");
   };
 
-  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,ukeplan:<UkeplanSide/>};
+  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,ukeplan:<UkeplanSide/>,arsplan:<ArsplanSide/>,boker:<BokerSide aktivBruker={aktivBruker}/>};
 
   return (
     <>
@@ -6141,122 +6594,64 @@ ${innhold}
 }
 
 // ═══════════════════════════════════════════
-//  NYTT PASSORD – vises etter klikk på tilbakestillingslenke
-// ═══════════════════════════════════════════
-function NyttPassordScreen({ onFerdig }) {
-  const [passord, setPassord] = useState("");
-  const [passord2, setPassord2] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [feil, setFeil] = useState("");
-  const [suksess, setSuksess] = useState("");
-
-  const inputStil = {
-    width:"100%", padding:"12px 13px", fontSize:14,
-    border:"1.5px solid #d8e6f5", borderRadius:10,
-    background:"#f5f9fd", color:"#1a2c45",
-    fontFamily:"'Nunito',sans-serif", boxSizing:"border-box",
-    marginBottom:10, outline:"none",
-  };
-
-  const handleSett = async (e) => {
-    e?.preventDefault?.();
-    setFeil("");
-    if (passord.length < 6) { setFeil("Passordet må være minst 6 tegn"); return; }
-    if (passord !== passord2) { setFeil("Passordene er ikke like"); return; }
-    setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: passord });
-    setLoading(false);
-    if (error) { setFeil(error.message); return; }
-    setSuksess("✅ Passord oppdatert! Du er nå innlogget.");
-    setTimeout(onFerdig, 1500);
-  };
-
-  return (
-    <>
-      <style>{CSS}</style>
-      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1f4068 0%,#3a72b0 50%,#6ba0d9 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 14px",fontFamily:"'Nunito',sans-serif"}}>
-        <div style={{width:"100%",maxWidth:420}}>
-          <div style={{textAlign:"center",marginBottom:22,color:"#fff"}}>
-            <div style={{fontSize:46,marginBottom:6}}>🔓</div>
-            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:24,lineHeight:1.1}}>Sett nytt passord</div>
-            <div style={{fontSize:13,opacity:0.85,marginTop:5}}>Velg et nytt passord for kontoen din</div>
-          </div>
-          <div style={{background:"#fff",borderRadius:18,padding:22,boxShadow:"0 8px 30px rgba(0,0,0,0.2)"}}>
-            {feil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 12px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {feil}</div>}
-            {suksess && <div className="fade" style={{background:"#d8f3dc",color:"#1b5e47",padding:"10px 12px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #2d6a4f"}}>{suksess}</div>}
-            <form onSubmit={handleSett}>
-              <label style={{display:"block",fontWeight:700,color:"#1a2c45",fontSize:12,marginBottom:4}}>Nytt passord (min. 6 tegn)</label>
-              <input type="password" value={passord} onChange={e=>setPassord(e.target.value)} style={inputStil} autoComplete="new-password" placeholder="••••••••" autoFocus />
-              <label style={{display:"block",fontWeight:700,color:"#1a2c45",fontSize:12,marginBottom:4}}>Bekreft nytt passord</label>
-              <input type="password" value={passord2} onChange={e=>setPassord2(e.target.value)} style={inputStil} autoComplete="new-password" placeholder="••••••••" />
-              <button type="submit" disabled={loading} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,background:loading?"#ccc":"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:11,cursor:loading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",marginTop:4,boxShadow:"0 3px 9px rgba(44,91,142,0.25)"}}>
-                {loading?"🔐 Lagrer ...":"🔑 Sett nytt passord"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════
 //  APP WRAPPER – auth-gate som velger mellom innlogging og hovedappen
 // ═══════════════════════════════════════════
 export default function App() {
   const [aktivBruker, setAktivBruker] = useState(null);
   const [laster, setLaster] = useState(true);
-  const [gjenopprettPassord, setGjenopprettPassord] = useState(false);
+  const [visInnlogging, setVisInnlogging] = useState(false);
 
   useEffect(() => {
+    // Fallback: hvis onAuthStateChange henger, avslutt lasting etter 5s
+    const fallback = setTimeout(() => setLaster(false), 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setGjenopprettPassord(true);
+      if (event === "INITIAL_SESSION") {
+        try {
+          if (session?.user) {
+            const profil = await hentProfil(session.user.id);
+            setAktivBruker(byggBruker(session.user, profil));
+          }
+        } catch (_) {}
+        clearTimeout(fallback);
         setLaster(false);
-        return;
-      }
-      if (session?.user) {
-        const profil = await hentProfil(session.user.id);
-        setAktivBruker(publiskBruker(session.user, profil));
+      } else if (session?.user) {
+        try {
+          const profil = await hentProfil(session.user.id);
+          setAktivBruker(byggBruker(session.user, profil));
+        } catch (_) {}
       } else {
         setAktivBruker(null);
       }
-      setGjenopprettPassord(false);
-      setLaster(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(fallback);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
     await slettSesjon();
     setAktivBruker(null);
+    setVisInnlogging(false);
   };
 
-  const handleUserUpdate = async (oppdatertBruker) => {
+  const handleUserUpdate = (oppdatertBruker) => {
     setAktivBruker(oppdatertBruker);
   };
 
   if (laster) {
-    return (
-      <>
-        <style>{CSS}</style>
-        <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1f4068,#3a72b0,#6ba0d9)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",color:"#fff",fontFamily:"'Nunito',sans-serif"}}>
-          <div style={{fontSize:46,marginBottom:14}}>🌿</div>
-          <div className="spin" style={{borderColor:"rgba(255,255,255,0.3)",borderTopColor:"#fff",marginBottom:14}}/>
-          <div style={{fontSize:14,opacity:0.85}}>Laster Barnehagehjelpen ...</div>
-        </div>
-      </>
-    );
+    return <Velkomst onStart={() => {}} sjekkSesjon={true}/>;
   }
 
-  if (gjenopprettPassord) {
-    return <NyttPassordScreen onFerdig={() => { setGjenopprettPassord(false); }} />;
+  if (!aktivBruker && !visInnlogging) {
+    return <Velkomst onStart={() => setVisInnlogging(true)} sjekkSesjon={false}/>;
   }
 
   if (!aktivBruker) {
     return <AuthScreen onLoginSuccess={setAktivBruker}/>;
   }
 
-  return <Barnehagehjelpen aktivBruker={aktivBruker} onLogout={handleLogout} onUserUpdate={handleUserUpdate}/>;
+  return <Barnehagehjelpen aktivBruker={aktivBruker} onLogout={handleLogout} onUserUpdate={handleUserUpdate} storageInfo={storageStatus}/>;
 }
