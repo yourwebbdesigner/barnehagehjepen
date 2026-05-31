@@ -7,11 +7,51 @@ import { supabase } from "./supabase.js";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
+
+  /* ── TEMA-VARIABLER ─────────────────────────────────────────── */
+  :root {
+    --c-g: #2c5b8e; --c-lg: #3a72b0; --c-mint: #d8e6f5;
+    --c-bg: #f3f7fc; --c-yl: #52b788; --c-w: #ffffff;
+    --c-t: #1a2c45; --c-gr: #5d7390; --c-lg2: #e8eff8;
+    --c-sidebar: linear-gradient(160deg,#1f4068,#3a72b0,#4178bd);
+    --c-input-bg: #f5f9fd; --c-input-border: #d8e6f5; --c-input-t: #1a2c45;
+    --c-card: #ffffff; --c-divider: #e0ecf8;
+    --c-scrollbar: #c4d6ec; --c-scrollbar-hover: #a8c1de;
+    --c-shimmer-1: #e8eff8; --c-shimmer-2: #f0f5fb;
+    --c-spin-bg: #d8f3dc; --c-spin-fg: #2d6a4f;
+  }
+  [data-theme="dark"] {
+    --c-g: #4a8fd4; --c-lg: #5a9de0; --c-mint: #1a3050;
+    --c-bg: #0f1923; --c-yl: #52b788; --c-w: #172233;
+    --c-t: #ddeaf8; --c-gr: #7a9ab8; --c-lg2: #1a2d40;
+    --c-sidebar: linear-gradient(160deg,#060e18,#0d1e35,#102444);
+    --c-input-bg: #1a2840; --c-input-border: #2a4060; --c-input-t: #ddeaf8;
+    --c-card: #172233; --c-divider: #1e3050;
+    --c-scrollbar: #2a4060; --c-scrollbar-hover: #3a5580;
+    --c-shimmer-1: #1a2d40; --c-shimmer-2: #1e3350;
+    --c-spin-bg: #1a3a2a; --c-spin-fg: #52b788;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --c-g: #4a8fd4; --c-lg: #5a9de0; --c-mint: #1a3050;
+      --c-bg: #0f1923; --c-yl: #52b788; --c-w: #172233;
+      --c-t: #ddeaf8; --c-gr: #7a9ab8; --c-lg2: #1a2d40;
+      --c-sidebar: linear-gradient(160deg,#060e18,#0d1e35,#102444);
+      --c-input-bg: #1a2840; --c-input-border: #2a4060; --c-input-t: #ddeaf8;
+      --c-card: #172233; --c-divider: #1e3050;
+      --c-scrollbar: #2a4060; --c-scrollbar-hover: #3a5580;
+      --c-shimmer-1: #1a2d40; --c-shimmer-2: #1e3350;
+      --c-spin-bg: #1a3a2a; --c-spin-fg: #52b788;
+      color-scheme: dark;
+    }
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body { font-family: 'Nunito', sans-serif; background: #f3f7fc; -webkit-tap-highlight-color: transparent; }
-  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #c4d6ec; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #a8c1de; }
+  body { font-family: 'Nunito', sans-serif; background: var(--c-bg); -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--c-scrollbar); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--c-scrollbar-hover); }
   textarea, input, select { font-family: 'Nunito', sans-serif; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   @keyframes spin { to { transform:rotate(360deg); } }
@@ -30,16 +70,17 @@ const CSS = `
   .btn:active { transform:translateY(0); transition-duration:0.06s; }
   .btn:focus-visible { outline: 2px solid #2c5b8e; outline-offset: 2px; }
   .tag { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; }
-  .spin { border:3px solid #d8f3dc; border-top:3px solid #2d6a4f; border-radius:50%; width:26px; height:26px; animation:spin 0.8s linear infinite; }
-  input:focus, textarea:focus, select:focus { outline:2px solid #3a72b0; outline-offset: 1px; }
-  a:focus-visible, button:focus-visible { outline: 2px solid #2c5b8e; outline-offset: 2px; }
+  .spin { border:3px solid var(--c-spin-bg); border-top:3px solid var(--c-spin-fg); border-radius:50%; width:26px; height:26px; animation:spin 0.8s linear infinite; }
+  input:focus, textarea:focus, select:focus { outline:2px solid var(--c-lg); outline-offset: 1px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--c-g); outline-offset: 2px; }
+  input, textarea, select { background: var(--c-input-bg); color: var(--c-input-t); border-color: var(--c-input-border); transition: background 0.2s, color 0.2s, border-color 0.2s; }
 
   /* SVG tegneark – levende hover-effekt */
   .svg-wrap-hover svg { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease; }
   .svg-wrap-hover:hover svg { transform: scale(1.04); filter: drop-shadow(0 4px 12px rgba(44,91,142,0.15)); }
 
   /* Skimmer-effekt mens innhold laster */
-  .skimmer { background: linear-gradient(90deg, #e8eff8 0px, #f0f5fb 100px, #e8eff8 200px); background-size: 400px 100%; animation: shimmer 1.2s linear infinite; border-radius: 8px; }
+  .skimmer { background: linear-gradient(90deg, var(--c-shimmer-1) 0px, var(--c-shimmer-2) 100px, var(--c-shimmer-1) 200px); background-size: 400px 100%; animation: shimmer 1.2s linear infinite; border-radius: 8px; }
 
   /* Reduser animasjoner for brukere som har slått det av i OS */
   @media (prefers-reduced-motion: reduce) {
@@ -48,8 +89,8 @@ const CSS = `
   }
 
   /* RESPONSIVT LAYOUT */
-  .bh-layout { display:flex; min-height:100vh; background:#f3f7fc; }
-  .bh-sidebar { position:fixed; top:0; left:0; width:225px; height:100vh; background:linear-gradient(160deg,#1f4068,#3a72b0,#4178bd); z-index:100; display:flex; flex-direction:column; overflow-y:auto; transition:transform 0.28s ease; }
+  .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }
+  .bh-sidebar { position:fixed; top:0; left:0; width:225px; height:100vh; background:var(--c-sidebar); z-index:100; display:flex; flex-direction:column; overflow-y:auto; transition:transform 0.28s ease, background 0.25s; }
   .bh-main { margin-left:225px; flex:1; padding:22px 20px; max-width:700px; transition:margin-left 0.28s ease; }
   .bh-hamburger { display:none; }
   .bh-backdrop { display:none; }
@@ -60,7 +101,7 @@ const CSS = `
     .bh-sidebar.open { transform:translateX(0); box-shadow:0 0 32px rgba(0,0,0,0.4); }
     .bh-sidebar-close { display:flex !important; }
     .bh-main { margin-left:0; padding:64px 14px 18px; max-width:100%; }
-    .bh-mobile-header { display:flex; position:fixed; top:0; left:0; right:0; height:52px; background:linear-gradient(135deg,#1f4068,#3a72b0); z-index:90; align-items:center; padding:0 12px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+    .bh-mobile-header { display:flex; position:fixed; top:0; left:0; right:0; height:52px; background:var(--c-sidebar); z-index:90; align-items:center; padding:0 12px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
     .bh-hamburger { display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:rgba(255,255,255,0.15); border:none; border-radius:9px; cursor:pointer; color:#fff; font-size:20px; padding:0; }
     .bh-hamburger:active { background:rgba(255,255,255,0.28); }
     .bh-mobile-title { color:#fff; font-family:'Fredoka One',cursive; font-size:17px; margin-left:12px; }
@@ -91,7 +132,7 @@ const CSS = `
   }
 `;
 
-const C = { g:"#2c5b8e", lg:"#3a72b0", mint:"#d8e6f5", bg:"#f3f7fc", yl:"#52b788", w:"#ffffff", t:"#1a2c45", gr:"#5d7390", lg2:"#e8eff8" };
+const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
 
 const KORT_KATEGORIER = [
   { id:"Lek",         ikon:"🎮", bg:"#e3f2fd", txt:"#1565c0" },
@@ -6272,6 +6313,16 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
 }
 
 function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
+  const [tema, setTema] = useState(() => localStorage.getItem("bh_tema") || "auto");
+
+  useEffect(() => {
+    const html = document.documentElement;
+    if (tema === "dark") { html.setAttribute("data-theme", "dark"); }
+    else if (tema === "light") { html.setAttribute("data-theme", "light"); }
+    else { html.removeAttribute("data-theme"); }
+    localStorage.setItem("bh_tema", tema);
+  }, [tema]);
+
   const [side, setSide] = useState("hjem");
   const [skjemaer, setSkjemaer] = useState([]);
   const [skjemaerLastet, setSkjemaerLastet] = useState(false);
@@ -9863,6 +9914,19 @@ ${innhold}
             ))}
           </nav>
           <div style={{padding:"0 12px 14px"}}>
+            {/* Mørk modus-bryter */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 11px",marginBottom:7,background:"rgba(255,255,255,0.08)",borderRadius:9}}>
+              <span style={{color:"rgba(255,255,255,0.85)",fontSize:12,fontWeight:700}}>
+                {tema==="dark" ? "🌙 Mørk modus" : "☀️ Lys modus"}
+              </span>
+              <button
+                onClick={()=>setTema(t=>t==="dark"?"auto":"dark")}
+                title="Bytt tema"
+                style={{background:tema==="dark"?"var(--c-g)":"rgba(255,255,255,0.25)",border:"none",borderRadius:20,padding:"3px",width:44,height:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:tema==="dark"?"flex-end":"flex-start",transition:"background 0.25s, justify-content 0s",flexShrink:0}}
+              >
+                <div style={{width:18,height:18,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",transition:"transform 0.25s"}} />
+              </button>
+            </div>
             <div onClick={()=>navigerTil("profil")} style={{background:"rgba(255,255,255,0.14)",borderRadius:10,padding:"10px 11px",marginBottom:7,cursor:"pointer",display:"flex",alignItems:"center",gap:10}} title="Gå til profil">
               <div style={{width:40,height:40,borderRadius:"50%",overflow:"hidden",background:aktivBruker?.profilbilde?"transparent":"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,lineHeight:1}}>
                 {aktivBruker?.profilbilde ? (
