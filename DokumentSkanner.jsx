@@ -194,6 +194,37 @@ const CSS = `
     background: #f0f5fb; border-radius: 10px; padding: 12px 14px;
     font-size: 12px; color: #5d7390; line-height: 1.65;
   }
+
+  [data-theme="dark"] .ds-kort {
+    background: var(--c-card);
+    border-color: var(--c-divider);
+  }
+  [data-theme="dark"] .ds-btn-sek {
+    background: var(--c-lg2);
+    color: var(--c-g);
+  }
+  [data-theme="dark"] .ds-steg-dot {
+    background: var(--c-lg2);
+  }
+  [data-theme="dark"] .ds-steg-dot.aktiv {
+    background: var(--c-g);
+  }
+  [data-theme="dark"] .ds-fremgang {
+    background: var(--c-lg2);
+  }
+  [data-theme="dark"] .ds-spinn {
+    border-color: rgba(74,143,212,0.2);
+    border-top-color: var(--c-g);
+  }
+  [data-theme="dark"] .ds-ocr-tekst {
+    background: var(--c-input-bg);
+    color: var(--c-input-t);
+    border-color: var(--c-divider);
+  }
+  [data-theme="dark"] .ds-info {
+    background: var(--c-lg2);
+    color: var(--c-gr);
+  }
 `;
 
 // ═══════════════════════════════════════════
