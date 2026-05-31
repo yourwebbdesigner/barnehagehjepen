@@ -74,6 +74,17 @@ const CSS = `
   input:focus, textarea:focus, select:focus { outline:2px solid var(--c-lg); outline-offset: 1px; }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--c-g); outline-offset: 2px; }
   input, textarea, select { background: var(--c-input-bg); color: var(--c-input-t); border-color: var(--c-input-border); transition: background 0.2s, color 0.2s, border-color 0.2s; }
+  [data-theme="dark"] input,
+  [data-theme="dark"] textarea,
+  [data-theme="dark"] select {
+    background: var(--c-input-bg) !important;
+    color: var(--c-input-t) !important;
+    border-color: var(--c-input-border) !important;
+  }
+  [data-theme="dark"] option {
+    background: var(--c-card);
+    color: var(--c-t);
+  }
 
   /* SVG tegneark – levende hover-effekt */
   .svg-wrap-hover svg { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease; }
