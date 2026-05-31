@@ -3034,22 +3034,22 @@ function NyttSkjemaForm({ onSave, onNavigate }) {
           </div>
         </div>
 
-        <div style={{background:"#fff9c4", borderRadius:11, padding:13, marginBottom:11}}>
+        <div style={{background:C.lg2, borderRadius:11, padding:13, marginBottom:11, borderLeft:"3px solid #f59e0b"}}>
           <div style={{fontWeight:800, color:C.t, fontSize:12, marginBottom:6}}>🎯 HVA – Beskriv aktiviteten</div>
           <textarea value={form.hva} onChange={upd("hva")} placeholder="Hva skal barna gjøre?" rows={2}
-            style={{...iStyle, border:"1.5px solid #ffe082", background:"#fffef0", resize:"vertical"}}/>
+            style={{...iStyle, border:`1.5px solid var(--c-divider)`, resize:"vertical"}}/>
         </div>
 
-        <div style={{background:"#e8f5e9", borderRadius:11, padding:13, marginBottom:11}}>
+        <div style={{background:C.lg2, borderRadius:11, padding:13, marginBottom:11, borderLeft:"3px solid #10b981"}}>
           <div style={{fontWeight:800, color:C.t, fontSize:12, marginBottom:6}}>⚙️ HVORDAN – Gjennomføring</div>
           <textarea value={form.hvordan} onChange={upd("hvordan")} placeholder="Steg for steg – beskriv gjennomføringen..." rows={4}
-            style={{...iStyle, border:"1.5px solid #a5d6a7", background:"#f1f9f1", resize:"vertical"}}/>
+            style={{...iStyle, border:`1.5px solid var(--c-divider)`, resize:"vertical"}}/>
         </div>
 
-        <div style={{background:"#e3f2fd", borderRadius:11, padding:13, marginBottom:11}}>
+        <div style={{background:C.lg2, borderRadius:11, padding:13, marginBottom:11, borderLeft:"3px solid #3b82f6"}}>
           <div style={{fontWeight:800, color:C.t, fontSize:12, marginBottom:6}}>❓ HVORFOR – Pedagogisk begrunnelse</div>
           <textarea value={form.hvorfor} onChange={upd("hvorfor")} placeholder="Hva lærer barna? Hva er den pedagogiske verdien?" rows={2}
-            style={{...iStyle, border:"1.5px solid #90caf9", background:"#f0f7ff", resize:"vertical"}}/>
+            style={{...iStyle, border:`1.5px solid var(--c-divider)`, resize:"vertical"}}/>
         </div>
 
         <div style={{marginBottom:16}}>
@@ -3062,12 +3062,12 @@ function NyttSkjemaForm({ onSave, onNavigate }) {
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
             {FAGOMRADER.map(f=>(
               <div key={f.id} onClick={()=>toggleR(f.id)} style={{
-                background:form.rammeplan.includes(f.id)?f.farge:f.lys,
+                background:form.rammeplan.includes(f.id)?f.farge:C.lg2,
                 borderRadius:8, padding:"9px 11px", cursor:"pointer", display:"flex", alignItems:"center", gap:7,
-                border:`2px solid ${form.rammeplan.includes(f.id)?f.farge:"transparent"}`, transition:"all 0.15s"
+                border:`2px solid ${form.rammeplan.includes(f.id)?f.farge:"var(--c-divider)"}`, transition:"all 0.15s"
               }}>
                 <span style={{fontSize:16}}>{f.ikon}</span>
-                <span style={{fontSize:10, fontWeight:700, color:form.rammeplan.includes(f.id)?"#fff":f.farge, lineHeight:1.3}}>{f.navn}</span>
+                <span style={{fontSize:10, fontWeight:700, color:form.rammeplan.includes(f.id)?"#fff":C.t, lineHeight:1.3}}>{f.navn}</span>
               </div>
             ))}
           </div>
@@ -3417,12 +3417,12 @@ function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
           </div>
           <div style={{display:"flex",gap:7,margin:"10px 0 14px",flexWrap:"wrap"}}>
             <span className="tag" style={{background:C.mint,color:C.g}}>{valgt.kategori}</span>
-            <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>👶 {valgt.alder}</span>
-            {valgt.melodi&&<span className="tag" style={{background:"#f3e5f5",color:"#b5179e"}}>🎼 {valgt.melodi}</span>}
-            {valgt._erMin&&<span className="tag" style={{background:"#ede9fe",color:"#6d28d9"}}>🤖 AI-generert</span>}
+            <span className="tag" style={{background:C.lg2,color:C.gr}}>👶 {valgt.alder}</span>
+            {valgt.melodi&&<span className="tag" style={{background:C.lg2,color:C.gr}}>🎼 {valgt.melodi}</span>}
+            {valgt._erMin&&<span className="tag" style={{background:C.lg2,color:C.gr}}>🤖 AI-generert</span>}
           </div>
-          <pre style={{background:"#f5f9fd",borderRadius:11,padding:16,fontSize:15,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.9,fontFamily:"'Nunito',sans-serif",marginBottom:12,border:"1px solid #c4d6ec"}}>{valgt.tekst}</pre>
-          {valgt.tips&&<div style={{background:"#fffde7",borderRadius:9,padding:12,fontSize:13,color:"#795548",marginBottom:12}}><strong>💡 Tips:</strong> {valgt.tips}</div>}
+          <pre style={{background:C.lg2,borderRadius:11,padding:16,fontSize:15,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.9,fontFamily:"'Nunito',sans-serif",marginBottom:12,border:`1px solid var(--c-divider)`}}>{valgt.tekst}</pre>
+          {valgt.tips&&<div style={{background:"var(--c-lg2)",borderRadius:9,padding:12,fontSize:13,color:C.t,marginBottom:12,border:`1px solid var(--c-divider)`}}><strong>💡 Tips:</strong> {valgt.tips}</div>}
           <div style={{fontSize:12,fontWeight:700,color:C.gr,marginBottom:7}}>Kobling til rammeplan:</div>
           <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{(valgt.rammeplan||[]).map(r=><FagTag key={r} rid={r}/>)}</div>
         </div>
@@ -6769,7 +6769,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
           {FAGOMRADER.map(f=>(
             <div key={f.id} className="hover" onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");setSide("rammeplan");}}
-              style={{background:f.lys, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s"}}>
+              style={{background:C.lg2, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s", borderLeft:`3px solid ${f.farge}`}}>
               <span style={{fontSize:20}}>{f.ikon}</span>
               <div>
                 <div style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
@@ -6780,9 +6780,9 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         </div>
       </div>
 
-      <div style={{background:`linear-gradient(135deg,#e8eff8,#d8e6f5)`, borderRadius:13, padding:"13px 15px", borderLeft:`4px solid ${C.g}`}}>
+      <div style={{background:C.lg2, borderRadius:13, padding:"13px 15px", borderLeft:`4px solid ${C.g}`}}>
         <div style={{fontWeight:800, color:C.g, fontSize:12, marginBottom:4}}>🌿 Om Barnehagehjelpen</div>
-        <div style={{fontSize:12, color:"#1a3a5e", lineHeight:1.7}}>Alt innhold er koblet til Rammeplan 2017. Bruk AI-assistenten til å generere sanger, aktiviteter og pedagogiske planer tilpasset din barnegruppe.</div>
+        <div style={{fontSize:12, color:C.t, lineHeight:1.7}}>Alt innhold er koblet til Rammeplan 2017. Bruk AI-assistenten til å generere sanger, aktiviteter og pedagogiske planer tilpasset din barnegruppe.</div>
       </div>
     </div>
   );
