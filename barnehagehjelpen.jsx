@@ -1,13 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+﻿import React, { useState, useRef, useEffect } from "react";
 import DokumentSkanner from "./DokumentSkanner.jsx";
 import BokerSide from "./Boker.jsx";
 import Velkomst from "./Velkomst.jsx";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import SamarbeidSide from "./Samarbeid.jsx";
+import { supabase } from "./supabase.js";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
@@ -97,6 +93,34 @@ const CSS = `
 
 const C = { g:"#2c5b8e", lg:"#3a72b0", mint:"#d8e6f5", bg:"#f3f7fc", yl:"#52b788", w:"#ffffff", t:"#1a2c45", gr:"#5d7390", lg2:"#e8eff8" };
 
+const KORT_KATEGORIER = [
+  { id:"Lek",         ikon:"🎮", bg:"#e3f2fd", txt:"#1565c0" },
+  { id:"Natur",       ikon:"🌿", bg:"#e8f5e9", txt:"#2e7d32" },
+  { id:"Vann",        ikon:"💧", bg:"#e1f5fe", txt:"#0277bd" },
+  { id:"Bevegelse",   ikon:"🏃", bg:"#fff3e0", txt:"#e65100" },
+  { id:"Kreativt",    ikon:"🎨", bg:"#fce4ec", txt:"#880e4f" },
+  { id:"Språk",       ikon:"💬", bg:"#f3e5f5", txt:"#6a1b9a" },
+  { id:"Antall",      ikon:"🔢", bg:"#e8eaf6", txt:"#283593" },
+  { id:"Musikk",      ikon:"🎵", bg:"#fbe9e7", txt:"#bf360c" },
+  { id:"Ute",         ikon:"🌳", bg:"#f1f8e9", txt:"#33691e" },
+  { id:"Rolig",       ikon:"🧘", bg:"#e0f2f1", txt:"#004d40" },
+  { id:"Eksperiment", ikon:"🔬", bg:"#fff8e1", txt:"#ff6f00" },
+  { id:"Sosialt",     ikon:"🤝", bg:"#fce4ec", txt:"#c2185b" },
+];
+
+const KORT_IKONER = [
+  // Dyr
+  "🦁","🐸","🐻","🐼","🐨","🐱","🐶","🦊","🐮","🐷","🐔","🦆","🐣","🦖","🦕","🐢","🐛","🐞","🐝","🦋","🐧","🐬","🐙","🦓","🐘",
+  // Natur og vær
+  "🌈","🌞","🌻","🌸","🌺","🌼","🌷","🍄","🌲","🌿","💧","🌊","🏔️","🍂","❄️","⛄","🌙","⭐","💫",
+  // Aktiviteter og lek
+  "🎨","🎵","🎭","🧩","🎈","🎪","🏃","⚽","🏀","🎠","🚂","🚀","🧸","🎀","🎁",
+  // Mat
+  "🍎","🍓","🍭","🧁","🍕",
+  // Annet
+  "🤝","🔬","🧲","🎯","🦄","🏕️","🎶","🖍️","✂️","🔑"
+];
+
 const FAGOMRADER = [
   { id:"kommunikasjon", navn:"Kommunikasjon, språk og tekst", ikon:"💬", farge:"#2d6a4f", lys:"#d8f3dc", nr:"1",
     kortbeskrivelse:"Språkutvikling, lesing, skriving og kommunikasjon",
@@ -157,59 +181,59 @@ const FAGOMRADER = [
 ];
 
 const SANGER = [
-  { id:1, tittel:"Lille Petter Edderkopp", kategori:"sang", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Kjent barnesang",
-    tekst:"Lille Petter Edderkopp\nKlatret opp en vegg\nNed kom regnet\nSkylt ham bort fra stegg\nOpp steg solen\nTørket alt det våte\nLille Petter Edderkopp\nKlatret opp igjen",
+  { id:1, tittel:"Lille Petter Edderkopp", kategori:"sang", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Lille Petter Edderkopp\nSpant sitt nett i tre\nÅtte bein og store øyne\nHjelper ham å se\nRegnet kom og vasket nettet\nSolen tørket fint\nLille Petter Edderkopp\nBegynte helt på nytt",
     tips:"Bruk pekefingeren som edderkopp. Barna elsker å dramatisere regnet og solen. Kobles til vær og årstider." },
-  { id:2, tittel:"God morgen alle sammen", kategori:"sang", alder:"1-6 år", rammeplan:["kommunikasjon","etikk"], melodi:"If You're Happy",
-    tekst:"God morgen, god morgen\nHvordan har du det?\nGod morgen, god morgen\nJeg har det bra!\nHvis du er glad og vet det\nSå klapp, klapp i dine hender\nHvis du er glad og vet det\nSå stamp, stamp med beina\nHvis du er glad og vet det\nSå si: Hei – hei – hei!",
+  { id:2, tittel:"God morgen alle sammen", kategori:"sang", alder:"1-6 år", rammeplan:["kommunikasjon","etikk"], melodi:"Egenkomponert",
+    tekst:"God morgen, god morgen\nHer er vi igjen\nGod morgen, god morgen\nAlle er her nå\nStrekk armene høyt opp\nMot den lyse himmelen\nGod morgen, god morgen\nKlar for en ny dag!\nKlapp i hendene dine\nStamp med føttene\nHei og hå og hei igjen\nNå begynner vi!",
     tips:"Perfekt åpning for samlingsstund. Barna hilser på hverandre. Bytt ut klapping med nye bevegelser." },
-  { id:3, tittel:"Bjørnen sover", kategori:"sang", alder:"2-6 år", rammeplan:["kommunikasjon","kropp"], melodi:"Tradisjonell",
-    tekst:"Bjørnen sover, bjørnen sover\nI sitt lune hi\nHar han lagt seg, har han lagt seg\nTidlig om kvelden\nVinteren er kald\nVinteren er kald\nMen om våren, men om våren\nVåkner bjørnen opp",
+  { id:3, tittel:"Bjørnen sover", kategori:"sang", alder:"2-6 år", rammeplan:["kommunikasjon","kropp"], melodi:"Egenkomponert",
+    tekst:"Store bjørn i skogen\nLa seg ned i hi\nLukket øyne rolig\nSov til våren vi\nSnøen dekte trærne\nKaldt og stille der\nMen da solen varmet\nBjørnen opp igjen\nGjesper stort og bredt nå\nStrekker seg og ler\nSulten etter vinteren\nUt på jakt han fer",
     tips:"Dramatiser: barna er bjørner som sover og våkner. Snakk om dyrenes vinterdvale og årstider." },
-  { id:4, tittel:"Ro, ro til fiskeskjær", kategori:"sang", alder:"0-3 år", rammeplan:["kommunikasjon","kropp"], melodi:"Tradisjonell norsk",
-    tekst:"Ro, ro til fiskeskjær\nFar og mor og lille Pær\nFar ror ut og mor ror inn\nLille Pær har fisket\nFem og tredve sild\nRo, ro til fiskeskjær",
+  { id:4, tittel:"Ro, ro på det blå hav", kategori:"sang", alder:"0-3 år", rammeplan:["kommunikasjon","kropp"], melodi:"Egenkomponert",
+    tekst:"Ro, ro på det blå hav\nBølger gynger oss\nRo med armene fremover\nAv og til vi stopp\nFisken hopper i det blå\nSølvblanke og fin\nRo, ro på det blå hav\nHjem til deg og din",
     tips:"Sett barna i par som ror sammen. Stimulerer motorikk, samarbeid og rytme. Ypperlig for de minste." },
-  { id:5, tittel:"Snekker Andersen", kategori:"sang", alder:"2-6 år", rammeplan:["kommunikasjon","naermiljo"], melodi:"Tradisjonell",
-    tekst:"Snekker Andersen har en stol\nSom han har snekret selv\nOg stolen har fire ben\nOg ryggen er solid og god\nBank, bank, bank – slikt er arbeid!\nBank, bank, bank – slik lyder det!\nSnekker Andersen er glad\nFor stolen ble så fin",
+  { id:5, tittel:"Olav Snekker", kategori:"sang", alder:"2-6 år", rammeplan:["kommunikasjon","naermiljo"], melodi:"Egenkomponert",
+    tekst:"Olav snekker i verkstedet\nLager fine ting\nHammer, sag og spiker\nRundt om ham en ring\nBank, bank, bank – nå blir det fint!\nSag, sag, sag – se så smart!\nHylla henger på veggen nå\nOlav er fornøyd",
     tips:"Bruk bevegelser for banking. Snakk om yrker og håndverk. Knytt til konstruksjonslek og samfunnsforståelse." },
-  { id:6, tittel:"Trollmors vuggesang", kategori:"sang", alder:"0-3 år", rammeplan:["kommunikasjon"], melodi:"Norsk vuggesang",
-    tekst:"Vesle vått og vesle grått\nMamma synger for deg\nSov nå lille barnet mitt\nTrollet passer deg\nNatt og dag og dag og natt\nMamma er jo her\nLille øye lukk deg nå\nNær, så nær, så nær",
+  { id:6, tittel:"Vuggesang for de minste", kategori:"sang", alder:"0-3 år", rammeplan:["kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Sov, sov, lille venn\nNatta er så mørk\nStjernene de blinker\nOver skog og bjørk\nPust så stille, pust så rolig\nDrømmene er nær\nSov, sov, lille venn\nJeg er alltid her",
     tips:"Rolig sang for soving og nærhet. God for kos og trygghet. Syng sakte og lavt." },
-  { id:7, tittel:"Hoppe sansen", kategori:"sang", alder:"1-4 år", rammeplan:["kropp","kommunikasjon"], melodi:"Tradisjonell",
-    tekst:"Hoppe, hoppe, sansen\nOpp og ned vi danser\nHoppe, hoppe, sansen\nI en glad romanse\nOpp og ned og opp og ned\nAlle hopper med!",
+  { id:7, tittel:"Hoppe sansen", kategori:"sang", alder:"1-4 år", rammeplan:["kropp","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Hopp, hopp, hopp vi nå\nOpp og ned med kroppen vår\nHopp på ett bein, hopp på to\nHopp til vi er slitne\nHopp mot solen, hopp mot sky\nAlle liker å hoppe ny\nHopp, hopp, hopp vi nå\nAlle hopper med!",
     tips:"Enkel sang som alle kan delta i. Fremmer grovmotorikk og bevegelsesglede. Bra i overgangssituasjoner." },
-  { id:8, tittel:"Fem små apekatter", kategori:"sang", alder:"2-5 år", rammeplan:["antall","kommunikasjon"], melodi:"Five Little Monkeys",
-    tekst:"Fem små apekatter hoppet i senga\nEn falt ned og slo seg i hodet\nMamma ringte legen, legen sa:\n'Ingen apekatter skal hoppe i senga!'\nFire små apekatter...\n(fortsetter ned til én apekatt)",
+  { id:8, tittel:"Fem små frosk", kategori:"sang", alder:"2-5 år", rammeplan:["antall","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Fem små frosk satt på en stein\nEn hoppet ned og ble igjen\nFire små frosk satt på en stein\nEn hoppet ned – nå er det tre\nTre, to, én – og ingen mer\nAlle froskene er borte her\nMen i dammen bobler det\nFem frosk er tilbake igjen!",
     tips:"Telle baklengs fra 5 til 0. Bruk fingre. Barna elsker repetisjonen. Knytter telling til konkret handling." },
-  { id:9, tittel:"Petter Kanin", kategori:"sang", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Frère Jacques",
-    tekst:"Petter Kanin, Petter Kanin\nLøper fort, løper fort\nFørst de to lange ørene\nSå den lille halen\nHopp, hopp, hopp!\nHopp, hopp, hopp!",
+  { id:9, tittel:"Lille kanin", kategori:"sang", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Lille kanin på enga\nLøper fort og lett\nLange ører peker opp\nKorte hale hvit\nSpiser gulrot og kløver\nSitt og napp og bit\nLille kanin på enga\nHopper glad og fri",
     tips:"Bruk hender som ører og hopp. Kan dramatiseres ute. Snakk om kaniner og andre haredyr." },
   { id:10, tittel:"Regnbuen", kategori:"sang", alder:"3-6 år", rammeplan:["natur","kunst"], melodi:"Egenkomponert",
     tekst:"Etter regn kommer sol\nOg etter sol regn igjen\nOg i himmelen lyser\nRegnbuen min venn\nRød og oransje og gul\nGrønn og blå og fiolett\nSyn syv vakre farger\nAlt det fineste på jord",
     tips:"Lag regnbue med armene. Tegn regnbuer i alle farger etterpå. Snakk om primær- og sekundærfarger." },
-  { id:11, tittel:"Alle fugler store og små", kategori:"sang", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Tradisjonell",
-    tekst:"Alle fugler store og små\nFlyr og flyr hele dag\nOppe i de høye trær\nSynger de sin sang\nTvit-tvit-tvit, tvit-tvit-tvit\nHva synger de da?\nTvit-tvit-tvit, tvit-tvit-tvit\nKom og hør på meg!",
+  { id:11, tittel:"Fuglene synger", kategori:"sang", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Fuglene synger om morgenen\nKvitter og triller og ler\nStore og små i trærne\nSynger for alle som er her\nVifter med vinger og flyr avsted\nOver tak og grønne trær\nFuglene synger om morgenen\nKom og lytt til dem!",
     tips:"Bruk armene som vinger. Lytt til fuglekvitter ute etterpå. Knytt til årstider og fuglearter." },
-  { id:12, tittel:"Ole Dole Doff", kategori:"regle", alder:"2-6 år", rammeplan:["antall","kommunikasjon"], melodi:"Tellerim",
-    tekst:"Ole dole doff\nKinke lane koff\nKoffe lane binke bane\nOle dole doff",
-    tips:"Klassisk tellerim for å velge 'den'. God overgang til lek. Barna liker rytmen og nonsens-ordene." },
-  { id:13, tittel:"En, to, tre – hopp!", kategori:"regle", alder:"2-5 år", rammeplan:["antall","kropp"], melodi:"Regle",
-    tekst:"En, to, tre – hopp!\nFire, fem, seks – stopp!\nSju, åtte, ni – vend om!\nTi – og så begynner vi om igjen!",
+  { id:12, tittel:"Ælle bælle bus", kategori:"regle", alder:"2-6 år", rammeplan:["antall","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Ælle bælle bus\nHvem leker med oss?\nPeke på hverandre\nRund og rundt vi går\nEn, to, tre og fire\nFem, seks, syv og åtte\nNi og ti – nå er du den!\nLeken kan begynne!",
+    tips:"Tellerim for å velge 'den'. God overgang til lek. Barna liker rytmen og spenningen." },
+  { id:13, tittel:"En, to, tre – hopp!", kategori:"regle", alder:"2-5 år", rammeplan:["antall","kropp"], melodi:"Egenkomponert",
+    tekst:"En, to, tre – hopp!\nFire, fem, seks – stopp!\nSju, åtte, ni – vend om!\nTi – og nå begynner vi!\nHopp og stans og snu deg rundt\nTelling er så morsomt her\nEn, to, tre – hopp igjen!\nKlarer du å følge med?",
     tips:"Kombiner bevegelse og telling. Bra i overgangssituasjoner. Barna lærer tallrekkefølgen." },
-  { id:14, tittel:"Regndråpen", kategori:"rim", alder:"3-6 år", rammeplan:["natur","kommunikasjon"], melodi:"Rim",
-    tekst:"Lille regndråpe\nFall ned fra sky\nPlaff i en bekk\nEr livet ditt ny\nDu renner til havet\nSå langt bort fra meg\nMen du kommer tilbake\nPå din evige vei",
+  { id:14, tittel:"Regndråpen", kategori:"rim", alder:"3-6 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Regndråpen faller\nFra skyen ned\nTrommer på taket\nSå mykt og lett\nRenner i bekken\nFar til elva\nSå til det store havet\nOg opp i sky igjen",
     tips:"Kobles til vannets kretsløp. Tegn regndråpens reise. Snakk om havet og skyene." },
-  { id:15, tittel:"Bukken Bruse (rim)", kategori:"rim", alder:"3-6 år", rammeplan:["kommunikasjon","etikk"], melodi:"Rim fra eventyret",
-    tekst:"Hvem tramper på min bro?\nDet er meg, den minste bukken bruse!\nJeg er på vei til setra\nFor å gjøre meg feit!\nVent til bror min kommer\nHan er mye større!\nOk, sa trollet, dra bare!",
+  { id:15, tittel:"Tre bukker på fjellet", kategori:"rim", alder:"3-6 år", rammeplan:["kommunikasjon","etikk"], melodi:"Egenkomponert",
+    tekst:"Tre bukker på fjellet\nVil opp til setra\nLille bukk går først\nMidtbukk følger etter\nStore bukk til sist\nSterk og modig han\nSammen kom de opp\nAlle tre til toppen",
     tips:"Dramatiser med tre barn som ulike bukker. Bruk stemmer. Snakk om mot, klokskap og samarbeid." },
-  { id:16, tittel:"Eple og pære", kategori:"regle", alder:"2-5 år", rammeplan:["antall","kommunikasjon"], melodi:"Regle",
-    tekst:"Eple, pære, plomme, pæ\nHvem kan telle?\nHvem kan se?\nEn, to, tre – nå er du fri!\nFire, fem, seks – kom hit til meg!\nSju, åtte, ni, ti – nå er vi ferdig alle vi!",
+  { id:16, tittel:"Fruktsangen", kategori:"regle", alder:"2-5 år", rammeplan:["antall","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Eple er rødt og pære er gul\nPlomme er blå og banan er rund\nTeller vi frukt her i dag\nEn og to og tre – hurra!\nSpis litt av hvert og lær deg smaken\nFrukt gjør kroppen vår glad\nEn, to, tre, fire, fem og seks\nSett dem på rekke og rad!",
     tips:"Bruk frukt som rekvisitter. Knytt til matlaging. Barna lærer fruktsorter og tall simultant." },
-  { id:17, tittel:"Tommeliten", kategori:"sang", alder:"1-4 år", rammeplan:["kommunikasjon","kropp"], melodi:"Tradisjonell",
-    tekst:"Her er Tommeliten liten\nOg her er Slikkepott\nLangemann er midtmann\nOg Gullebrand er mett\nLille veslefinger\nSitter innerst inne\nNå kommer de alle fem\nOg hilser pent på deg!",
+  { id:17, tittel:"De fem fingrene", kategori:"sang", alder:"1-4 år", rammeplan:["kommunikasjon","kropp"], melodi:"Egenkomponert",
+    tekst:"Tommelen er størst av dem\nPekefingeren peker frem\nLangemann er midtmann han\nRingefingeren er ganske fin\nLillefingeren minst av alle\nNå løfter vi dem én for én\nFem fingre på hver hånd vi har\nTi fingre har vi alle her!",
     tips:"Løft opp en finger om gangen. Fantastisk for finmotorikk og navn på fingre. God for de aller minste." },
-  { id:18, tittel:"Byssan lull", kategori:"sang", alder:"0-3 år", rammeplan:["kommunikasjon"], melodi:"Skandinavisk vuggesang",
-    tekst:"Byssan lull, byssan lull\nKaka i kulla\nHvem er det som bor der\nInni den lille kulla?\nDet er lille barnet\nMitt aller kjæreste\nByssan lull, byssan lull\nSov nå, sov nå litt",
+  { id:18, tittel:"Sovesangen", kategori:"sang", alder:"0-3 år", rammeplan:["kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Søvnen kommer sakte\nØynene de tunge\nLukk dem nå og hvil litt\nDrøm om fine ting\nPust så rolig, pust så stille\nHjertet slår så lett\nSov nå, lille venn min\nTrygg og god du er",
     tips:"Rolig vuggesang. God for søvnsituasjoner og nærhet. Syng sakte og lavt – skaper ro." },
   { id:19, tittel:"Høstsangen", kategori:"sang", alder:"2-6 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
     tekst:"Bladene de faller\nRøde, gule, brune\nVinden blåser kaldt\nOg høsten er her\nKongler og eikenøtter\nFinner vi på bakken\nNaturens eget skattkammer\nVenter på oss her",
@@ -217,11 +241,11 @@ const SANGER = [
   { id:20, tittel:"Vi er mange farger", kategori:"sang", alder:"3-6 år", rammeplan:["etikk","naermiljo"], melodi:"Egenkomponert",
     tekst:"Vi er mange farger\nVi er mange vi\nNoen er som deg\nNoen er som meg\nMen alle hører til her\nAlle hører til\nForskjellige og like\nEr vi alle vi",
     tips:"Synges i samlingsstund. Snakk om mangfold og det å høre til. Bruk bilder av barn fra ulike kulturer." },
-  { id:21, tittel:"Tommelise", kategori:"rim", alder:"3-6 år", rammeplan:["kommunikasjon","kunst"], melodi:"Rim",
-    tekst:"Tommelise, liten og fin\nSov i en valnøttskall så grønn\nBlomsterne duftet rundt henne\nOg fuglene sang i lønn\nMen en morgen hun reiste\nMed fugle-prins bort\nTil et land der det alltid\nEr vår og sol og godt",
-    tips:"Kobles til Andersens eventyr. La barna tegne Tommelise. Snakk om eventyr og fantasi." },
-  { id:22, tittel:"Månen lyser", kategori:"rim", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Rim",
-    tekst:"Månen lyser over skog og hei\nStjernene er mange på sin vei\nNattfuglen synger i mørket der\nOg barnet sover – mor er nær",
+  { id:21, tittel:"Den vesle reisen", kategori:"rim", alder:"3-6 år", rammeplan:["kommunikasjon","kunst"], melodi:"Egenkomponert",
+    tekst:"Liten som en ert\nBor i blomstens favn\nSover i en nøtteskall\nUnder himlens havn\nFuglene er venner\nBærer henne vidt\nTil et land av blomster\nDer alt er nytt og fritt",
+    tips:"La barna tegne en liten eventyrfigur. Snakk om eventyr, fantasiverdener og å være modig." },
+  { id:22, tittel:"Månen og stjernene", kategori:"rim", alder:"2-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Månen seiler stille\nHøyt der oppe nå\nStjernene er vaktene\nSom passer på oss her\nNatta er ikke skummel\nLyse stjerner blinker\nSov nå, lille venn min\nMånen lyser klart",
     tips:"Bruk til rolig avslutning av dagen. Kobles til naturfenomener: måne, stjerner og nattedyr." },
   { id:23, tittel:"Den lille katten", kategori:"sang", alder:"1-5 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
     tekst:"Mjau, mjau, lille katt\nLeker hele dag og natt\nSover, spinner, drikker melk\nMed myk pels og blank stjert",
@@ -391,16 +415,16 @@ const SANGER = [
   { id:98, tittel:"Toget tøff-tøff", kategori:"sang", alder:"1-5 år", rammeplan:["naermiljo","kropp"], melodi:"Egenkomponert",
     tekst:"Tøff-tøff-tøff, sier toget mitt\nKjører raskt på skinner blank\nGjennom skog og over bro\nFolk reiser fra hjem til hjem",
     tips:"Lag toget – stå i rekke. Tøff sammen." },
-  { id:101, tittel:"Klapp-klapp regle", kategori:"regle", alder:"2-5 år", rammeplan:["kommunikasjon","kropp"], melodi:"Regle",
+  { id:101, tittel:"Klapp-klapp regle", kategori:"regle", alder:"2-5 år", rammeplan:["kommunikasjon","kropp"], melodi:"Egenkomponert",
     tekst:"Klapp i hender, klapp på lår\nKlapp på hodet, klapp på tå\nKlapp så høyt og klapp så lavt\nKlapp så alle hører meg",
     tips:"Klappe-mønster. God for rytmeforståelse." },
-  { id:102, tittel:"Tipp-tapp regle", kategori:"regle", alder:"1-4 år", rammeplan:["kommunikasjon","kropp"], melodi:"Regle",
+  { id:102, tittel:"Tipp-tapp regle", kategori:"regle", alder:"1-4 år", rammeplan:["kommunikasjon","kropp"], melodi:"Egenkomponert",
     tekst:"Tipp-tapp, tipp-tapp\nLille mus i hus\nTipp-tapp, tipp-tapp\nKrump som en lus",
     tips:"Tipp på lår eller bord med fingrene. Rytmisk." },
-  { id:103, tittel:"Værregle", kategori:"regle", alder:"3-6 år", rammeplan:["natur","kommunikasjon"], melodi:"Regle",
-    tekst:"Regn, regn, gå din vei\nKom igjen en annen dag\nLille barnet vil gå ut\nOg leke i den varme sol",
+  { id:103, tittel:"Værregle", kategori:"regle", alder:"3-6 år", rammeplan:["natur","kommunikasjon"], melodi:"Egenkomponert",
+    tekst:"Regn og sol og vind og snø\nVæret skifter hele tid\nRegn gir vann til blomster\nSol gir oss sin glød\nKledd for været er vi klare\nFor hva enn det bringer",
     tips:"Ute når det regner og slutter. Tradisjonsbevisst." },
-  { id:104, tittel:"Vente-regle", kategori:"regle", alder:"2-5 år", rammeplan:["kommunikasjon"], melodi:"Regle",
+  { id:104, tittel:"Vente-regle", kategori:"regle", alder:"2-5 år", rammeplan:["kommunikasjon"], melodi:"Egenkomponert",
     tekst:"En, to, tre, vi venter litt\nFire, fem, seks, nå er det mitt\nSyv, åtte, ni, og ti igjen\nNå har turen kommet hen",
     tips:"Bruk i situasjoner som krever venting." },
   { id:105, tittel:"Hare-regle", kategori:"regle", alder:"2-5 år", rammeplan:["natur","kropp"], melodi:"Regle",
@@ -927,6 +951,45 @@ const RE = {
       { rolle:"Barnehagelærer", b:"Faglig ansvar i samspill med pedagogisk leder. Bidrar til planlegging og gjennomføring." },
       { rolle:"Fagarbeider/assistent", b:"Viktig medarbeider i det daglige arbeidet med barna. Bidrar til omsorg, lek og læring." },
     ] },
+
+  barnehageloven:{ tittel:"Barnehageloven – sentrale paragrafer",
+    paragrafer:[
+      { nr:"§1", tittel:"Formål", tekst:"Barnehagen skal i samarbeid og forståelse med hjemmet ivareta barnas behov for omsorg og lek, og fremme læring og danning som grunnlag for allsidig utvikling. Barnehagen skal bygge på grunnleggende verdier i kristen og humanistisk arv og tradisjon, slik som respekt for menneskeverdet og naturen, på åndsfrihet, nestekjærlighet, tilgivelse, likeverd og solidaritet. Barna skal få utfolde skaperglede, undring og utforskertrang. De skal lære å ta vare på seg selv, hverandre og naturen. Barna skal utvikle grunnleggende kunnskaper og ferdigheter. De skal ha rett til medvirkning tilpasset alder og forutsetninger. Barnehagen skal møte barna med tillit og respekt, og anerkjenne barndommens egenverdi." },
+      { nr:"§2", tittel:"Barnehagens innhold", tekst:"Barnehagen skal være en pedagogisk virksomhet. Barnehagen skal gi barn under opplæringspliktig alder gode utviklings- og aktivitetsmuligheter i nær forståelse og samarbeid med barnas hjem. Departementet fastsetter en rammeplan for barnehagen. Rammeplanen skal gi retningslinjer for barnehagens innhold og oppgaver. Barnehagens eier kan tilpasse rammeplanen til lokale forhold." },
+      { nr:"§3", tittel:"Barns rett til medvirkning", tekst:"Barn i barnehagen har rett til å gi uttrykk for sitt syn på barnehagens daglige virksomhet. Barn skal jevnlig få mulighet til aktiv deltakelse i planlegging og vurdering av barnehagens virksomhet. Barnets synspunkter skal tillegges vekt i samsvar med dets alder og modenhet." },
+      { nr:"§4", tittel:"Foreldreråd og samarbeidsutvalg", tekst:"For å sikre samarbeidet med barnas hjem, skal hver barnehage ha et foreldreråd og et samarbeidsutvalg. Foreldrerådet består av foreldrene/de foresatte til alle barna og skal fremme deres fellesinteresser og bidra til at samarbeidet mellom barnehagen og foreldregruppen skaper et godt barnehagemiljø. Samarbeidsutvalget skal være et rådgivende, kontaktskapende og samordnende organ. Samarbeidsutvalget fastsetter barnehagens årsplan." },
+      { nr:"§7", tittel:"Barnehageeierens ansvar", tekst:"Barnehageeieren skal drive virksomheten i samsvar med gjeldende lover og regelverk, herunder denne loven og barnehagens vedtekter. Barnehageeieren plikter å rette seg etter pålegg fra kommunen som barnehagemyndighet. Barnehageeieren har ansvar for at barnehagen har tilstrekkelig faglig kompetanse og bemanning." },
+      { nr:"§8", tittel:"Kommunens ansvar som barnehagemyndighet", tekst:"Kommunen er lokal barnehagemyndighet. Kommunen skal gi veiledning og påse at barnehagene drives i samsvar med gjeldende regelverk. Kommunen skal behandle søknader om godkjenning og gi godkjenning der lovens vilkår er oppfylt. Kommunen har plikt til å føre tilsyn med barnehagene." },
+      { nr:"§16", tittel:"Opplysningsplikt til barnevernstjenesten", tekst:"Barnehagepersonalet skal i sitt arbeid være oppmerksom på forhold som kan føre til tiltak fra barnevernstjenestens side. Uten hinder av taushetsplikt skal barnehagepersonalet av eget tiltak gi opplysninger til barnevernstjenesten, når det er grunn til å tro at et barn blir mishandlet i hjemmet eller det foreligger andre former for alvorlig omsorgssvikt, eller når et barn har vist vedvarende alvorlige atferdsvansker." },
+      { nr:"§19a", tittel:"Rett til spesialpedagogisk hjelp", tekst:"Barn under opplæringspliktig alder som har særlige behov for spesialpedagogisk hjelp, har rett til slik hjelp. Hjelpen skal omfatte tilbud om foreldrerådgivning. Kommunen skal oppfylle retten til spesialpedagogisk hjelp for alle barn som oppholder seg i kommunen. Kommunen kan kreve at barnehagen knytter til seg en spesialpedagog." },
+      { nr:"§41", tittel:"Aktivitetsplikt for trygt barnehagemiljø", tekst:"Alle som arbeider i barnehagen, skal følge med på om barna har et trygt og godt barnehagemiljø. Alle som arbeider i barnehagen, skal melde fra til styreren dersom de får mistanke om eller kjennskap til at et barn ikke har et trygt og godt barnehagemiljø. Styreren skal melde fra til barnehageeieren i alvorlige tilfeller. Barnehagen skal lage en skriftlig plan med tiltak, og gjennomføre og evaluere tiltakene. Saken skal følges opp til barnet har et trygt og godt barnehagemiljø." },
+    ] },
+
+  roller:{ tittel:"Ansvar og roller i barnehagen",
+    innhold:"Alle som jobber i barnehagen har et felles ansvar for barnas ve og vel, men har ulike roller og ansvarsområder. God rolleforståelse skaper et godt arbeidsmiljø og bedre kvalitet for barna.",
+    personer:[
+      { rolle:"Barnehageeier", ikon:"🏢", farge:"#1a2c45", ansvar:["Overordnet ansvar for at barnehagen drives i samsvar med lov og rammeplan","Sørge for tilstrekkelig bemanning og faglig kompetanse","Legge til rette for personalets kompetanseutvikling","Vedta og revidere barnehagens vedtekter","Ansvarlig overfor kommunen som barnehagemyndighet"], krav:"Eier kan være en kommune, en organisasjon, et selskap eller en privatperson. Alle barnehager må ha godkjenning fra kommunen." },
+      { rolle:"Styrer", ikon:"👩‍💼", farge:"#1565c0", ansvar:["Faglig og administrativ leder av barnehagen","Ansvar for at rammeplanen følges i praksis","Personalledelse, veiledning og medarbeidersamtaler","Økonomi- og ressursforvaltning","Kontakt med foreldre, samarbeidsutvalg og kommune","Kvalitetsutviklingsarbeid og tilsyn"], krav:"Styrere skal ha barnehagelærerutdanning eller annen høgskoleutdanning med pedagogisk utdanning og erfaring fra arbeid med barn." },
+      { rolle:"Pedagogisk leder", ikon:"👩‍🏫", farge:"#2d6a4f", ansvar:["Faglig ansvar for sin avdeling eller base","Lede det pedagogiske arbeidet og teamet","Planlegge og vurdere det pedagogiske arbeidet","Veilede og støtte øvrig personale","Tett samarbeid med foreldre om enkeltbarn","Sikre at alle barn inkluderes og trives"], krav:"Pedagogisk leder skal ha barnehagelærerutdanning. Styrer kan innvilge dispensasjon ved mangel på kvalifiserte søkere." },
+      { rolle:"Barnehagelærer", ikon:"🎓", farge:"#00695c", ansvar:["Bidrar til planlegging og gjennomføring av pedagogisk arbeid","Ansvar for barnegruppa i samarbeid med pedagogisk leder","Utøver profesjonelt pedagogisk skjønn i hverdagen","Bidrar til kollektiv refleksjon og faglig utvikling"], krav:"3-årig barnehagelærerutdanning (bachelor) eller master i barnehagepedagogikk." },
+      { rolle:"Fagarbeider / BUA", ikon:"🛠️", farge:"#e67e22", ansvar:["Viktig medarbeider i det daglige arbeidet med barna","Bidrar til omsorg, lek og pedagogisk arbeid","Kan ha ansvar for enkeltbarn eller grupper under faglig ledelse","Deltar i planlegging og refleksjonsmøter"], krav:"Barne- og ungdomsarbeider (fagbrev, BUA) fra videregående opplæring + 2 år i lære." },
+      { rolle:"Assistent", ikon:"🤝", farge:"#6a1b9a", ansvar:["Støtter opp under det pedagogiske arbeidet","Bidrar til omsorg og trygghet i hverdagen","Utfører praktiske oppgaver knyttet til barna","Bidrar i samarbeid med øvrig personale"], krav:"Ingen formelle utdanningskrav, men barnehager oppfordres til å prioritere søkere med relevant kompetanse." },
+      { rolle:"Kommunen / Barnehagemyndigheten", ikon:"🏛️", farge:"#37474f", ansvar:["Lokal barnehagemyndighet med tilsynsansvar","Gi veiledning til barnehagene","Godkjenne barnehager etter søknad","Sikre at barnehagene drives i samsvar med regelverket","Behandle klager og fatte enkeltvedtak"], krav:"Kommunen skal ha en plan for tilsyn med barnehagene og gjennomføre jevnlig tilsyn." },
+    ] },
+
+  inkludering:{ tittel:"Inkludering og tilrettelegging",
+    innhold:"Barnehagen skal ha plass til alle barn, uavhengig av forutsetninger, behov og bakgrunn. Inkludering betyr at alle barn deltar aktivt i fellesskapet på egne premisser – ikke at alle skal gjøre det samme, men at alle får like muligheter.",
+    omrader:[
+      { navn:"Barn med nedsatt funksjonsevne", ikon:"♿", farge:"#1565c0", innhold:"Barn med nedsatt funksjonsevne har rett til prioritet ved opptak i barnehage. Barnehagen skal tilrettelegge for disse barna. Kommunen kan gi tilskudd til tilrettelegging av utstyr og miljø.", tiltak:["Individuell plan (IP) ved behov","Støttepedagog eller spesialpedagogisk hjelp","Tilpasning av miljø, materialer og aktiviteter","Tett samarbeid med PPT","Kartlegging og utredning ved behov"] },
+      { navn:"Spesialpedagogisk hjelp (§19a)", ikon:"📚", farge:"#2d6a4f", innhold:"Barn som har særlige behov for spesialpedagogisk hjelp, har rett til slik hjelp. Det er PPT som utreder og tilrår hjelpen. Hjelpen kan gis i barnehagen eller i egne grupper.", tiltak:["Sakkyndig vurdering fra PPT","Enkeltvedtak fra kommunen","Individuell plan for spesialpedagogisk hjelp","Spesialpedagog kan komme inn i barnehagen","Årsrapport og evaluering av tiltakene"] },
+      { navn:"Flerspråklige barn", ikon:"🌍", farge:"#e67e22", innhold:"Barnehagen skal støtte flerspråklige barn i å bruke morsmålet sitt og samtidig utvikle norsk. Morsmålet er grunnlaget for all annen språklig og kognitiv utvikling.", tiltak:["Tospråklig assistanse der det er mulig","Morsmålsstøtte i hverdagen","Bruke bilder, konkreter og bevegelse","Samarbeid med foreldre om barnets morsmål","Ekstra norsk språkstimulering"] },
+      { navn:"Barnevernsbarn og sårbare barn", ikon:"💛", farge:"#c62828", innhold:"Barnehagen er en viktig arena for å oppdage og støtte barn i vanskelige situasjoner. Barnehagepersonalet har opplysningsplikt til barnevernstjenesten.", tiltak:["Kjenne og bruke opplysningsplikten (§16)","Bygge nær og trygg relasjon til barnet","Informere styrer ved bekymring","Samarbeide med barnevernstjenesten ved behov","Barnets beste er alltid overordnet"] },
+      { navn:"Samiske barn og nasjonale minoriteter", ikon:"🪶", farge:"#00695c", innhold:"Samiske barn har rett til plass i samisk barnehage. Barnehagen skal gi alle barn kjennskap til samisk kultur. Nasjonale minoriteters kultur og tradisjoner skal respekteres og inkluderes.", tiltak:["Markere samisk nasjonaldag 6. februar","Bruke samiske fortellinger, sang og tradisjoner","Samiske barnehager har samisk som opplæringsspråk","Romanikultur og andre minoriteters tradisjoner inkluderes"] },
+    ],
+    ppt:{ tittel:"PPT – Pedagogisk-psykologisk tjeneste",
+      innhold:"PPT er kommunens sakkyndige instans for barn som trenger spesialpedagogisk hjelp. Barnehagen kan henvise barn til PPT med samtykke fra foreldre. PPT er gratis og tilgjengelig for alle.",
+      oppgaver:["Sakkyndig vurdering av barn med særskilte behov","Rådgivning og veiledning til barnehagen","Samarbeid med andre instanser (BUP, HABU, helsestasjon)","Kompetanseutvikling for barnehageansatte"],
+      hvemKanHenvise:"Barnehagen (med foreldresamtykke) eller foreldrene direkte kan henvende seg til PPT." } },
 
   livsmestring:{ tittel:"Livsmestring og helse",
     innhold:"Barnehagen skal bidra til barnas trivsel, livsglede, mestring og følelse av egenverd og forebygge krenkelser og mobbing. Et godt psykososialt miljø er en forutsetning for barns læring og utvikling.",
@@ -1559,6 +1622,1066 @@ const SvgGresskar = ()=>(
   </svg>
 );
 
+const SvgReinsdyr = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="155" cy="165" rx="85" ry="52"/>
+    <circle cx="228" cy="112" r="40"/>
+    <circle cx="236" cy="106" r="9" fill={S.s}/><circle cx="238" cy="104" r="3" fill="white" stroke="none"/>
+    <ellipse cx="248" cy="102" rx="14" ry="8" fill="#f9c5b5" transform="rotate(-20,248,102)"/>
+    <circle cx="240" cy="92" r="10" fill="#ff5252" stroke="#c62828" strokeWidth="2"/>
+    <path d="M198 80 Q185 48 168 38 Q180 52 182 68" strokeWidth="3"/>
+    <path d="M168 38 Q155 22 148 18 Q158 30 162 42" strokeWidth="2.5"/>
+    <path d="M210 76 Q205 50 218 38 Q212 54 216 68" strokeWidth="3"/>
+    <path d="M218 38 Q228 22 235 18 Q226 30 224 42" strokeWidth="2.5"/>
+    <path d="M70 140 Q40 118 28 105" strokeWidth="3.5"/>
+    <path d="M240 140 Q265 118 278 105" strokeWidth="3.5"/>
+    <path d="M95 215 Q75 248 72 278" strokeWidth="3.5"/>
+    <path d="M130 215 Q120 252 122 278" strokeWidth="3.5"/>
+    <path d="M180 215 Q178 252 180 278" strokeWidth="3.5"/>
+    <path d="M215 215 Q225 248 228 278" strokeWidth="3.5"/>
+  </svg>
+);
+const SvgGave = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="52" y="138" width="196" height="148" rx="10"/>
+    <rect x="42" y="108" width="216" height="38" rx="8"/>
+    <line x1="150" y1="108" x2="150" y2="286" strokeWidth="4"/>
+    <line x1="42" y1="127" x2="258" y2="127" strokeWidth="4"/>
+    <path d="M150 108 Q130 72 108 68 Q90 65 88 82 Q86 100 120 108 Q135 112 150 108Z" fill="#ff9898"/>
+    <path d="M150 108 Q170 72 192 68 Q210 65 212 82 Q214 100 180 108 Q165 112 150 108Z" fill="#ff9898"/>
+    <circle cx="150" cy="98" r="14" fill="#ff5252" stroke="#c62828" strokeWidth="2"/>
+    <circle cx="98" cy="185" r="12"/><circle cx="202" cy="185" r="12"/>
+    <circle cx="98" cy="245" r="12"/><circle cx="202" cy="245" r="12"/>
+    <circle cx="150" cy="215" r="10"/>
+  </svg>
+);
+const SvgPepperkake = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="150" cy="72" r="52" fill="#c8956c" stroke="#8B5E3C" strokeWidth="3.5"/>
+    <circle cx="128" cy="62" r="8" fill={S.s}/><circle cx="172" cy="62" r="8" fill={S.s}/>
+    <path d="M128 86 Q150 100 172 86" fill="none" strokeWidth="3" stroke="#8B5E3C"/>
+    <path d="M130 120 Q150 108 170 120 Q155 135 150 145 Q145 135 130 120Z" fill="#c8956c" stroke="#8B5E3C" strokeWidth="3"/>
+    <rect x="110" y="148" width="80" height="80" rx="12" fill="#c8956c" stroke="#8B5E3C" strokeWidth="3.5"/>
+    <circle cx="135" cy="172" r="8" fill="white" stroke="#c8956c" strokeWidth="2"/>
+    <circle cx="165" cy="172" r="8" fill="white" stroke="#c8956c" strokeWidth="2"/>
+    <circle cx="150" cy="198" r="8" fill="white" stroke="#c8956c" strokeWidth="2"/>
+    <path d="M110 178 Q72 162 52 178 Q68 165 75 188" strokeWidth="3.5" fill="none"/>
+    <path d="M190 178 Q228 162 248 178 Q232 165 225 188" strokeWidth="3.5" fill="none"/>
+    <ellipse cx="65" cy="200" rx="20" ry="14"/>
+    <ellipse cx="235" cy="200" rx="20" ry="14"/>
+    <path d="M120 228 Q110 262 105 290" strokeWidth="3.5"/>
+    <path d="M180 228 Q190 262 195 290" strokeWidth="3.5"/>
+    <ellipse cx="105" cy="292" rx="22" ry="12"/>
+    <ellipse cx="195" cy="292" rx="22" ry="12"/>
+  </svg>
+);
+const SvgSolsikke = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>(<ellipse key={a} cx={150+72*Math.cos(a*Math.PI/180)} cy={125+72*Math.sin(a*Math.PI/180)} rx="22" ry="38" transform={`rotate(${a},${150+72*Math.cos(a*Math.PI/180)},${125+72*Math.sin(a*Math.PI/180)})`} fill="#ffd700" stroke="#ff8c00" strokeWidth="2.5"/>))}
+    <circle cx="150" cy="125" r="52" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="3.5"/>
+    <circle cx="150" cy="125" r="38" fill="#6b4423" stroke="none"/>
+    {[0,45,90,135,180,225,270,315].map(a=>(<circle key={a} cx={150+22*Math.cos(a*Math.PI/180)} cy={125+22*Math.sin(a*Math.PI/180)} r="5" fill="#8B5E3C" stroke="none"/>))}
+    <rect x="138" y="177" width="24" height="112" rx="10" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="3"/>
+    <ellipse cx="100" cy="235" rx="42" ry="22" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="2.5" transform="rotate(-35,100,235)"/>
+    <ellipse cx="200" cy="248" rx="42" ry="22" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="2.5" transform="rotate(35,200,248)"/>
+  </svg>
+);
+const SvgPaaskelilje = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[0,60,120,180,240,300].map(a=>(<ellipse key={a} cx={150+58*Math.cos(a*Math.PI/180)} cy={105+58*Math.sin(a*Math.PI/180)} rx="24" ry="44" transform={`rotate(${a},${150+58*Math.cos(a*Math.PI/180)},${105+58*Math.sin(a*Math.PI/180)})`} fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>))}
+    <ellipse cx="150" cy="105" rx="32" ry="24" fill="#ffd740" stroke="#f9a825" strokeWidth="3"/>
+    <ellipse cx="150" cy="105" rx="22" ry="16" fill="#ffca28" stroke="none"/>
+    <rect x="138" y="130" width="24" height="120" rx="10" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="3"/>
+    <ellipse cx="95" cy="205" rx="50" ry="16" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2.5" transform="rotate(-25,95,205)"/>
+    <ellipse cx="205" cy="215" rx="50" ry="16" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2.5" transform="rotate(20,205,215)"/>
+    <circle cx="88" cy="95" r="16" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
+    <ellipse cx="88" cy="95" rx="10" ry="8" fill="#ffd740" stroke="none"/>
+    <rect x="80" y="108" width="14" height="80" rx="6" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
+    <circle cx="212" cy="108" r="16" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
+    <ellipse cx="212" cy="108" rx="10" ry="8" fill="#ffd740" stroke="none"/>
+    <rect x="206" y="121" width="14" height="75" rx="6" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
+  </svg>
+);
+const SvgCupcake = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M78 168 Q88 252 100 268 L200 268 Q212 252 222 168Z"/>
+    {[88,108,128,148,168,188,208].map(x=>(<line key={x} x1={x} y1="168" x2={x-4} y2="268" strokeWidth="1.5" stroke="#c4d6ec"/>))}
+    <path d="M78 168 Q82 148 90 148 L210 148 Q218 148 222 168"/>
+    <path d="M150 148 Q108 148 90 120 Q88 88 115 75 Q135 65 150 72 Q165 65 185 75 Q212 88 210 120 Q192 148 150 148Z" fill="#ff9898"/>
+    <path d="M118 82 Q150 95 182 82 Q172 75 150 72 Q128 75 118 82Z" fill="#ff5252" stroke="none"/>
+    <path d="M108 108 Q150 122 192 108 Q180 98 150 95 Q120 98 108 108Z" fill="#ff5252" stroke="none"/>
+    <circle cx="150" cy="72" r="12" fill="#ff4444" stroke="#c62828" strokeWidth="2"/>
+    <ellipse cx="150" cy="60" rx="5" ry="14" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="2"/>
+    <circle cx="122" cy="95" r="7" fill="white" stroke="none"/>
+    <circle cx="178" cy="95" r="7" fill="white" stroke="none"/>
+    <circle cx="150" cy="118" r="7" fill="white" stroke="none"/>
+  </svg>
+);
+const SvgSopp = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M62 175 Q60 108 150 85 Q240 108 238 175Z" fill="#e53e3e" stroke="#c62828" strokeWidth="3.5"/>
+    <rect x="125" y="175" width="50" height="80" rx="12"/>
+    <circle cx="112" cy="130" r="16" fill="white" stroke="none"/>
+    <circle cx="155" cy="110" r="14" fill="white" stroke="none"/>
+    <circle cx="195" cy="128" r="16" fill="white" stroke="none"/>
+    <circle cx="135" cy="158" r="11" fill="white" stroke="none"/>
+    <circle cx="175" cy="155" r="11" fill="white" stroke="none"/>
+    <ellipse cx="88" cy="245" rx="28" ry="18" fill="#e53e3e" stroke="#c62828" strokeWidth="2.5"/>
+    <rect x="82" y="228" width="12" height="22" rx="5"/>
+    <circle cx="82" cy="236" r="7" fill="white" stroke="none"/>
+    <circle cx="96" cy="232" r="6" fill="white" stroke="none"/>
+    <ellipse cx="218" cy="252" rx="24" ry="15" fill="#e53e3e" stroke="#c62828" strokeWidth="2.5"/>
+    <rect x="212" y="237" width="12" height="20" rx="5"/>
+    <circle cx="212" cy="244" r="6" fill="white" stroke="none"/>
+    <circle cx="225" cy="240" r="5" fill="white" stroke="none"/>
+    <ellipse cx="150" cy="285" rx="80" ry="14" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+  </svg>
+);
+const SvgTrommer = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="195" rx="110" ry="52" fill="#e8eff8" stroke="#6ba0d9" strokeWidth="3"/>
+    <path d="M40 195 L40 245 Q40 258 150 258 Q260 258 260 245 L260 195"/>
+    <ellipse cx="150" cy="195" rx="110" ry="52"/>
+    <line x1="150" y1="143" x2="150" y2="195" strokeWidth="3"/>
+    {[-35,35].map(a=>(<ellipse key={a} cx={150+60*Math.sin(a*Math.PI/180)} cy={150-60*Math.cos(a*Math.PI/180)} rx="40" ry="15" stroke="#6ba0d9" strokeWidth="2.5" fill="#d8e8f5" transform={`rotate(${a},${150+60*Math.sin(a*Math.PI/180)},${150-60*Math.cos(a*Math.PI/180)})`}/>))}
+    <line x1="60" y1="245" x2="50" y2="272" strokeWidth="4"/><line x1="240" y1="245" x2="250" y2="272" strokeWidth="4"/>
+    <line x1="100" y1="60" x2="128" y2="140" strokeWidth="8" stroke="#8B5E3C" strokeLinecap="round"/>
+    <circle cx="100" cy="58" r="10" fill="#8B5E3C" stroke="none"/>
+    <line x1="200" y1="48" x2="175" y2="135" strokeWidth="8" stroke="#8B5E3C" strokeLinecap="round"/>
+    <circle cx="200" cy="46" r="10" fill="#8B5E3C" stroke="none"/>
+  </svg>
+);
+
+// ── Nye unike SVGer (duplikat-erstatninger) ─────────────────────────────────
+const SvgSolVaar = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[0,45,90,135,180,225,270,315].map(a=>(<line key={a} x1={150+72*Math.cos(a*Math.PI/180)} y1={110+72*Math.sin(a*Math.PI/180)} x2={150+92*Math.cos(a*Math.PI/180)} y2={110+92*Math.sin(a*Math.PI/180)} strokeWidth="4"/>))}
+    <circle cx="150" cy="110" r="56" fill="#fff9c4"/>
+    <circle cx="128" cy="100" r="8" fill={S.s}/><circle cx="172" cy="100" r="8" fill={S.s}/>
+    <path d="M130 122 Q150 136 170 122" fill="none" strokeWidth="3"/>
+    <path d="M40 220 Q80 180 150 185 Q220 180 260 220 Q250 270 150 275 Q50 270 40 220Z" fill="#d8f3dc" stroke="#52b788" strokeWidth="2.5"/>
+    <circle cx="95" cy="208" r="14" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
+    <circle cx="175" cy="200" r="12" fill="#ffd700" stroke="#f9a825" strokeWidth="2"/>
+    <circle cx="135" cy="216" r="10" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
+  </svg>
+);
+const SvgStrand = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="55" rx="48" ry="48" fill="#fff9c4"/>
+    {[0,36,72,108,144,180,216,252,288,324].map(a=>(<line key={a} x1={150+55*Math.cos(a*Math.PI/180)} y1={55+55*Math.sin(a*Math.PI/180)} x2={150+68*Math.cos(a*Math.PI/180)} y2={55+68*Math.sin(a*Math.PI/180)} strokeWidth="3.5"/>))}
+    <rect x="20" y="168" width="260" height="80" rx="8" fill="#d8e8f5"/>
+    <path d="M20 168 Q90 145 150 162 Q210 145 280 168" fill="#e8f5e9" strokeWidth="2"/>
+    <ellipse cx="150" cy="226" rx="120" ry="28" fill="#ffd54f" stroke="#f9a825" strokeWidth="2"/>
+    <path d="M100 162 L100 108" strokeWidth="3"/><path d="M100 108 L138 128 L100 130Z" fill="#ff5252" stroke="#c62828" strokeWidth="2"/>
+    <ellipse cx="220" cy="178" rx="28" ry="16" fill="#ff9898"/>
+    <circle cx="220" cy="162" r="14"/>
+    <path d="M206 170 Q220 178 234 170" fill="none" strokeWidth="2.5"/>
+  </svg>
+);
+const SvgSolLav = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M20 180 Q150 180 280 180" strokeWidth="3" stroke="#c4d6ec"/>
+    {[-60,-40,-20,0,20,40,60].map(a=>(<line key={a} x1={150+200*Math.cos((a-90)*Math.PI/180)} y1={180+200*Math.sin((a-90)*Math.PI/180)} x2={150+230*Math.cos((a-90)*Math.PI/180)} y2={180+230*Math.sin((a-90)*Math.PI/180)} strokeWidth="4" stroke="#ff8c00"/>))}
+    <path d="M20 180 Q80 140 150 178 Q220 140 280 180" fill="#fff9c4" strokeWidth="2"/>
+    <ellipse cx="150" cy="180" rx="80" ry="0" fill="none"/>
+    <rect x="20" y="180" width="260" height="80" rx="8" fill="#e3f2fd"/>
+    <path d="M40 195 Q90 188 140 195 Q190 202 250 195" fill="none" strokeWidth="2" stroke="#c4d6ec"/>
+    <ellipse cx="80" cy="225" rx="40" ry="18" fill="white"/>
+    <ellipse cx="200" cy="230" rx="50" ry="20" fill="white"/>
+    <line x1="130" y1="155" x2="115" y2="105" strokeWidth="2.5" stroke="#6ba0d9"/>
+    <line x1="170" y1="155" x2="185" y2="105" strokeWidth="2.5" stroke="#6ba0d9"/>
+    <line x1="95" y1="168" x2="62" y2="135" strokeWidth="2.5" stroke="#6ba0d9"/>
+  </svg>
+);
+const SvgBarnehage = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="30" y="120" width="240" height="140" rx="6"/>
+    <polygon points="30,120 150,40 270,120"/>
+    <rect x="105" y="185" width="50" height="75" rx="5" fill="#d8e8f5"/>
+    <rect x="48" y="142" width="52" height="52" rx="5"/>
+    <rect x="200" y="142" width="52" height="52" rx="5"/>
+    <circle cx="64" cy="168" r="12"/><circle cx="86" cy="168" r="12"/>
+    <circle cx="216" cy="168" r="12"/><circle cx="238" cy="168" r="12"/>
+    <line x1="75" y1="142" x2="75" y2="194" strokeWidth="2"/><line x1="48" y1="168" x2="100" y2="168" strokeWidth="2"/>
+    <line x1="227" y1="142" x2="227" y2="194" strokeWidth="2"/><line x1="200" y1="168" x2="252" y2="168" strokeWidth="2"/>
+    <rect x="136" y="58" width="14" height="38"/>
+    <rect x="128" y="52" width="30" height="14" rx="3" fill="#e53e3e"/>
+    <ellipse cx="150" cy="262" rx="130" ry="12" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+  </svg>
+);
+const SvgDrommehus = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="55" y="145" width="190" height="130" rx="6"/>
+    <polygon points="55,145 150,65 245,145"/>
+    <rect x="50" y="55" width="55" height="110" rx="6"/><polygon points="50,55 77,20 105,55"/>
+    <rect x="195" y="75" width="55" height="90" rx="6"/><polygon points="195,75 222,40 250,75"/>
+    <rect x="118" y="200" width="44" height="75" rx="5" fill="#d8e8f5"/>
+    <circle cx="77" cy="95" r="20"/><rect x="77" y="115" width="1" height="1"/>
+    <circle cx="222" cy="112" r="18"/>
+    <rect x="74" y="178" width="36" height="36" rx="4" fill="#fff9c4"/>
+    <rect x="190" y="162" width="36" height="36" rx="4" fill="#fff9c4"/>
+    <path d="M148 65 Q155 45 165 35" fill="none" strokeWidth="2.5"/>
+    <circle cx="167" cy="32" r="8" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+  </svg>
+);
+const SvgHusNorge = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="55" y="130" width="175" height="130" rx="6"/>
+    <polygon points="55,130 142,55 230,130"/>
+    <rect x="110" y="190" width="45" height="70" rx="5" fill="#d8e8f5"/>
+    <rect x="68" y="152" width="44" height="44" rx="4"/>
+    <rect x="173" y="152" width="44" height="44" rx="4"/>
+    <line x1="90" y1="152" x2="90" y2="196" strokeWidth="2"/><line x1="68" y1="174" x2="112" y2="174" strokeWidth="2"/>
+    <line x1="195" y1="152" x2="195" y2="196" strokeWidth="2"/><line x1="173" y1="174" x2="217" y2="174" strokeWidth="2"/>
+    <line x1="142" y1="55" x2="142" y2="18" strokeWidth="3"/>
+    <rect x="142" y="18" width="30" height="22" rx="2" fill="#e53e3e" stroke="#e53e3e" strokeWidth="1"/>
+    <line x1="142" y1="26" x2="172" y2="26" strokeWidth="3" stroke="white"/>
+    <rect x="152" y="18" width="8" height="22" fill="white" stroke="none"/>
+    <ellipse cx="142" cy="268" rx="115" ry="11" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+  </svg>
+);
+const SvgFamilieMai = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="88" cy="72" r="30"/><ellipse cx="88" cy="162" rx="32" ry="52"/>
+    <circle cx="212" cy="72" r="30"/><ellipse cx="212" cy="162" rx="32" ry="52"/>
+    <circle cx="150" cy="95" r="22"/><ellipse cx="150" cy="172" rx="22" ry="38"/>
+    <ellipse cx="88" cy="228" rx="28" ry="12"/><ellipse cx="212" cy="228" rx="28" ry="12"/><ellipse cx="150" cy="218" rx="20" ry="10"/>
+    <line x1="60" y1="125" x2="38" y2="88" strokeWidth="3"/><rect x="28" y="72" width="12" height="26" rx="2" fill="#e53e3e"/>
+    <line x1="68" y1="125" x2="55" y2="82" strokeWidth="3"/><rect x="44" y="66" width="12" height="26" rx="2" fill="#e53e3e"/>
+    <line x1="240" y1="125" x2="262" y2="88" strokeWidth="3"/><rect x="260" y="72" width="12" height="26" rx="2" fill="#e53e3e"/>
+    <line x1="163" y1="138" x2="172" y2="108" strokeWidth="3"/><rect x="170" y="92" width="10" height="20" rx="2" fill="#e53e3e"/>
+    <line x1="85" y1="72" x2="80" y2="52"/><line x1="80" y1="52" x2="70" y2="48"/><line x1="80" y1="52" x2="85" y2="44"/>
+    <line x1="210" y1="72" x2="205" y2="52"/><line x1="205" y1="52" x2="195" y2="48"/><line x1="205" y1="52" x2="210" y2="44"/>
+  </svg>
+);
+const SvgFamilieHjem = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="30" y="140" width="240" height="148" rx="8" fill="#fff9c4" stroke={S.s} strokeWidth="2.5"/>
+    <polygon points="30,140 150,60 270,140" fill={S.f}/>
+    <rect x="120" y="210" width="60" height="78" rx="6" fill="#d8e8f5"/>
+    <rect x="48" y="168" width="56" height="50" rx="5"/>
+    <rect x="196" y="168" width="56" height="50" rx="5"/>
+    <circle cx="112" cy="100" r="26"/><ellipse cx="112" cy="176" rx="28" ry="44"/>
+    <circle cx="188" cy="100" r="26"/><ellipse cx="188" cy="176" rx="28" ry="44"/>
+    <circle cx="150" cy="115" r="18"/><ellipse cx="150" cy="172" rx="18" ry="32"/>
+    <path d="M112 86 Q112 75 122 72 Q135 70 145 80" fill="none" strokeWidth="2" stroke="#6ba0d9"/>
+  </svg>
+);
+const SvgFamilieEldre = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="82" cy="78" r="32"/><ellipse cx="82" cy="168" rx="34" ry="52"/>
+    <circle cx="218" cy="78" r="32"/><ellipse cx="218" cy="168" rx="34" ry="52"/>
+    <circle cx="150" cy="108" r="22"/><ellipse cx="150" cy="180" rx="22" ry="38"/>
+    <path d="M65 78 Q62 58 68 52 L96 52 Q102 58 99 78" fill="none" strokeWidth="2.5" stroke="#c4d6ec"/>
+    <path d="M201 78 Q198 58 204 52 L232 52 Q238 58 235 78" fill="none" strokeWidth="2.5" stroke="#c4d6ec"/>
+    <line x1="42" y1="178" x2="28" y2="235" strokeWidth="4"/><ellipse cx="26" cy="238" rx="8" ry="5"/>
+    <line x1="52" y1="178" x2="38" y2="235" strokeWidth="4"/>
+    <line x1="258" y1="178" x2="272" y2="235" strokeWidth="4"/><ellipse cx="274" cy="238" rx="8" ry="5"/>
+    <line x1="248" y1="178" x2="262" y2="235" strokeWidth="4"/>
+    <path d="M82 122 Q116 148 150 138" fill="none" strokeWidth="3"/>
+    <path d="M218 122 Q184 148 150 138" fill="none" strokeWidth="3"/>
+    <path d="M130 108 Q108 98 90 108" fill="none" strokeWidth="2" stroke="#ff9898"/>
+    <path d="M170 108 Q192 98 210 108" fill="none" strokeWidth="2" stroke="#ff9898"/>
+  </svg>
+);
+const SvgVennerLeker = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="88" cy="72" r="32"/><ellipse cx="88" cy="168" rx="32" ry="52"/>
+    <circle cx="212" cy="72" r="32"/><ellipse cx="212" cy="168" rx="32" ry="52"/>
+    <circle cx="150" cy="200" r="28" stroke="#6ba0d9" strokeWidth="3"/>
+    <path d="M122 200 Q150 185 178 200 Q165 218 150 222 Q135 218 122 200Z" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+    <line x1="58" y1="128" x2="38" y2="175" strokeWidth="4"/><line x1="38" y1="175" x2="18" y2="162" strokeWidth="3"/>
+    <line x1="58" y1="128" x2="44" y2="178" strokeWidth="4"/>
+    <line x1="242" y1="128" x2="262" y2="175" strokeWidth="4"/><line x1="262" y1="175" x2="282" y2="162" strokeWidth="3"/>
+    <line x1="242" y1="128" x2="256" y2="178" strokeWidth="4"/>
+    <ellipse cx="88" cy="234" rx="28" ry="12"/><ellipse cx="212" cy="234" rx="28" ry="12"/>
+  </svg>
+);
+const SvgGladSorg = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="90" cy="95" r="62" fill="#fff9c4"/>
+    <circle cx="70" cy="82" r="9" fill={S.s}/><circle cx="72" cy="80" r="3" fill="white" stroke="none"/>
+    <circle cx="110" cy="82" r="9" fill={S.s}/><circle cx="112" cy="80" r="3" fill="white" stroke="none"/>
+    <path d="M70 110 Q90 128 110 110" fill="none" strokeWidth="4"/>
+    <path d="M35 60 L22 42 M45 52 L35 32 M55 48 L50 28" fill="none" strokeWidth="2.5" stroke="#ffd700"/>
+    <circle cx="210" cy="95" r="62" fill="#d8e8f5"/>
+    <circle cx="190" cy="82" r="9" fill={S.s}/><circle cx="192" cy="80" r="3" fill="white" stroke="none"/>
+    <circle cx="230" cy="82" r="9" fill={S.s}/><circle cx="232" cy="80" r="3" fill="white" stroke="none"/>
+    <path d="M190 118 Q210 102 230 118" fill="none" strokeWidth="4"/>
+    <path d="M205 118 Q202 130 198 138" fill="none" strokeWidth="2.5" stroke="#6ba0d9"/>
+    <path d="M215 118 Q218 130 222 138" fill="none" strokeWidth="2.5" stroke="#6ba0d9"/>
+    <path d="M130 130 Q150 145 170 130" fill="none" strokeWidth="3"/>
+    <ellipse cx="90" cy="220" rx="55" ry="45" fill="#fff9c4"/>
+    <ellipse cx="210" cy="220" rx="55" ry="45" fill="#d8e8f5"/>
+    <path d="M145 200 L155 200" strokeWidth="3"/>
+  </svg>
+);
+const SvgUgleHost = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="170" rx="72" ry="85"/>
+    <ellipse cx="110" cy="90" r="38"/><ellipse cx="190" cy="90" r="38"/>
+    <circle cx="110" cy="88" r="20" fill="#fff9c4"/><circle cx="110" cy="88" r="12" fill={S.s}/><circle cx="113" cy="85" r="4" fill="white" stroke="none"/>
+    <circle cx="190" cy="88" r="20" fill="#fff9c4"/><circle cx="190" cy="88" r="12" fill={S.s}/><circle cx="193" cy="85" r="4" fill="white" stroke="none"/>
+    <path d="M135 115 L150 130 L165 115" fill={S.s}/>
+    <path d="M78 200 Q52 195 30 212" fill="none" strokeWidth="3.5"/>
+    <path d="M222 200 Q248 195 270 212" fill="none" strokeWidth="3.5"/>
+    <ellipse cx="112" cy="262" rx="32" ry="14"/><ellipse cx="188" cy="262" rx="32" ry="14"/>
+    {[40,60,80,100,120,140,160,220,240,260].map(x=>(<ellipse key={x} cx={x} cy={x<200?248:252} rx="14" ry="8" fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5" transform={`rotate(${x<150?-20:20},${x},${x<200?248:252})`}/>))}
+  </svg>
+);
+const SvgUgleHalloween = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="220" cy="48" r="38" fill="#334155" stroke={S.s} strokeWidth="2.5"/>
+    <circle cx="236" cy="38" r="14" fill={S.f}/>
+    <ellipse cx="150" cy="175" rx="72" ry="82"/>
+    <ellipse cx="110" cy="92" r="36"/><ellipse cx="190" cy="92" r="36"/>
+    <circle cx="110" cy="90" r="18" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/><circle cx="110" cy="90" r="11" fill={S.s}/>
+    <circle cx="190" cy="90" r="18" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/><circle cx="190" cy="90" r="11" fill={S.s}/>
+    <path d="M135 118 L150 132 L165 118" fill={S.s}/>
+    <path d="M78 200 Q52 192 30 208" fill="none" strokeWidth="3.5"/>
+    <path d="M222 200 Q248 192 270 208" fill="none" strokeWidth="3.5"/>
+    <ellipse cx="112" cy="260" rx="32" ry="14"/><ellipse cx="188" cy="260" rx="32" ry="14"/>
+    <path d="M48 130 Q30 115 20 95 Q38 102 48 118" fill={S.s} stroke={S.s}/>
+    <path d="M252 130 Q270 115 280 95 Q262 102 252 118" fill={S.s} stroke={S.s}/>
+    <path d="M42 185 Q22 175 15 155" fill="none" strokeWidth="2.5"/>
+  </svg>
+);
+const SvgAdventlys = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[[68,0],[108,0],[188,0],[228,0]].map(([x,_],i)=>(
+      <g key={x}>
+        <rect x={x-12} y={120+i%2*10} width="24" height={i===0?120:100} rx="6" fill={i===0?"#ffd700":"white"}/>
+        <ellipse cx={x} cy={112+i%2*10} rx="10" ry="16" fill={i===0?"#ff8c00":"#ffd700"} stroke="none"/>
+      </g>
+    ))}
+    <rect x="30" y="235" width="240" height="18" rx="8" fill="#52b788" stroke="#2d6a4f" strokeWidth="2.5"/>
+    <rect x="20" y="248" width="260" height="14" rx="6" fill="#2d6a4f" stroke={S.s} strokeWidth="2"/>
+    <circle cx="150" cy="58" r="32" fill="#ffd700" stroke="#ff8c00" strokeWidth="3"/>
+    {[0,72,144,216,288].map(a=>(<path key={a} d={`M${150+28*Math.cos(a*Math.PI/180)} ${58+28*Math.sin(a*Math.PI/180)} L${150+44*Math.cos((a+5)*Math.PI/180)} ${58+44*Math.sin((a+5)*Math.PI/180)} L${150+44*Math.cos((a-5)*Math.PI/180)} ${58+44*Math.sin((a-5)*Math.PI/180)}Z`} fill="#ffd700" stroke="none"/>))}
+  </svg>
+);
+const SvgStjerneSkudd = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="50" cy="50" r="14" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+    <path d="M50 50 L260 240" strokeWidth="3" stroke="#ffd700" strokeDasharray="12 6"/>
+    <circle cx="145" cy="70" r="10" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+    <path d="M145 70 L280 200" strokeWidth="2.5" stroke="#ffd700" strokeDasharray="8 5"/>
+    <circle cx="245" cy="42" r="8" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+    <path d="M245 42 L90 230" strokeWidth="2" stroke="#ffd700" strokeDasharray="6 4"/>
+    {[[260,240,22],[280,200,18],[90,230,16],[180,160,12],[80,180,14],[210,90,12]].map(([x,y,r],i)=>(
+      <polygon key={i} points={[0,1,2,3,4].map(n=>`${x+r*Math.cos((n*72-90)*Math.PI/180)},${y+r*Math.sin((n*72-90)*Math.PI/180)}`).join(' ')} fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5"/>
+    ))}
+    <rect x="20" y="258" width="260" height="22" rx="8" fill="#1a2c45"/>
+    <path d="M20 258 Q150 240 280 258" fill="#2c3e6e"/>
+  </svg>
+);
+const SvgSommerfuglVaar = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="140" rx="14" ry="55"/>
+    <ellipse cx="88" cy="95" rx="72" ry="58" transform="rotate(-18,88,95)" fill="#d8f3dc"/>
+    <ellipse cx="212" cy="95" rx="72" ry="58" transform="rotate(18,212,95)" fill="#d8f3dc"/>
+    <ellipse cx="84" cy="190" rx="54" ry="42" transform="rotate(15,84,190)" fill="#d8f3dc"/>
+    <ellipse cx="216" cy="190" rx="54" ry="42" transform="rotate(-15,216,190)" fill="#d8f3dc"/>
+    <circle cx="108" cy="88" r="18" fill="#fff9c4"/><circle cx="192" cy="88" r="18" fill="#fff9c4"/>
+    <circle cx="104" cy="185" r="14" fill="#fce8e8"/><circle cx="196" cy="185" r="14" fill="#fce8e8"/>
+    <path d="M143 82 Q134 62 119 54" fill="none" strokeWidth="2.5"/>
+    <path d="M157 82 Q166 62 181 54" fill="none" strokeWidth="2.5"/>
+    <circle cx="118" cy="52" r="5" fill={S.s}/><circle cx="182" cy="52" r="5" fill={S.s}/>
+    <ellipse cx="150" cy="260" rx="100" ry="14" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+    <circle cx="90" cy="250" r="8" fill="#ffd700" stroke="#f9a825" strokeWidth="1.5"/>
+    <circle cx="210" cy="245" r="8" fill="#ff9898" stroke="#c62828" strokeWidth="1.5"/>
+  </svg>
+);
+const SvgSommerfuglMany = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[[70,65,0.7],[220,55,0.7],[150,130,1],[60,190,0.65],[240,185,0.65],[130,52,0.55],[200,160,0.6]].map(([cx,cy,sc],i)=>(
+      <g key={i} transform={`translate(${cx},${cy}) scale(${sc})`}>
+        <ellipse cx="0" cy="0" rx="12" ry="8"/>
+        <ellipse cx="-26" cy="-16" rx="32" ry="24" transform="rotate(-20,-26,-16)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
+        <ellipse cx="26" cy="-16" rx="32" ry="24" transform="rotate(20,26,-16)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
+        <ellipse cx="-24" cy="18" rx="24" ry="18" transform="rotate(15,-24,18)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
+        <ellipse cx="24" cy="18" rx="24" ry="18" transform="rotate(-15,24,18)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
+      </g>
+    ))}
+    <rect x="20" y="248" width="260" height="22" rx="10" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+  </svg>
+);
+const SvgKaninEng = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="208" rx="68" ry="54"/>
+    <circle cx="150" cy="150" r="52"/>
+    <ellipse cx="118" cy="88" rx="20" ry="55"/><ellipse cx="118" cy="94" rx="10" ry="38" fill="#fce8e8" stroke="none"/>
+    <ellipse cx="182" cy="88" rx="20" ry="55"/><ellipse cx="182" cy="94" rx="10" ry="38" fill="#fce8e8" stroke="none"/>
+    <circle cx="130" cy="148" r="9" fill={S.s}/><circle cx="170" cy="148" r="9" fill={S.s}/>
+    <ellipse cx="150" cy="162" rx="7" ry="5" fill="#f9a8b8" stroke="none"/>
+    <path d="M142 168 Q150 175 158 168" fill="none" strokeWidth="2"/>
+    <circle cx="214" cy="205" r="20"/>
+    <ellipse cx="100" cy="262" rx="36" ry="15"/><ellipse cx="200" cy="262" rx="36" ry="15"/>
+    <ellipse cx="50" cy="285" rx="50" ry="14" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+    <ellipse cx="250" cy="285" rx="50" ry="14" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+    <circle cx="52" cy="252" r="9" fill="#ffd700" stroke="#f9a825" strokeWidth="1.5"/>
+    <circle cx="235" cy="248" r="9" fill="#ff9898" stroke="#c62828" strokeWidth="1.5"/>
+    <circle cx="80" cy="245" r="7" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+  </svg>
+);
+const SvgKaninEgg = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="130" cy="198" rx="58" ry="50"/>
+    <circle cx="130" cy="148" r="46"/>
+    <ellipse cx="104" cy="88" rx="18" ry="50"/><ellipse cx="104" cy="93" rx="9" ry="35" fill="#fce8e8" stroke="none"/>
+    <ellipse cx="156" cy="88" rx="18" ry="50"/><ellipse cx="156" cy="93" rx="9" ry="35" fill="#fce8e8" stroke="none"/>
+    <circle cx="116" cy="145" r="8" fill={S.s}/><circle cx="144" cy="145" r="8" fill={S.s}/>
+    <ellipse cx="130" cy="158" rx="6" ry="4" fill="#f9a8b8" stroke="none"/>
+    <line x1="72" y1="198" x2="56" y2="238" strokeWidth="3"/>
+    <ellipse cx="88" cy="252" rx="28" ry="12"/><ellipse cx="172" cy="252" rx="28" ry="12"/>
+    <path d="M185 145 Q200 135 218 145 Q228 158 218 170 Q200 180 185 170 Q178 158 185 145Z" fill="#ffd700" stroke="#f9a825" strokeWidth="2"/>
+    <path d="M230 110 Q248 100 262 112 Q270 124 260 134 Q248 142 232 132 Q224 122 230 110Z" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
+    <path d="M195 220 Q210 210 228 222 Q235 232 226 240 Q212 248 198 238 Q192 228 195 220Z" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2"/>
+    <ellipse cx="200" cy="175" rx="14" ry="14" fill="#52b788" stroke="#2d6a4f" strokeWidth="2"/>
+  </svg>
+);
+const SvgFuglV = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[[150,60],[112,85],[76,112],[42,140],[188,85],[224,112],[260,140]].map(([x,y],i)=>(
+      <g key={i}>
+        <ellipse cx={x} cy={y} rx="24" ry="14" transform={`rotate(${i<4?-10:10},${x},${y})`}/>
+        <circle cx={x+(i===0?12:i<4?10:-10)} cy={y-6} r="10"/>
+        <path d={`M${x-20} ${y} Q${x-10} ${y-12} ${x} ${y}`} fill="none" strokeWidth="3"/>
+        <path d={`M${x+20} ${y} Q${x+10} ${y-12} ${x} ${y}`} fill="none" strokeWidth="3"/>
+      </g>
+    ))}
+    <path d="M30 200 Q150 170 270 200" stroke="#52b788" strokeWidth="2" fill="none"/>
+    <ellipse cx="150" cy="265" rx="140" ry="14" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>
+  </svg>
+);
+const SvgFuglSang = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="30" y="145" width="160" height="18" rx="8" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="2.5"/>
+    <ellipse cx="175" cy="122" rx="88" ry="58"/>
+    <circle cx="238" cy="88" r="44"/>
+    <ellipse cx="264" cy="82" rx="18" ry="10" fill="#ffd700" stroke="#f9a825" strokeWidth="2" transform="rotate(-18,264,82)"/>
+    <circle cx="248" cy="75" r="8" fill={S.s}/><circle cx="250" cy="73" r="3" fill="white" stroke="none"/>
+    <path d="M72 132 Q52 108 44 118 Q56 108 72 118Z" fill="#d8f3dc"/>
+    <path d="M72 162 Q52 186 44 176 Q56 186 72 176Z" fill="#d8f3dc"/>
+    <line x1="132" y1="152" x2="110" y2="248"/><line x1="164" y1="152" x2="186" y2="248"/>
+    <line x1="110" y1="248" x2="88" y2="248" strokeWidth="3"/><line x1="186" y1="248" x2="208" y2="248" strokeWidth="3"/>
+    {[[260,38],[278,52],[272,22],[290,40]].map(([x,y])=>(<text key={x+y} x={x} y={y} fontSize="20" fill={S.s} stroke="none" fontFamily="serif">♪</text>))}
+  </svg>
+);
+const SvgRumpetroll = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="135" rx="80" ry="58"/>
+    <path d="M228 148 Q265 165 278 152 Q265 142 255 155 Q275 152 278 168 Q265 158 258 168" strokeWidth="3" fill="none"/>
+    <circle cx="122" cy="120" r="16" fill="#d8f3dc"/><circle cx="122" cy="120" r="9" fill={S.s}/><circle cx="124" cy="118" r="3" fill="white" stroke="none"/>
+    <circle cx="178" cy="120" r="16" fill="#d8f3dc"/><circle cx="178" cy="120" r="9" fill={S.s}/><circle cx="180" cy="118" r="3" fill="white" stroke="none"/>
+    <path d="M130 152 Q150 162 170 152" fill="none" strokeWidth="3"/>
+    <path d="M88 185 Q58 205 45 240 Q70 225 84 215" strokeWidth="3"/>
+    <path d="M84 215 Q92 220 98 212" strokeWidth="2.5"/>
+    <path d="M212 185 Q242 205 255 240 Q230 225 216 215" strokeWidth="3"/>
+    <path d="M216 215 Q208 220 202 212" strokeWidth="2.5"/>
+    <ellipse cx="100" cy="245" rx="88" ry="28" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+    <ellipse cx="195" cy="252" rx="55" ry="18" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="1.5"/>
+    <path d="M115 248 Q140 238 165 248" fill="none" strokeWidth="2" stroke="#52b788"/>
+  </svg>
+);
+const SvgFroskBad = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="175" rx="115" ry="72" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2.5"/>
+    <path d="M35 210 Q90 195 150 205 Q210 195 265 210" fill="none" strokeWidth="2" stroke="#6ba0d9"/>
+    <ellipse cx="150" cy="148" rx="72" ry="58"/>
+    <circle cx="100" cy="105" r="28"/><circle cx="100" cy="105" r="16" fill="#d8f3dc"/>
+    <circle cx="200" cy="105" r="28"/><circle cx="200" cy="105" r="16" fill="#d8f3dc"/>
+    <circle cx="100" cy="103" r="9" fill={S.s}/><circle cx="102" cy="101" r="3" fill="white" stroke="none"/>
+    <circle cx="200" cy="103" r="9" fill={S.s}/><circle cx="202" cy="101" r="3" fill="white" stroke="none"/>
+    <path d="M122 162 Q150 172 178 162" fill="none" strokeWidth="3"/>
+    <path d="M38 175 Q20 168 15 155" fill="none" strokeWidth="3"/>
+    <path d="M262 175 Q280 168 285 155" fill="none" strokeWidth="3"/>
+    <circle cx="72" cy="228" r="8" fill="#ffd700" stroke="#f9a825" strokeWidth="2"/>
+    <circle cx="228" cy="232" r="8" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
+  </svg>
+);
+const SvgFiskestang = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M48 25 Q100 80 100 170" fill="none" strokeWidth="4" stroke="#8B5E3C"/>
+    <circle cx="48" cy="25" r="8" fill="#8B5E3C" stroke="none"/>
+    <line x1="100" y1="40" x2="248" y2="168" strokeWidth="2" stroke="#c4d6ec" strokeDasharray="6 4"/>
+    <circle cx="248" cy="168" r="10" fill="#ff5252" stroke="#c62828" strokeWidth="2"/>
+    <line x1="248" y1="178" x2="248" y2="210" strokeWidth="2" stroke="#c4d6ec"/>
+    <ellipse cx="240" cy="218" rx="16" ry="10" fill="#ff8c42" stroke="#e65100" strokeWidth="2"/>
+    <rect x="20" y="198" width="260" height="60" rx="8" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2.5"/>
+    <path d="M20 215 Q90 205 150 215 Q210 205 280 215" fill="none" strokeWidth="2" stroke="#6ba0d9"/>
+    <ellipse cx="110" cy="228" rx="40" ry="22"/>
+    <circle cx="88" cy="220" r="7" fill={S.s}/><circle cx="90" cy="218" r="2.5" fill="white" stroke="none"/>
+    <path d="M90 228 Q110 236 130 228" fill="none" strokeWidth="2.5"/>
+    <path d="M148 218 Q168 208 175 218 Q168 205 162 216Z"/>
+  </svg>
+);
+const SvgHavbunn = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="0" y="0" width="300" height="280" rx="0" fill="#d8e8f5" stroke="none"/>
+    <ellipse cx="150" cy="135" rx="90" ry="58" fill={S.f}/>
+    <circle cx="72" cy="102" r="10" fill={S.s}/><circle cx="74" cy="100" r="3.5" fill="white" stroke="none"/>
+    <path d="M258 135 Q282 118 288 100 Q278 115 272 125 Q288 125 288 140 Q278 130 272 140" strokeWidth="3"/>
+    <circle cx="168" cy="62" r="28" fill={S.f}/>
+    <circle cx="180" cy="56" r="7" fill={S.s}/>
+    <ellipse cx="178" cy="60" rx="13" ry="7" fill="#d8f3dc"/>
+    <path d="M140 62 Q128 52 120 62" fill="none" strokeWidth="3"/>
+    {[[50,235],[90,250],[130,240],[170,252],[210,238],[250,248]].map(([x,y])=>(<ellipse key={x} cx={x} cy={y} rx="22" ry="14" fill="#52b788" stroke="#2d6a4f" strokeWidth="2"/>))}
+    <path d="M50 238 Q52 225 56 218 Q52 226 58 218 Q56 227 60 220" fill="none" strokeWidth="2" stroke="#2d6a4f"/>
+    <ellipse cx="200" cy="220" rx="24" ry="14" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
+    <line x1="185" y1="215" x2="215" y2="215" strokeWidth="2.5"/><line x1="200" y1="206" x2="200" y2="224" strokeWidth="2.5"/>
+    {[[80,185],[150,178],[230,188]].map(([x,y])=>(<circle key={x} cx={x} cy={y} r="4" fill="white" opacity="0.7" stroke="none"/>))}
+  </svg>
+);
+const SvgBjornBaer = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="80" cy="82" r="34"/><circle cx="80" cy="82" r="18" fill="#f9c5b5" stroke="none"/>
+    <circle cx="220" cy="82" r="34"/><circle cx="220" cy="82" r="18" fill="#f9c5b5" stroke="none"/>
+    <circle cx="150" cy="148" r="78"/>
+    <ellipse cx="150" cy="173" rx="36" ry="28" fill="#f9d5c5"/>
+    <circle cx="120" cy="132" r="11" fill={S.s}/><circle cx="180" cy="132" r="11" fill={S.s}/>
+    <ellipse cx="150" cy="163" rx="11" ry="8" fill={S.s}/>
+    <path d="M138 175 Q150 186 162 175" fill="none" strokeWidth="2.5"/>
+    <ellipse cx="150" cy="255" rx="72" ry="52"/>
+    <path d="M220 220 Q250 190 268 200" fill="none" strokeWidth="4"/>
+    <circle cx="255" cy="175" r="12" fill="#4a1942" stroke="#2d1a28" strokeWidth="2"/>
+    <circle cx="278" cy="185" r="10" fill="#4a1942" stroke="#2d1a28" strokeWidth="2"/>
+    <circle cx="268" cy="162" r="10" fill="#4a1942" stroke="#2d1a28" strokeWidth="2"/>
+    <circle cx="285" cy="170" r="8" fill="#ff8c42" stroke="#e65100" strokeWidth="2"/>
+    <path d="M265 205 Q270 220 268 235" fill="none" strokeWidth="3.5"/>
+    <ellipse cx="102" cy="295" rx="30" ry="12"/><ellipse cx="198" cy="295" rx="30" ry="12"/>
+  </svg>
+);
+const SvgBjornHi = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M18 200 Q50 155 100 145 Q150 138 200 145 Q250 155 282 200 Q260 265 150 270 Q40 265 18 200Z" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="3"/>
+    <path d="M55 200 Q85 170 140 165 Q195 170 225 200 Q210 250 150 255 Q90 250 55 200Z" fill="#c8956c" stroke="#8B5E3C" strokeWidth="2.5"/>
+    <circle cx="115" cy="185" r="30"/><circle cx="115" cy="185" r="16" fill="#f9c5b5" stroke="none"/>
+    <circle cx="165" cy="185" r="30"/>
+    <circle cx="115" cy="182" r="10" fill={S.s}/><circle cx="165" cy="182" r="10" fill={S.s}/>
+    <ellipse cx="140" cy="200" rx="12" ry="9" fill={S.s}/>
+    <path d="M126 210 Q140 220 154 210" fill="none" strokeWidth="2.5"/>
+    <path d="M50 145 Q30 100 55 70 Q72 90 78 118" fill="#e8f5e9" strokeWidth="2.5"/>
+    <path d="M250 145 Q270 100 245 70 Q228 90 222 118" fill="#e8f5e9" strokeWidth="2.5"/>
+    <ellipse cx="150" cy="58" rx="80" ry="32" fill="#e8f5e9" stroke="#52b788" strokeWidth="2"/>
+  </svg>
+);
+const SvgKylling = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M95 235 Q80 200 110 180 Q130 160 150 165 Q170 160 190 180 Q220 200 205 235 Q185 265 150 270 Q115 265 95 235Z" fill="#ffd700" stroke="#ff8c00" strokeWidth="3"/>
+    <path d="M78 255 Q58 242 72 255 Q58 258 78 260" strokeWidth="2.5" fill="#ff8c00" stroke="#ff8c00"/>
+    <path d="M222 255 Q242 242 228 255 Q242 258 222 260" strokeWidth="2.5" fill="#ff8c00" stroke="#ff8c00"/>
+    <circle cx="128" cy="202" r="10" fill={S.s}/><circle cx="130" cy="200" r="3.5" fill="white" stroke="none"/>
+    <circle cx="172" cy="202" r="10" fill={S.s}/><circle cx="174" cy="200" r="3.5" fill="white" stroke="none"/>
+    <path d="M130 225 Q150 235 170 225" fill="none" strokeWidth="2.5"/>
+    <path d="M140 215 L142 205 L148 215 L152 205 L158 215" fill="none" strokeWidth="2" stroke="#ff8c00"/>
+    <path d="M80 265 Q82 225 95 210" strokeWidth="3"/>
+    <path d="M220 265 Q218 225 205 210" strokeWidth="3"/>
+    <path d="M90 278 Q150 290 210 278" strokeWidth="3" fill="none"/>
+    <path d="M55 210 Q88 195 95 210 Q70 215 80 235" fill={S.f} strokeWidth="2.5"/>
+    <path d="M245 210 Q212 195 205 210 Q230 215 220 235" fill={S.f} strokeWidth="2.5"/>
+  </svg>
+);
+const SvgHostRegn = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="90" cy="72" r="52" fill="#c4d6ec"/><ellipse cx="150" cy="58" r="60" fill="#c4d6ec"/><ellipse cx="210" cy="72" r="52" fill="#c4d6ec"/>
+    <rect x="30" y="92" width="240" height="52" rx="26" fill="#c4d6ec"/>
+    {[60,90,120,150,180,210,240].map(x=>(<line key={x} x1={x} y1="155" x2={x-8} y2="195" strokeWidth="2" stroke="#6ba0d9"/>))}
+    {[75,105,135,165,195,225].map(x=>(<line key={x} x1={x} y1="175" x2={x-8} y2="215" strokeWidth="2" stroke="#6ba0d9"/>))}
+    <ellipse cx="80" cy="235" rx="20" ry="8" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="1.5"/>
+    <ellipse cx="160" cy="245" rx="22" ry="8" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="1.5"/>
+    <ellipse cx="238" cy="238" rx="18" ry="8" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="1.5"/>
+    {[[65,240],[130,255],[200,252],[258,244]].map(([x,y],i)=>(<path key={i} d={`M${x} ${y} Q${x+5} ${y-10} ${x+10} ${y}`} fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>))}
+    {[[65,240],[130,255],[200,252],[258,244]].map(([x,y],i)=>(<path key={"s"+i} d={`M${x+2} ${y+5} Q${x+8} ${y+14} ${x+12} ${y+2}`} fill="#8B5E3C" stroke="#5a3e28" strokeWidth="2"/>))}
+  </svg>
+);
+const SvgIskremBoks = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="55" y="148" width="190" height="108" rx="12"/>
+    <ellipse cx="150" cy="148" rx="95" ry="28"/>
+    <path d="M55 148 Q55 168 150 176 Q245 168 245 148"/>
+    <ellipse cx="150" cy="128" rx="85" ry="38" fill="#ff9898" stroke="#c62828" strokeWidth="2.5"/>
+    <ellipse cx="150" cy="118" rx="72" ry="30" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+    <ellipse cx="150" cy="108" rx="58" ry="24" fill="#4299e1" stroke="#2c5b8e" strokeWidth="2"/>
+    <ellipse cx="150" cy="100" rx="44" ry="18" fill="#52b788" stroke="#2d6a4f" strokeWidth="2"/>
+    <ellipse cx="150" cy="93" rx="30" ry="12" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
+    <circle cx="150" cy="85" r="10" fill="#c62828" stroke="#8b1a1a" strokeWidth="2"/>
+    <circle cx="95" cy="188" r="8" fill={S.s} stroke="none"/><circle cx="125" cy="198" r="8" fill={S.s} stroke="none"/><circle cx="175" cy="195" r="8" fill={S.s} stroke="none"/><circle cx="205" cy="183" r="8" fill={S.s} stroke="none"/>
+  </svg>
+);
+const SvgBursdagKake = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="235" rx="108" ry="32"/>
+    <path d="M42 200 L42 235 Q42 267 150 267 Q258 267 258 235 L258 200"/>
+    <ellipse cx="150" cy="200" rx="108" ry="32" fill="#ff9898"/>
+    <ellipse cx="150" cy="165" rx="95" ry="28"/>
+    <path d="M55 140 L55 165 Q55 193 150 193 Q245 193 245 165 L245 140"/>
+    <ellipse cx="150" cy="140" rx="95" ry="28" fill="#ffd700"/>
+    <ellipse cx="150" cy="110" rx="80" ry="24"/>
+    <path d="M70 88 L70 110 Q70 134 150 134 Q230 134 230 110 L230 88"/>
+    <ellipse cx="150" cy="88" rx="80" ry="24" fill="#d8e8f5"/>
+    <path d="M42 218 Q95 208 150 218 Q205 208 258 218" fill="none" strokeWidth="2.5" stroke="#c62828"/>
+    <path d="M55 153 Q100 143 150 153 Q200 143 245 153" fill="none" strokeWidth="2.5" stroke="#ff8c00"/>
+    {[90,122,150,178,210].map((x,i)=>(<g key={x}><rect x={x-5} y={50} width="10" height="32" rx="4" fill={["#ff5252","#ffd700","#52b788","#4299e1","#9b59b6"][i]}/><ellipse cx={x} cy={46} rx="5" ry="9" fill="#ff8c00" stroke="none"/></g>))}
+  </svg>
+);
+const SvgSvartkatt = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="40" y="185" width="220" height="28" rx="5" fill="#5a3e28" stroke="#3d2b1a" strokeWidth="2.5"/>
+    <rect x="80" y="180" width="140" height="12" rx="4" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="2"/>
+    <circle cx="150" cy="135" r="68"/>
+    <path d="M98 88 L88 42 L118 78" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    <path d="M202 88 L212 42 L182 78" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    <circle cx="120" cy="125" r="18" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/><circle cx="120" cy="125" r="9" fill="#334155" stroke="none"/>
+    <circle cx="180" cy="125" r="18" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/><circle cx="180" cy="125" r="9" fill="#334155" stroke="none"/>
+    <ellipse cx="150" cy="148" rx="8" ry="6" fill="#f9a8b8" stroke="none"/>
+    <path d="M138 155 Q150 163 162 155" fill="none" strokeWidth="2.5"/>
+    <line x1="95" y1="150" x2="145" y2="148" strokeWidth="1.5"/><line x1="95" y1="157" x2="145" y2="155" strokeWidth="1.5"/>
+    <line x1="205" y1="150" x2="155" y2="148" strokeWidth="1.5"/><line x1="205" y1="157" x2="155" y2="155" strokeWidth="1.5"/>
+    <path d="M218 175 Q255 165 272 185 Q260 175 258 190" fill="none" strokeWidth="3"/>
+    <ellipse cx="110" cy="262" rx="30" ry="14"/><ellipse cx="190" cy="262" rx="30" ry="14"/>
+    <ellipse cx="150" cy="235" rx="68" ry="48"/>
+  </svg>
+);
+const SvgMusHalloween = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="105" cy="82" r="30"/><circle cx="195" cy="82" r="30"/>
+    <circle cx="150" cy="148" r="66"/>
+    <circle cx="124" cy="138" r="10" fill={S.s}/><circle cx="176" cy="138" r="10" fill={S.s}/>
+    <ellipse cx="150" cy="155" rx="8" ry="6" fill="#f9a8b8" stroke="none"/>
+    <path d="M140 163 Q150 170 160 163" fill="none" strokeWidth="2"/>
+    <line x1="95" y1="153" x2="138" y2="153" strokeWidth="1.5"/><line x1="205" y1="153" x2="162" y2="153" strokeWidth="1.5"/>
+    <path d="M185 185 Q230 190 258 215" strokeWidth="4"/>
+    <ellipse cx="150" cy="255" rx="58" ry="44"/>
+    <path d="M110 218 Q95 235 102 255" strokeWidth="3"/><path d="M190 218 Q205 235 198 255" strokeWidth="3"/>
+    <ellipse cx="105" cy="278" rx="28" ry="12"/><ellipse cx="195" cy="278" rx="28" ry="12"/>
+    <path d="M112 225 Q100 215 108 205 Q118 215 115 228" fill="#ff8c42" stroke="#e65100" strokeWidth="2"/>
+    <path d="M188 225 Q200 215 192 205 Q182 215 185 228" fill="#ff8c42" stroke="#e65100" strokeWidth="2"/>
+    <rect x="128" y="208" width="44" height="32" rx="6" fill="#ff9898"/>
+    <circle cx="138" cy="224" r="6"/><circle cx="162" cy="224" r="6"/>
+  </svg>
+);
+const SvgPingvinFam = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="88" cy="185" rx="46" ry="72"/>
+    <ellipse cx="88" cy="175" rx="28" ry="42" fill="#c4d6ec"/>
+    <circle cx="88" cy="110" r="38"/>
+    <circle cx="74" cy="102" r="9" fill={S.s}/><circle cx="76" cy="100" r="3" fill="white" stroke="none"/>
+    <circle cx="102" cy="102" r="9" fill={S.s}/><circle cx="104" cy="100" r="3" fill="white" stroke="none"/>
+    <path d="M55 185 Q38 198 32 220" strokeWidth="3.5"/><path d="M121 185 Q138 198 144 220" strokeWidth="3.5"/>
+    <ellipse cx="212" cy="195" rx="46" ry="72"/>
+    <ellipse cx="212" cy="185" rx="28" ry="42" fill="#c4d6ec"/>
+    <circle cx="212" cy="120" r="38"/>
+    <circle cx="198" cy="112" r="9" fill={S.s}/><circle cx="226" cy="112" r="9" fill={S.s}/>
+    <path d="M179 195 Q162 208 156 230" strokeWidth="3.5"/><path d="M245 195 Q262 208 268 230" strokeWidth="3.5"/>
+    <ellipse cx="150" cy="228" rx="28" ry="44"/>
+    <ellipse cx="150" cy="222" rx="16" ry="26" fill="#c4d6ec"/>
+    <circle cx="150" cy="183" r="24"/>
+    <circle cx="142" cy="178" r="6" fill={S.s}/><circle cx="158" cy="178" r="6" fill={S.s}/>
+    <ellipse cx="80" cy="278" rx="34" ry="12"/><ellipse cx="220" cy="278" rx="34" ry="12"/><ellipse cx="150" cy="282" rx="24" ry="10"/>
+  </svg>
+);
+const SvgRobot2 = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="22" rx="14" ry="14"/>
+    <line x1="150" y1="36" x2="150" y2="65" strokeWidth="3"/>
+    <rect x="78" y="65" width="144" height="108" rx="22"/>
+    <ellipse cx="118" cy="107" rx="22" ry="22"/><ellipse cx="118" cy="107" rx="14" ry="14" fill="#d8e8f5"/><circle cx="118" cy="107" r="8" fill={S.s}/>
+    <ellipse cx="182" cy="107" rx="22" ry="22"/><ellipse cx="182" cy="107" rx="14" ry="14" fill="#d8e8f5"/><circle cx="182" cy="107" r="8" fill={S.s}/>
+    <path d="M118 142 L135 152 L150 142 L165 152 L182 142" fill="none" strokeWidth="3"/>
+    <rect x="62" y="188" width="176" height="112" rx="18"/>
+    <circle cx="116" cy="232" r="22"/><circle cx="116" cy="232" r="14" fill="#d8e8f5"/>
+    <circle cx="184" cy="232" r="22"/><circle cx="184" cy="232" r="14" fill="#d8e8f5"/>
+    <line x1="116" y1="268" x2="184" y2="268" strokeWidth="3"/>
+    <rect x="14" y="190" width="46" height="90" rx="14"/>
+    <rect x="240" y="190" width="46" height="90" rx="14"/>
+    <path d="M14 218 Q5 235 14 252" fill="none" strokeWidth="2.5"/>
+    <path d="M286 218 Q295 235 286 252" fill="none" strokeWidth="2.5"/>
+    <rect x="90" y="297" width="48" height="22" rx="8"/><rect x="162" y="297" width="48" height="22" rx="8"/>
+  </svg>
+);
+const SvgBallongMany = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[[75,80,"#ff9898"],[150,55,"#ffd700"],[225,80,"#52b788"],[50,155,"#4299e1"],[250,155,"#9b59b6"],[110,140,"#ff8c42"],[190,135,"#ff9898"]].map(([cx,cy,fill],i)=>(
+      <g key={i}>
+        <ellipse cx={cx} cy={cy} rx="32" ry="38" fill={fill} stroke={S.s} strokeWidth="2.5"/>
+        <path d={`M${cx-4} ${cy+38} Q${cx} ${cy+50} ${cx+4} ${cy+38}`} fill="none" strokeWidth="2"/>
+        <line x1={cx} y1={cy+50} x2={cx+((i%3-1)*8)} y2="280" strokeWidth="1.5" stroke="#c4d6ec"/>
+      </g>
+    ))}
+    <line x1="145" y1="275" x2="155" y2="275" strokeWidth="4"/>
+    <ellipse cx="150" cy="288" rx="50" ry="10" fill="#f5f9fd"/>
+  </svg>
+);
+const SvgEpletre = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="132" y="202" width="36" height="72" rx="8" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="3"/>
+    <circle cx="150" cy="162" r="68" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="3.5"/>
+    <circle cx="108" cy="182" r="52" fill="#52b788" stroke="#2d6a4f" strokeWidth="3"/>
+    <circle cx="192" cy="182" r="52" fill="#52b788" stroke="#2d6a4f" strokeWidth="3"/>
+    <circle cx="150" cy="195" r="48" fill="#6ab04c" stroke="#2d6a4f" strokeWidth="3"/>
+    {[[118,142],[162,128],[145,168],[100,162],[195,155]].map(([cx,cy],i)=>(<circle key={i} cx={cx} cy={cy} r={i===0||i===3?16:i===1?14:12} fill="#ff5252" stroke="#c62828" strokeWidth="2"/>))}
+    {[[118,142],[162,128],[145,168],[100,162],[195,155]].map(([cx,cy],i)=>(<line key={"s"+i} x1={cx} y1={cy-(i===0||i===3?16:i===1?14:12)} x2={cx+4} y2={cy-(i===0||i===3?24:i===1?22:20)} strokeWidth="2" stroke="#2d6a4f"/>))}
+  </svg>
+);
+const SvgTreVaar = ()=>(
+  <svg viewBox="0 0 300 310" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="126" y="222" width="48" height="76" rx="8" fill="#c8956c" stroke="#8B5E3C" strokeWidth="3"/>
+    <circle cx="150" cy="188" r="66" fill="#d8f3dc" stroke="#2d6a4f" strokeWidth="3.5"/>
+    <circle cx="108" cy="208" r="50" fill="#e8f5e9" stroke="#2d6a4f" strokeWidth="3.5"/>
+    <circle cx="192" cy="208" r="50" fill="#e8f5e9" stroke="#2d6a4f" strokeWidth="3.5"/>
+    <circle cx="150" cy="226" r="48" fill="#f0fff4" stroke="#2d6a4f" strokeWidth="3.5"/>
+    {[[118,158],[165,148],[145,178],[105,185],[192,172]].map(([cx,cy])=>(<circle key={cx} cx={cx} cy={cy} r="8" fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5"/>))}
+    {[[130,165],[155,155],[108,175],[178,180]].map(([cx,cy])=>(<circle key={"p"+cx} cx={cx} cy={cy} r="7" fill="#ff9898" stroke="#c62828" strokeWidth="1.5"/>))}
+  </svg>
+);
+const SvgSykkelVei = ()=>(
+  <svg viewBox="0 0 300 260" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="0" y="185" width="300" height="55" rx="0" fill="#c4d6ec" stroke="none"/>
+    <line x1="0" y1="213" x2="300" y2="213" strokeWidth="3" stroke="white" strokeDasharray="20 15"/>
+    <circle cx="90" cy="155" r="45"/>
+    <circle cx="210" cy="155" r="45"/>
+    <circle cx="90" cy="155" r="25"/><circle cx="210" cy="155" r="25"/>
+    <line x1="90" y1="155" x2="210" y2="155" strokeWidth="5"/>
+    <line x1="150" y1="80" x2="150" y2="155" strokeWidth="5"/>
+    <ellipse cx="150" cy="78" rx="28" ry="12" strokeWidth="3"/>
+    <ellipse cx="148" cy="72" rx="18" ry="7" fill="#ff5252" stroke="#c62828" strokeWidth="2"/>
+    <circle cx="152" cy="60" r="14"/>
+    <circle cx="144" cy="56" r="5" fill={S.s}/><circle cx="160" cy="56" r="5" fill={S.s}/>
+    <path d="M144 66 Q152 72 160 66" fill="none" strokeWidth="2"/>
+    <line x1="110" y1="130" x2="148" y2="80" strokeWidth="4"/>
+    <line x1="165" y1="112" x2="150" y2="80" strokeWidth="4"/>
+    <line x1="150" y1="155" x2="168" y2="115" strokeWidth="4"/>
+    {[[30,175],[80,170],[260,172],[235,168]].map(([x,y])=>(<ellipse key={x} cx={x} cy={y} rx="16" ry="6" fill="#d8f3dc" stroke="#52b788" strokeWidth="1.5"/>))}
+  </svg>
+);
+const SvgGledefarge = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="150" cy="140" r="88" fill="#fff9c4"/>
+    <circle cx="118" cy="118" r="14" fill={S.s}/><circle cx="121" cy="115" r="5" fill="white" stroke="none"/>
+    <circle cx="182" cy="118" r="14" fill={S.s}/><circle cx="185" cy="115" r="5" fill="white" stroke="none"/>
+    <path d="M112 160 Q150 192 188 160" fill="none" strokeWidth="6"/>
+    <ellipse cx="108" cy="162" rx="16" ry="10" fill="#ff9898" stroke="none"/>
+    <ellipse cx="192" cy="162" rx="16" ry="10" fill="#ff9898" stroke="none"/>
+    {[0,45,90,135,180,225,270,315].map(a=>(<line key={a} x1={150+92*Math.cos(a*Math.PI/180)} y1={140+92*Math.sin(a*Math.PI/180)} x2={150+112*Math.cos(a*Math.PI/180)} y2={140+112*Math.sin(a*Math.PI/180)} strokeWidth="4" stroke="#ffd700"/>))}
+    {[[55,55],[245,62],[55,218],[245,222]].map(([x,y],i)=>(<path key={i} d={[0,1,2,3,4].map(n=>`${n===0?"M":"L"}${x+12*Math.cos((n*72-90)*Math.PI/180)},${y+12*Math.sin((n*72-90)*Math.PI/180)}`).join(" ")+"Z"} fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5"/>))}
+  </svg>
+);
+const SvgElgHost = ()=>(
+  <svg viewBox="0 0 300 310" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="155" cy="165" rx="88" ry="54"/>
+    <circle cx="228" cy="112" r="42"/>
+    <ellipse cx="248" cy="86" rx="18" ry="10" fill="#f9c5b5" transform="rotate(-20,248,86)"/>
+    <circle cx="238" cy="100" r="9" fill={S.s}/><circle cx="240" cy="98" r="3" fill="white" stroke="none"/>
+    <path d="M200 78 Q188 48 170 38 Q182 52 184 68" strokeWidth="3"/>
+    <path d="M170 38 Q156 22 149 18 Q159 30 163 42" strokeWidth="2.5"/>
+    <path d="M212 74 Q206 48 220 36 Q213 52 217 66" strokeWidth="3"/>
+    <path d="M220 36 Q230 20 237 16 Q228 28 226 40" strokeWidth="2.5"/>
+    <path d="M68 140 Q40 118 28 105" strokeWidth="3.5"/>
+    <path d="M242 140 Q266 118 278 105" strokeWidth="3.5"/>
+    <path d="M95 215 Q74 248 72 278" strokeWidth="3.5"/>
+    <path d="M132 217 Q122 252 124 278" strokeWidth="3.5"/>
+    <path d="M178 217 Q178 252 180 278" strokeWidth="3.5"/>
+    <path d="M215 215 Q225 248 228 278" strokeWidth="3.5"/>
+    {[[42,260],[52,245],[72,255],[88,242],[265,248],[255,262],[240,252]].map(([x,y],i)=>(<ellipse key={i} cx={x} cy={y} rx="14" ry="8" fill={["#ffd700","#ff8c42","#e53e3e","#ffd700","#ff8c42","#e53e3e","#ffd700"][i]} stroke={S.s} strokeWidth="1.5" transform={`rotate(${[-20,-10,15,-25,20,5,-15][i]},${x},${y})`}/>))}
+  </svg>
+);
+const SvgSkyRegn = ()=>(
+  <svg viewBox="0 0 320 260" fill="none" stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc}>
+    <ellipse cx="52" cy="85" rx="38" ry="25" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    <ellipse cx="80" cy="70" rx="48" ry="32" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    <ellipse cx="118" cy="75" rx="40" ry="28" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    <ellipse cx="88" cy="92" rx="68" ry="22" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    {[45,62,79,96,113,130].map(x=>(<g key={x}><line x1={x} y1="115" x2={x-6} y2="148" strokeWidth="2.5" stroke="#6ba0d9"/><ellipse cx={x-7} cy={152} rx="6" ry="4" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="1.5"/></g>))}
+    <path d="M185 195 Q185 82 242 82 Q300 82 300 195" stroke="#e53e3e" strokeWidth="10" fill="none"/>
+    <path d="M185 195 Q185 102 242 102 Q300 102 300 195" stroke="#6ba0d9" strokeWidth="10" fill="none"/>
+    <path d="M185 195 Q185 120 242 120 Q300 120 300 195" stroke="#ffd700" strokeWidth="10" fill="none"/>
+    <path d="M185 195 Q185 138 242 138 Q300 138 300 195" stroke="#52b788" strokeWidth="10" fill="none"/>
+  </svg>
+);
+const SvgMaalvakt = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="15" y="40" width="12" height="170" rx="4"/><rect x="15" y="40" width="200" height="12" rx="4"/><rect x="203" y="40" width="12" height="130" rx="4"/>
+    <path d="M27 210 L215 170" fill="none" strokeWidth="2" stroke="#c4d6ec" strokeDasharray="6 4"/>
+    <circle cx="248" cy="82" r="24"/>
+    <path d="M224 82 Q210 90 205 100" fill="none" strokeWidth="3" stroke="#6ba0d9"/>
+    <circle cx="188" cy="192" r="32"/>
+    <circle cx="160" cy="180" r="8" fill={S.s}/><circle cx="216" cy="180" r="8" fill={S.s}/>
+    <path d="M162 200 Q188 214 214 200" fill="none" strokeWidth="2.5"/>
+    <ellipse cx="188" cy="222" rx="28" ry="8"/>
+    <line x1="160" y1="220" x2="140" y2="260" strokeWidth="4"/>
+    <line x1="216" y1="220" x2="236" y2="260" strokeWidth="4"/>
+    <line x1="170" y1="155" x2="140" y2="148" strokeWidth="4"/>
+    <line x1="206" y1="155" x2="250" y2="135" strokeWidth="4"/>
+    <ellipse cx="140" cy="261" rx="20" ry="10"/><ellipse cx="236" cy="261" rx="20" ry="10"/>
+  </svg>
+);
+const SvgGresskarNatt = ()=>(
+  <svg viewBox="0 0 300 280" fill="#ff8833" stroke="#c62828" strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="160" rx="100" ry="85"/>
+    <ellipse cx="90" cy="160" rx="38" ry="82" fill="#ff7722"/>
+    <ellipse cx="210" cy="160" rx="38" ry="82" fill="#ff7722"/>
+    <ellipse cx="150" cy="160" rx="32" ry="85" fill="#ff9944"/>
+    <path d="M150 75 Q145 50 130 45 Q145 55 145 75" fill="#5d8c5d" stroke="#2d6a4f" strokeWidth="2"/>
+    <rect x="143" y="55" width="14" height="25" fill="#8b5e3c"/>
+    <path d="M98 128 L125 128 L111 150Z" fill="#3d1c08" stroke="none"/>
+    <path d="M175 128 L202 128 L188 150Z" fill="#3d1c08" stroke="none"/>
+    <path d="M88 185 Q150 218 212 185 L202 198 Q188 192 182 202 Q168 192 162 202 Q150 192 144 202 Q132 192 124 202 Q112 192 98 198Z" fill="#3d1c08" stroke="none"/>
+    <circle cx="50" cy="55" r="28" fill="#334155" stroke="#1a2c45" strokeWidth="2"/>
+    <circle cx="62" cy="44" r="12" fill="none" stroke="#ffd700" strokeWidth="2"/>
+    <path d="M28 120 Q18 100 28 80" fill="none" stroke="#c4d6ec" strokeWidth="2" strokeDasharray="5 4"/>
+    <path d="M272 100 Q280 115 268 130" fill="none" stroke="#c4d6ec" strokeWidth="2" strokeDasharray="5 4"/>
+    <ellipse cx="150" cy="272" rx="105" ry="8" fill="#1a2c45" stroke="none"/>
+  </svg>
+);
+const SvgPaaskelilje2 = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[30,90,150,210,270,330].map(a=>(<ellipse key={a} cx={150+56*Math.cos(a*Math.PI/180)} cy={95+56*Math.sin(a*Math.PI/180)} rx="22" ry="42" transform={`rotate(${a},${150+56*Math.cos(a*Math.PI/180)},${95+56*Math.sin(a*Math.PI/180)})`} fill="#fffde7" stroke="#f9a825" strokeWidth="2"/>))}
+    <ellipse cx="150" cy="95" rx="30" ry="22" fill="#ffd740" stroke="#f9a825" strokeWidth="3"/>
+    <ellipse cx="150" cy="95" rx="20" ry="14" fill="#ffca28" stroke="none"/>
+    <rect x="138" y="118" width="24" height="112" rx="10" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="3"/>
+    <ellipse cx="98" cy="192" rx="48" ry="16" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2.5" transform="rotate(-22,98,192)"/>
+    <ellipse cx="202" cy="205" rx="48" ry="16" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2.5" transform="rotate(18,202,205)"/>
+    <circle cx="75" cy="82" r="18" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
+    <ellipse cx="75" cy="82" rx="12" ry="9" fill="#ffd740" stroke="none"/>
+    <rect x="68" y="98" width="14" height="90" rx="6" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
+    <circle cx="225" cy="95" r="18" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
+    <ellipse cx="225" cy="95" rx="12" ry="9" fill="#ffd740" stroke="none"/>
+    <rect x="218" y="111" width="14" height="80" rx="6" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
+    <circle cx="175" cy="65" r="14" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
+    <rect x="168" y="78" width="14" height="60" rx="5" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
+  </svg>
+);
+const SvgSnomannJul = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="150" cy="278" r="66"/>
+    <circle cx="150" cy="190" r="48"/>
+    <circle cx="150" cy="118" r="36"/>
+    <rect x="118" y="74" width="64" height="22" rx="4" fill="#c62828"/><rect x="112" y="79" width="76" height="10" rx="3" fill="#c62828"/>
+    <ellipse cx="224" cy="78" rx="22" ry="14" fill="white" stroke="none"/>
+    <circle cx="136" cy="113" r="6" fill={S.s}/><circle cx="164" cy="113" r="6" fill={S.s}/>
+    <ellipse cx="150" cy="124" rx="5" ry="8" fill="#ff8c42" stroke="#e65100" strokeWidth="2"/>
+    <path d="M138 133 Q150 140 162 133" fill="none" strokeWidth="2.5"/>
+    <circle cx="146" cy="182" r="5" fill={S.s}/><circle cx="156" cy="190" r="5" fill={S.s}/><circle cx="146" cy="198" r="5" fill={S.s}/>
+    <path d="M102 185 Q72 168 55 150" fill="none" strokeWidth="3"/><path d="M198 185 Q228 168 245 150" fill="none" strokeWidth="3"/>
+    <path d="M62 155 Q52 148 48 138" fill="none" strokeWidth="2"/><path d="M240 148 Q250 138 252 128" fill="none" strokeWidth="2"/>
+    {[[55,115],[80,95],[230,108],[255,128]].map(([x,y],i)=>(<polygon key={i} points={[0,1,2,3,4].map(n=>`${x+8*Math.cos((n*72-90)*Math.PI/180)},${y+8*Math.sin((n*72-90)*Math.PI/180)}`).join(' ')} fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5"/>))}
+    <path d="M88 272 Q108 258 122 272" fill="none" strokeWidth="3"/>
+    <path d="M178 272 Q192 258 212 272" fill="none" strokeWidth="3"/>
+  </svg>
+);
+const SvgEng = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <ellipse cx="150" cy="265" rx="145" ry="18" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+    {[[55,155],[110,140],[160,148],[210,138],[255,152]].map(([cx,cy],i)=>(<g key={i}><ellipse cx={cx} cy={cy} rx={26+i%2*6} ry={28+i%3*5} fill={["#ff9898","#ffd700","#d8e8f5","#ff9898","#ffd700"][i]} stroke={S.s} strokeWidth="2.5"/><rect x={cx-5} y={cy+28} width="10" height={35-i%2*5} rx="4" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/></g>))}
+    {[[42,235],[88,240],[138,232],[188,238],[238,234]].map(([x,y])=>(<circle key={x} cx={x} cy={y} r="9" fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5"/>))}
+    {[[65,185],[150,175],[240,182]].map(([x,y])=>(<path key={x} d={`M${x} ${y} Q${x+6} ${y-10} ${x+12} ${y} M${x+14} ${y} Q${x+20} ${y-10} ${x+26} ${y}`} fill="none" stroke="#334155" strokeWidth="1.5"/>))}
+  </svg>
+);
+const SvgFyr = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="20" y="165" width="260" height="95" rx="8" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2.5"/>
+    <path d="M20 192 Q90 178 150 188 Q210 178 280 192" fill="none" strokeWidth="2.5" stroke="#6ba0d9"/>
+    <rect x="118" y="75" width="46" height="130" rx="6"/>
+    <rect x="110" y="65" width="62" height="22" rx="6" fill="#e53e3e" stroke="#c62828" strokeWidth="2.5"/>
+    <ellipse cx="141" cy="64" rx="20" ry="14" fill="#ffd700" stroke="#ff8c00" strokeWidth="2.5"/>
+    {[-50,-25,0,25,50].map(a=>(<line key={a} x1={141+28*Math.cos(a*Math.PI/180)} y1={64+28*Math.sin(a*Math.PI/180)} x2={141+40*Math.cos(a*Math.PI/180)} y2={64+40*Math.sin(a*Math.PI/180)} strokeWidth="2.5" stroke="#ffd700"/>))}
+    <rect x="128" y="95" width="26" height="16" rx="3" fill="#d8e8f5"/>
+    <rect x="128" y="128" width="26" height="16" rx="3" fill="#d8e8f5"/>
+    <rect x="128" y="161" width="26" height="16" rx="3" fill="#d8e8f5"/>
+    <rect x="105" y="186" width="72" height="12" rx="4"/>
+    <ellipse cx="72" cy="210" rx="42" ry="26"/>
+    <ellipse cx="72" cy="200" rx="26" ry="14" fill="#d8f3dc"/>
+  </svg>
+);
+
+const SvgSnøfnugg = ()=>(
+  <svg viewBox="0 0 300 300" fill="none" stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[0,60,120,180,240,300].map(a=>(
+      <g key={a} transform={`rotate(${a},150,150)`}>
+        <line x1="150" y1="150" x2="150" y2="30" strokeWidth="4"/>
+        <line x1="130" y1="70" x2="150" y2="50" strokeWidth="2.5"/>
+        <line x1="170" y1="70" x2="150" y2="50" strokeWidth="2.5"/>
+        <line x1="126" y1="105" x2="150" y2="90" strokeWidth="2.5"/>
+        <line x1="174" y1="105" x2="150" y2="90" strokeWidth="2.5"/>
+      </g>
+    ))}
+    <circle cx="150" cy="150" r="18" fill={S.f} stroke={S.s} strokeWidth="3"/>
+    {[0,60,120,180,240,300].map(a=>(<circle key={a} cx={150+110*Math.cos((a-90)*Math.PI/180)} cy={150+110*Math.sin((a-90)*Math.PI/180)} r="10" fill={S.f} stroke={S.s} strokeWidth="2.5"/>))}
+  </svg>
+);
+const SvgFarger = ()=>(
+  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    {[["#e53e3e",30],["#ff8c00",70],["#ffd700",110],["#52b788",150],["#4299e1",190],["#5a67d8",230],["#9b59b6",270]].map(([c,x])=>(
+      <g key={x}>
+        <rect x={x-15} y="60" width="30" height="140" rx="14" fill={c} stroke={S.s} strokeWidth="2.5"/>
+        <circle cx={x} cy="48" r="18" fill={c} stroke={S.s} strokeWidth="2.5"/>
+      </g>
+    ))}
+    <rect x="22" y="215" width="256" height="28" rx="12" fill="#f5f9fd"/>
+    {[1,2,3,4,5,6,7].map((n,i)=>(<text key={n} x={30+i*40} y="234" fontSize="14" fontWeight="bold" fontFamily="sans-serif" fill={S.s} textAnchor="middle">{n}</text>))}
+  </svg>
+);
+const SvgPust = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="150" cy="88" r="44"/>
+    <circle cx="132" cy="80" r="7" fill={S.s}/><circle cx="134" cy="78" r="2.5" fill="white" stroke="none"/>
+    <circle cx="168" cy="80" r="7" fill={S.s}/><circle cx="170" cy="78" r="2.5" fill="white" stroke="none"/>
+    <path d="M132 102 Q150 116 168 102" fill="none" strokeWidth="3"/>
+    <ellipse cx="150" cy="190" rx="60" ry="72"/>
+    <ellipse cx="76" cy="198" rx="24" ry="42" transform="rotate(-12,76,198)"/>
+    <ellipse cx="224" cy="198" rx="24" ry="42" transform="rotate(12,224,198)"/>
+    <ellipse cx="110" cy="280" rx="30" ry="14"/><ellipse cx="190" cy="280" rx="30" ry="14"/>
+    {[0,1,2,3,4].map(i=>(<path key={i} d={`M${130+i*8} 150 Q${134+i*8} ${138+i*4} ${138+i*8} 150`} fill="none" stroke="#6ba0d9" strokeWidth="2"/>))}
+    <path d="M100 155 Q80 135 68 120" fill="none" stroke="#6ba0d9" strokeWidth="2" strokeDasharray="5 4"/>
+    <path d="M200 155 Q220 135 232 120" fill="none" stroke="#6ba0d9" strokeWidth="2" strokeDasharray="5 4"/>
+    <circle cx="68" cy="116" r="8" stroke="#6ba0d9" strokeWidth="2" fill="#e3f2fd"/>
+    <circle cx="232" cy="116" r="8" stroke="#6ba0d9" strokeWidth="2" fill="#e3f2fd"/>
+  </svg>
+);
+
+const SvgEgg = ()=>(
+  <svg viewBox="0 0 300 340" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M150 20 Q230 20 268 140 Q280 200 260 255 Q235 315 150 320 Q65 315 40 255 Q20 200 32 140 Q70 20 150 20Z"/>
+    <path d="M44 155 Q150 185 256 155" fill="none" strokeWidth="3"/>
+    <path d="M34 210 Q150 240 266 210" fill="none" strokeWidth="3"/>
+    <circle cx="110" cy="90" r="16"/><circle cx="170" cy="75" r="12"/><circle cx="200" cy="105" r="14"/>
+    <circle cx="85" cy="135" r="10"/><circle cx="215" cy="130" r="10"/>
+    <path d="M60 175 Q80 165 100 175 Q120 185 140 175 Q160 165 180 175 Q200 185 220 175 Q240 165 250 175" fill="none" strokeWidth="2.5"/>
+    <path d="M45 225 Q75 215 105 225 Q135 235 165 225 Q195 215 225 225 Q250 235 265 225" fill="none" strokeWidth="2.5"/>
+  </svg>
+);
+const SvgGulrot = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M148 55 Q168 80 175 130 Q178 175 165 220 Q155 255 150 268 Q145 255 135 220 Q122 175 125 130 Q132 80 148 55Z" fill="#ff8c42"/>
+    <line x1="148" y1="90" x2="100" y2="90" strokeWidth="2"/><line x1="150" y1="115" x2="200" y2="115" strokeWidth="2"/>
+    <line x1="148" y1="140" x2="95" y2="145" strokeWidth="2"/><line x1="150" y1="165" x2="205" y2="160" strokeWidth="2"/>
+    <path d="M148 55 Q130 20 115 10 Q135 30 138 50" fill="#2d8c3c" stroke="#2d8c3c" strokeWidth="2"/>
+    <path d="M148 55 Q152 15 168 5 Q160 28 152 52" fill="#2d8c3c" stroke="#2d8c3c" strokeWidth="2"/>
+    <path d="M148 55 Q170 22 185 15 Q172 35 155 52" fill="#2d8c3c" stroke="#2d8c3c" strokeWidth="2"/>
+    <ellipse cx="90" cy="210" rx="42" ry="30" transform="rotate(-20,90,210)" fill="#ff8c42"/>
+    <path d="M90 185 Q70 178 88 182" fill="none" stroke="#2d8c3c" strokeWidth="2"/>
+    <path d="M90 185 Q100 172 96 183" fill="none" stroke="#2d8c3c" strokeWidth="2"/>
+    <ellipse cx="215" cy="195" rx="36" ry="25" transform="rotate(15,215,195)" fill="#ff8c42"/>
+    <path d="M215 172 Q230 165 220 170" fill="none" stroke="#2d8c3c" strokeWidth="2"/>
+  </svg>
+);
+const SvgKlem = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M148 60 Q155 40 165 55 Q168 42 162 35 Q155 25 148 35 Q141 25 138 35 Q132 42 135 55 Q145 40 148 60Z" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
+    <circle cx="98" cy="108" r="34"/>
+    <circle cx="202" cy="108" r="34"/>
+    <circle cx="88" cy="100" r="8" fill={S.s}/><circle cx="90" cy="98" r="3" fill="white" stroke="none"/>
+    <circle cx="192" cy="100" r="8" fill={S.s}/><circle cx="194" cy="98" r="3" fill="white" stroke="none"/>
+    <path d="M86 122 Q98 132 110 122" fill="none" strokeWidth="2.5"/>
+    <path d="M190 122 Q202 132 214 122" fill="none" strokeWidth="2.5"/>
+    <ellipse cx="98" cy="198" rx="46" ry="56"/>
+    <ellipse cx="202" cy="198" rx="46" ry="56"/>
+    <path d="M144 165 Q150 158 156 165" fill="none" strokeWidth="3"/>
+    <path d="M68 160 Q50 148 48 175 Q60 165 78 172" strokeWidth="3"/>
+    <path d="M232 160 Q250 148 252 175 Q240 165 222 172" strokeWidth="3"/>
+    <ellipse cx="98" cy="278" rx="38" ry="16"/>
+    <ellipse cx="202" cy="278" rx="38" ry="16"/>
+  </svg>
+);
+const SvgGran = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <polygon points="150,18 178,62 165,62 190,105 174,105 202,155 180,155 210,210 90,210 120,155 98,155 126,105 110,105 135,62 122,62"/>
+    <rect x="132" y="210" width="36" height="48" rx="6" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="3"/>
+    <circle cx="150" cy="18" r="14" fill="#ffd700" stroke="#ff8c00" strokeWidth="2.5"/>
+    <circle cx="122" cy="90" r="8" fill="#ff4444" stroke="none"/>
+    <circle cx="178" cy="110" r="8" fill="#ffd700" stroke="none"/>
+    <circle cx="108" cy="140" r="8" fill="#4499ff" stroke="none"/>
+    <circle cx="192" cy="135" r="8" fill="#ff4444" stroke="none"/>
+    <circle cx="145" cy="165" r="8" fill="#ffd700" stroke="none"/>
+    <circle cx="170" cy="180" r="8" fill="#44cc44" stroke="none"/>
+    <circle cx="125" cy="185" r="8" fill="#ff4444" stroke="none"/>
+  </svg>
+);
+
+const SvgRobot = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <line x1="150" y1="30" x2="150" y2="65" strokeWidth="3"/>
+    <circle cx="150" cy="22" r="12"/>
+    <rect x="82" y="65" width="136" height="105" rx="14"/>
+    <circle cx="118" cy="105" r="18"/><circle cx="122" cy="101" r="6" fill={S.s}/>
+    <circle cx="182" cy="105" r="18"/><circle cx="186" cy="101" r="6" fill={S.s}/>
+    <rect x="108" y="138" width="84" height="18" rx="6"/>
+    <line x1="129" y1="138" x2="129" y2="156" strokeWidth="2"/><line x1="150" y1="138" x2="150" y2="156" strokeWidth="2"/><line x1="171" y1="138" x2="171" y2="156" strokeWidth="2"/>
+    <rect x="68" y="185" width="164" height="110" rx="14"/>
+    <rect x="100" y="202" width="100" height="60" rx="8"/>
+    <circle cx="128" cy="228" r="14"/>
+    <rect x="148" y="213" width="38" height="12" rx="4"/><rect x="148" y="232" width="38" height="12" rx="4"/>
+    <rect x="20" y="188" width="46" height="88" rx="12"/>
+    <rect x="234" y="188" width="46" height="88" rx="12"/>
+    <ellipse cx="43" cy="290" rx="22" ry="16"/>
+    <ellipse cx="257" cy="290" rx="22" ry="16"/>
+    <rect x="96" y="293" width="46" height="25" rx="8"/><rect x="158" y="293" width="46" height="25" rx="8"/>
+  </svg>
+);
+const SvgRakette = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M150 12 Q192 62 196 128 L104 128 Q108 62 150 12Z"/>
+    <rect x="104" y="128" width="92" height="130" rx="8"/>
+    <circle cx="150" cy="170" r="30"/>
+    <circle cx="150" cy="170" r="20" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2"/>
+    <path d="M104 215 Q68 235 58 285 L104 262Z"/>
+    <path d="M196 215 Q232 235 242 285 L196 262Z"/>
+    <path d="M118 258 Q133 298 150 315 Q167 298 182 258Z" fill="#fff9c4" stroke="#6ba0d9" strokeWidth="2"/>
+    <path d="M128 258 Q141 292 150 305 Q159 292 172 258Z" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
+    <circle cx="62" cy="72" r="5" fill={S.s} stroke="none"/>
+    <circle cx="238" cy="110" r="4" fill={S.s} stroke="none"/>
+    <circle cx="52" cy="148" r="3" fill={S.s} stroke="none"/>
+    <circle cx="250" cy="48" r="6" fill={S.s} stroke="none"/>
+  </svg>
+);
+const SvgAstronaut = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="150" cy="92" r="66"/>
+    <path d="M98 76 Q150 125 202 76 Q186 50 150 50 Q114 50 98 76Z" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2.5"/>
+    <rect x="118" y="152" width="64" height="18" rx="8"/>
+    <rect x="80" y="170" width="140" height="100" rx="22"/>
+    <rect x="112" y="188" width="76" height="50" rx="10"/>
+    <circle cx="150" cy="204" r="12"/>
+    <line x1="132" y1="220" x2="168" y2="220" strokeWidth="3"/><line x1="132" y1="230" x2="168" y2="230" strokeWidth="3"/>
+    <ellipse cx="54" cy="208" rx="27" ry="48" transform="rotate(-8,54,208)"/>
+    <ellipse cx="246" cy="208" rx="27" ry="48" transform="rotate(8,246,208)"/>
+    <ellipse cx="44" cy="250" rx="21" ry="17"/>
+    <ellipse cx="256" cy="250" rx="21" ry="17"/>
+    <ellipse cx="122" cy="295" rx="30" ry="22"/>
+    <ellipse cx="178" cy="295" rx="30" ry="22"/>
+    <rect x="188" y="178" width="28" height="50" rx="8"/>
+  </svg>
+);
+const SvgGitar = ()=>(
+  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <rect x="140" y="20" width="20" height="38" rx="7"/>
+    <circle cx="133" cy="24" r="7"/><circle cx="133" cy="38" r="7"/>
+    <circle cx="167" cy="24" r="7"/><circle cx="167" cy="38" r="7"/>
+    <rect x="137" y="55" width="26" height="155" rx="8"/>
+    <ellipse cx="150" cy="218" rx="58" ry="44"/>
+    <ellipse cx="150" cy="278" rx="76" ry="52"/>
+    <path d="M92 248 Q112 260 92 272" fill="none" strokeWidth="3.5"/>
+    <path d="M208 248 Q188 260 208 272" fill="none" strokeWidth="3.5"/>
+    <circle cx="150" cy="260" r="26"/>
+    <circle cx="150" cy="260" r="19" stroke="#c4d6ec" strokeWidth="1.5"/>
+    <rect x="126" y="292" width="48" height="10" rx="5"/>
+    {[140,145,150,155,160,165].map(x=>(<line key={x} x1={x} y1="58" x2={x} y2="293" strokeWidth="1" stroke="#6ba0d9"/>))}
+  </svg>
+);
+const SvgFotball = ()=>(
+  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <circle cx="150" cy="148" r="120"/>
+    <polygon points="150,50 190,76 174,122 126,122 110,76" strokeWidth="2.5"/>
+    <polygon points="68,100 110,76 126,122 86,152 44,138" strokeWidth="2.5"/>
+    <polygon points="232,100 190,76 174,122 214,152 256,138" strokeWidth="2.5"/>
+    <polygon points="76,192 86,152 126,122 150,168 120,204" strokeWidth="2.5"/>
+    <polygon points="224,192 214,152 174,122 150,168 180,204" strokeWidth="2.5"/>
+    <polygon points="150,248 120,204 150,168 180,204" strokeWidth="2.5"/>
+    <ellipse cx="150" cy="290" rx="92" ry="12" fill="#e8f5e9" stroke="#c4d6ec" strokeWidth="1.5"/>
+  </svg>
+);
+
 // ═══════════════════════════════════════════
 //  SVG OVERRIDE-REGISTRY
 //  ─────────────────────────────────────────────
@@ -1601,111 +2724,119 @@ function hentSvg(navn, OriginalKomponent) {
 //  TEGNEARK ARRAY
 // ═══════════════════════════════════════════
 const TEGNEARK = [
-  {id:1,tittel:"Den søte kaninen",ikon:"🐰",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgKanin/>,oppgave:"Farg kaninen! Velg din yndlingsfarge. Tegn gress, blomster og gulrøtter rundt kaninen.",samtale:"Hva spiser kaniner? Har du sett en kanin? Kan kaniner hoppe høyt?",mal:"Naturkunnskap og kreativt uttrykk"},
-  {id:2,tittel:"Den store bjørnen",ikon:"🐻",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","etikk"],svg:<SvgBjorn/>,oppgave:"Farg bjørnen. Tegn et hi der bjørnen kan sove om vinteren. Hva spiser bjørnen om sommeren?",samtale:"Hva gjør bjørnen om vinteren? Hva spiser bjørner? Hvor i Norge lever bjørner?",mal:"Årstider og naturkunnskap"},
-  {id:3,tittel:"Den glade fuglen",ikon:"🐦",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgFugl/>,oppgave:"Farg fuglen med vakre farger. Tegn et tre der fuglen kan sitte, og kanskje et reir?",samtale:"Hva heter fugler dere ser i barnehagen? Hva spiser fugler? Hvor bor fuglen?",mal:"Naturglede og kreativitet"},
-  {id:4,tittel:"Fisken i havet",ikon:"🐟",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgFisk/>,oppgave:"Farg fisken. Tegn et hav rundt den med bølger, tang og mange andre fisker og sjødyr!",samtale:"Har du sett en fisk? Hvilken farge hadde den? Hva bor ellers under vann?",mal:"Naturkunnskap og fantasi"},
-  {id:5,tittel:"Den vakre sommerfuglen",ikon:"🦋",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSommerfugl/>,oppgave:"Farg vingene med flotte mønstre! Ingen sommerfugler er like. Tegn blomster den besøker.",samtale:"Hva er en larve? Hvordan blir den til en sommerfugl? Hvor mange farger kan du bruke?",mal:"Naturprosesser og estetisk uttrykk"},
-  {id:6,tittel:"Den grønne frosken",ikon:"🐸",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFrosk/>,oppgave:"Farg frosken (gjerne grønn!). Tegn et tjern rundt frosken med vann, liljepads og insekter.",samtale:"Kan frosk hoppe? Prøv å hoppe som en frosk! Hva er lyden til en frosk?",mal:"Kroppsbevegelse og naturkunnskap"},
-  {id:7,tittel:"Elgen i norsk skog",ikon:"🦌",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","naermiljo"],svg:<SvgElg/>,oppgave:"Farg elgen og tegn en norsk skog rundt den. Elgen er Norges største dyr!",samtale:"Har du sett en elg? Hva er spesielt med elgens hode? Hvor stor tror du den er?",mal:"Norsk natur og identitet"},
-  {id:8,tittel:"Solen og skyene",ikon:"☀️",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSol/>,oppgave:"Farg solen gul og oransje. Farg skyene. Tegn regndråper og en liten regnbue!",samtale:"Hva gjør solen for plantene? Hva slags vær er det ute i dag?",mal:"Naturfenomener og undring"},
-  {id:9,tittel:"Regnbuen etter regnet",ikon:"🌈",kategori:"natur",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgRegnbue/>,oppgave:"Farg regnbuen med alle 7 farger: rød, oransje, gul, grønn, blå, indigo og fiolett!",samtale:"Når ser vi regnbue? Kan du telle fargene? Hvilken er din favorittfarge?",mal:"Farger, natur og matematikk"},
-  {id:10,tittel:"Høsttreet",ikon:"🍂",kategori:"host",alder:"3-6 år",rammeplan:["natur","kunst"],svg:<SvgHost/>,oppgave:"Farg bladene i høstfarger: rødt, oransje, gult og brunt. Tegn mer blader som faller!",samtale:"Hva skjer med trær om høsten? Hva finner vi i skogen om høsten?",mal:"Årstider og naturprosesser"},
-  {id:11,tittel:"Snømannen min",ikon:"⛄",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSnomann/>,oppgave:"Gi snømannen et fargerikt skjerf og votter. Tegn snø og kanskje en liten fugl på skulderen?",samtale:"Hva trenger vi for å lage en snømann? Hva skjer med ham når solen kommer?",mal:"Vinter, natur og kreativitet"},
-  {id:12,tittel:"Vårens blomster",ikon:"🌸",kategori:"vaar",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgVaar/>,oppgave:"Farg blomstene i vakre vårfarger! Tegn bier og sommerfugler som besøker blomstene.",samtale:"Hvilke blomster kommer først om våren? Hva skjer med naturen om våren?",mal:"Vår, naturglede og årstider"},
-  {id:13,tittel:"Familien min",ikon:"👨‍👩‍👧‍👦",kategori:"mennesker",alder:"3-6 år",rammeplan:["etikk","naermiljo","kommunikasjon"],svg:<SvgFamilie/>,oppgave:"Farg personene slik din familie ser ut! Tegn huset og hagen. Hvem er i familien din?",samtale:"Hvem bor hjemme hos deg? Hva liker familien din å gjøre sammen?",mal:"Familie, identitet og tilhørighet"},
-  {id:14,tittel:"To gode venner",ikon:"🤝",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","kommunikasjon","naermiljo"],svg:<SvgVennskap/>,oppgave:"Farg vennene og gi dem fine klær. Tegn hva de gjør sammen – danser de, hopper de?",samtale:"Hvem er din beste venn? Hva gjør gode venner for hverandre?",mal:"Vennskap, empati og sosial kompetanse"},
-  {id:15,tittel:"Den vakre blomsten",ikon:"🌻",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgBlomst/>,oppgave:"Farg blomsten med de fineste fargene! Tegn en bie som henter nektar fra blomsten.",samtale:"Hva trenger blomster for å vokse? Har vi blomster i barnehagen?",mal:"Naturglede og kreativitet"},
-  {id:16,tittel:"Det store treet",ikon:"🌳",kategori:"natur",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgTre/>,oppgave:"Farg treet med grønne blader og brun stamme. Tegn fugler, epler og insekter i treet!",samtale:"Hva bruker vi tre til? Hvem bor i og rundt trær? Hva er treets viktigste jobb?",mal:"Naturkunnskap og bærekraft"},
-  {id:17,tittel:"Den søte pusekatten",ikon:"🐱",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgKatt/>,oppgave:"Farg katten i din favorittfarge. Tegn en pinne den kan leke med og en skål med melk.",samtale:"Har du en katt hjemme? Hva sier en katt? Hva spiser katter?",mal:"Naturkunnskap og dyrekunnskap"},
-  {id:18,tittel:"Min trofaste hund",ikon:"🐶",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","etikk"],svg:<SvgHund/>,oppgave:"Farg hunden. Gi den et hundehus eller en pinne å leke med. Tegn en kjeks også!",samtale:"Hva sier en hund? Hvordan tar vi vare på dyrene våre? Liker hunder å leke?",mal:"Omsorg for dyr og naturkunnskap"},
-  {id:19,tittel:"Den raske hesten",ikon:"🐴",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgHest/>,oppgave:"Farg hesten. Gi den en lang mane og en fin sal. Tegn et grønt beite rundt.",samtale:"Har du sett en hest? Hva spiser hester? Kan de løpe fort?",mal:"Naturkunnskap og kroppslig læring"},
-  {id:20,tittel:"Kua på beite",ikon:"🐮",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","naermiljo"],svg:<SvgKu/>,oppgave:"Farg kua med svart og hvitt – eller dine egne farger. Tegn gress og en liten kalv.",samtale:"Hvor kommer melken fra? Har du sett en ku? Hva sier en ku?",mal:"Mat, naturkunnskap og nærmiljø"},
-  {id:21,tittel:"Grisen Knort",ikon:"🐷",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgGris/>,oppgave:"Farg grisen rosa! Tegn en gjørmedam og litt mat – griser elsker å spise.",samtale:"Hva sier en gris? Hvorfor liker griser gjørme? Hva spiser griser?",mal:"Naturkunnskap og dyrelyder"},
-  {id:22,tittel:"Sauen med ull",ikon:"🐑",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgSau/>,oppgave:"Farg sauen hvit eller grå med fluffy ull. Tegn et lite lam ved siden av.",samtale:"Hva får vi av sauen? Hvilke klær er laget av ull? Hva sier sauen?",mal:"Naturkunnskap og bærekraftige ressurser"},
-  {id:23,tittel:"Høna i hønsegården",ikon:"🐔",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","antall"],svg:<SvgHone/>,oppgave:"Farg høna med fine fjær og rød kam. Tegn flere egg og noen kyllinger!",samtale:"Hvor kommer egg fra? Hva sier en høne? Kan høner fly?",mal:"Mat, antall og naturkunnskap"},
-  {id:24,tittel:"Lille musen",ikon:"🐭",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgMus/>,oppgave:"Farg musen grå. Tegn et lite hus og en bit ost den vil ha tak i.",samtale:"Hvor bor mus? Hva spiser de? Hva er forskjellen mellom mus og rotte?",mal:"Naturkunnskap og dyrekunnskap"},
-  {id:25,tittel:"Ugla i natten",ikon:"🦉",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgUgleny/>,oppgave:"Farg ugla og lag en mørk natt med stjerner og månelys rundt.",samtale:"Når er ugler våkne? Hva spiser de? Hva er lyden til en ugle?",mal:"Nattedyr og naturkunnskap"},
-  {id:26,tittel:"Pingvin på isen",ikon:"🐧",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgPingvin/>,oppgave:"Farg pingvinen og tegn snø, is og kanskje noen flere pingviner sammen.",samtale:"Hvor bor pingviner? Kan de fly? Hvordan holder de seg varme?",mal:"Verdens dyr og naturkunnskap"},
-  {id:27,tittel:"Den modige løven",ikon:"🦁",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgLove/>,oppgave:"Farg løven gylden og brun. Gi den en stor manke! Tegn savannen med høyt gress.",samtale:"Hvor bor løver? Hva spiser de? Hvorfor heter den 'dyrenes konge'?",mal:"Verdens dyr og økologi"},
-  {id:28,tittel:"Elefanten med snabel",ikon:"🐘",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgElefant/>,oppgave:"Farg elefanten grå. Tegn store ører og bruk snabelen til å holde noe!",samtale:"Hva bruker elefanten snabelen til? Hvor stor blir en elefant? Hvor bor de?",mal:"Verdens dyr og naturkunnskap"},
-  {id:29,tittel:"Den store dinosauren",ikon:"🦕",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgDinosaur/>,oppgave:"Farg dinosauren med dine ville farger. Tegn jungel, vulkaner eller andre dinosaurer!",samtale:"Lever dinosaurer i dag? Hva spiste de? Hvilken er din favorittdinosaur?",mal:"Historie, paleontologi og fantasi"},
-  {id:30,tittel:"Påskelilje i hagen",ikon:"🌼",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgBlomst/>,oppgave:"Farg påskeliljen gul og hvit. Tegn flere vårblomster: krokus, snøklokke og hyasinter.",samtale:"Hvilke blomster ser vi om våren? Hva trenger blomster for å vokse?",mal:"Vår, naturglede og estetikk"},
-  {id:31,tittel:"Trekkfuglen kommer hjem",ikon:"🐦",kategori:"vaar",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgFugl/>,oppgave:"Farg fuglen og tegn et reir med små egg. Vinteren er over – nå er våren her!",samtale:"Hvor har trekkfuglene vært om vinteren? Hvorfor flyr de tilbake om våren?",mal:"Trekkfugler og årsrytmer"},
-  {id:32,tittel:"Vårens første sommerfugl",ikon:"🦋",kategori:"vaar",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSommerfugl/>,oppgave:"Farg sommerfuglens vinger i lyse vårfarger. Tegn de første blomstene rundt.",samtale:"Hva har sommerfuglen gjort om vinteren? Hvilke blomster liker den?",mal:"Naturens kretsløp og estetikk"},
-  {id:33,tittel:"Vårens regnbue",ikon:"🌈",kategori:"vaar",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgRegnbue/>,oppgave:"Farg regnbuen med alle 7 farger. Tegn vårblomster nede på bakken.",samtale:"Når kommer regnbuen? Hva er forskjellen på vår- og høst-vær?",mal:"Vær, farger og årstider"},
-  {id:34,tittel:"Vårsolen",ikon:"☀️",kategori:"vaar",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgSol/>,oppgave:"Farg solen sterk gul. Tegn varme stråler og en glad blomst som drikker solen.",samtale:"Hva gjør solen for plantene? Hvorfor er solen ekstra viktig om våren?",mal:"Vår, energi og naturkunnskap"},
-  {id:35,tittel:"Treet får nye blader",ikon:"🌳",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgTre/>,oppgave:"Farg treet med små grønne knopper og friske blader som spirer.",samtale:"Hvor var bladene om vinteren? Hva skjer med treet om våren?",mal:"Trærs livssyklus og årstider"},
-  {id:36,tittel:"Vårens lille kanin",ikon:"🐰",kategori:"vaar",alder:"1-5 år",rammeplan:["natur","etikk"],svg:<SvgKanin/>,oppgave:"Farg kaninen og lag en grønn vår-eng med gul løvetann og krokus.",samtale:"Hvor har kaninen vært om vinteren? Hva spiser den om våren?",mal:"Naturens våkning og dyrekunnskap"},
-  {id:37,tittel:"Frosken om våren",ikon:"🐸",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFrosk/>,oppgave:"Farg frosken grønn. Tegn et tjern med rumpetroll og liljepads.",samtale:"Hva er forskjellen på en rumpetroll og en frosk? Når blir tjernet varmt?",mal:"Naturens kretsløp og metamorfose"},
-  {id:38,tittel:"Sommersolen høyt på himmel",ikon:"☀️",kategori:"sommer",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgSol/>,oppgave:"Farg en knall gul sol. Tegn et svømmebasseng eller et hav å bade i.",samtale:"Hva gjør vi når det er varmt ute? Hvorfor må vi bruke solkrem?",mal:"Sommer, kropp og helse"},
-  {id:39,tittel:"Sommerens iskrem",ikon:"🍦",kategori:"sommer",alder:"1-5 år",rammeplan:["kropp","kommunikasjon"],svg:<SvgIskrem/>,oppgave:"Farg iskremen i din favorittsmak! Tegn flere kuler oppe – jordbær, sjokolade, vanilje?",samtale:"Hva er din favorittiskrem? Hvorfor smelter iskrem fort om sommeren?",mal:"Mat og smaksopplevelser"},
-  {id:40,tittel:"Båt på sommerhavet",ikon:"⛵",kategori:"sommer",alder:"2-6 år",rammeplan:["naermiljo","natur"],svg:<SvgBat/>,oppgave:"Farg båten og seilet. Tegn bølger, måker og kanskje en delfin som hopper!",samtale:"Har du vært på båt? Hva ser man fra båten? Hvordan flyter en båt?",mal:"Hav, fysikk og sommeropplevelser"},
-  {id:41,tittel:"Sommersykkeltur",ikon:"🚲",kategori:"sommer",alder:"2-6 år",rammeplan:["kropp","naermiljo"],svg:<SvgSykkel/>,oppgave:"Farg sykkelen din favorittfarge! Tegn en sti, trær og et lite eple i sekken.",samtale:"Kan du sykle? Hva trenger du for å sykle trygt? Hvor liker du å sykle?",mal:"Bevegelse, mestring og trafikksikkerhet"},
-  {id:42,tittel:"Fisketur om sommeren",ikon:"🐟",kategori:"sommer",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgFisk/>,oppgave:"Farg fisken med blå og sølv. Tegn fiskestang, krok og bølger med flere fisker.",samtale:"Hva spiser fisk? Har du fisket? Hva trenger man for å fiske?",mal:"Natur, mat og tradisjoner"},
-  {id:43,tittel:"Frosken og sommerdammen",ikon:"🐸",kategori:"sommer",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFrosk/>,oppgave:"Farg frosken grønn. Tegn varme bølger på dammen og insekter den vil spise.",samtale:"Hva gjør frosker om sommeren? Hvorfor liker de varmt vær?",mal:"Naturkunnskap og økosystemer"},
-  {id:44,tittel:"Sommerblomstene",ikon:"🌻",kategori:"sommer",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgBlomst/>,oppgave:"Farg blomsten knall gul som en solsikke! Tegn en stor blomstereng med mange farger.",samtale:"Hvilken blomst er din favoritt? Hvorfor liker bier blomster?",mal:"Naturglede og økologi"},
-  {id:45,tittel:"Sommerfugler på enga",ikon:"🦋",kategori:"sommer",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgSommerfugl/>,oppgave:"Farg flere sommerfugler i forskjellige farger. Tell hvor mange du tegner!",samtale:"Hvor mange sommerfugler kan du tegne? Hva spiser de?",mal:"Natur, antall og estetikk"},
-  {id:46,tittel:"Høsttreet med fargerike blader",ikon:"🍁",kategori:"host",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgHost/>,oppgave:"Farg bladene rødt, gult, oransje og brunt. Tegn flere som faller og en bunke nede.",samtale:"Hvorfor skifter bladene farge? Hvor lander de når de faller?",mal:"Årstider og naturens kretsløp"},
-  {id:47,tittel:"Høstens gresskar",ikon:"🎃",kategori:"host",alder:"2-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgGresskar/>,oppgave:"Farg gresskaret oransje! Tegn et morsomt eller skummelt ansikt på det.",samtale:"Hva kan vi lage av gresskar? Når er det høst-sesong?",mal:"Mat, høstkultur og kreativitet"},
-  {id:48,tittel:"Eple om høsten",ikon:"🍎",kategori:"host",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgEple/>,oppgave:"Farg eplet rødt eller grønt. Tegn flere epler på et eple-tre.",samtale:"Hvor vokser epler? Når plukker vi dem? Hva kan vi lage av epler?",mal:"Mat, høst og naturkunnskap"},
-  {id:49,tittel:"Bjørnen samler bær",ikon:"🐻",kategori:"host",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgBjorn/>,oppgave:"Farg bjørnen brun. Tegn blåbær, tyttebær og kanskje en honningkrukke!",samtale:"Hvorfor må bjørnen spise mye om høsten? Hva gjør den om vinteren?",mal:"Dyr om høsten og forberedelse til vinter"},
-  {id:50,tittel:"Elgen på høstskogen",ikon:"🦌",kategori:"host",alder:"3-6 år",rammeplan:["natur","naermiljo"],svg:<SvgElg/>,oppgave:"Farg elgen brun. Tegn høstløv rundt – rødt, gult og oransje.",samtale:"Hvor lever elgene? Hva spiser de om høsten? Har du sett en elg?",mal:"Norsk natur og dyreliv"},
-  {id:51,tittel:"Høstens ugle",ikon:"🦉",kategori:"host",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgUgleny/>,oppgave:"Farg ugla på en grein med rødgule blader. Tegn månen og mørk natthimmel.",samtale:"Hva spiser ugler om høsten? Hvor sover de om dagen?",mal:"Nattedyr og høstmiljø"},
-  {id:52,tittel:"Trærne mister bladene",ikon:"🌳",kategori:"host",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgTre/>,oppgave:"Farg de gjenværende bladene gyldent og rødt. Tegn flere som virvler i vinden.",samtale:"Hvorfor mister trær bladene om høsten? Hva skjer med bladene på bakken?",mal:"Årstider og kretsløp"},
-  {id:53,tittel:"Vinterlandskap",ikon:"❄️",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgVinter/>,oppgave:"Farg snølandskapet med kalde farger. Tegn et lite hus med røyk fra pipa.",samtale:"Hva er kjekt å gjøre om vinteren? Hva trenger vi når det er kaldt?",mal:"Vintermiljø og klær"},
-  {id:54,tittel:"Min beste snømann",ikon:"⛄",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSnomann/>,oppgave:"Gi snømannen en gulrot-nese, ull-lue og fargerikt skjerf!",samtale:"Hva trenger vi til en snømann? Hvor lenge varer han?",mal:"Vinter, kreativitet og smelting"},
-  {id:55,tittel:"Pingvin på vinteris",ikon:"🐧",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgPingvin/>,oppgave:"Farg pingvinen svart og hvit. Tegn isfjell og kanskje en pingvin som hopper i vannet!",samtale:"Hvor bor pingviner? Synes du det er kaldt der? Hvordan beskytter de seg?",mal:"Kalde områder og dyreliv"},
-  {id:56,tittel:"Bjørnen sover vinterhvile",ikon:"🐻",kategori:"vinter",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgBjorn/>,oppgave:"Tegn et hi i fjellet hvor bjørnen sover. Farg snøen rundt og himmelen mørk.",samtale:"Hvor lenge sover bjørnen? Hva gjør den i hiet? Hva spiste den før?",mal:"Dyrs vinteradapsjon"},
-  {id:57,tittel:"Vintersolen",ikon:"☀️",kategori:"vinter",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgSol/>,oppgave:"Farg en lavtstående vintersol. Tegn snø, et tre uten blader og kanskje en fugl.",samtale:"Hvorfor er solen lav om vinteren? Når er det mørkest på året?",mal:"Årstider, sol og lys"},
-  {id:58,tittel:"Julenissen",ikon:"🎅",kategori:"jul",alder:"1-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgJulemann/>,oppgave:"Farg julenissens drakt rød med hvitt skjegg. Tegn en sekk med gaver.",samtale:"Hvor bor julenissen? Hva spiser han? Hva ønsker du deg i jula?",mal:"Juletradisjoner og kultur"},
-  {id:59,tittel:"Den skinnende julestjernen",ikon:"⭐",kategori:"jul",alder:"2-6 år",rammeplan:["kunst","etikk"],svg:<SvgStjerne/>,oppgave:"Farg stjernen i gull. Tegn andre dekorasjoner og lys under stjernen.",samtale:"Hvorfor er stjernen viktig i julen? Hva er julens historie?",mal:"Juletradisjoner og fortelling"},
-  {id:60,tittel:"Vårt juletre",ikon:"🎄",kategori:"jul",alder:"1-6 år",rammeplan:["kunst","etikk"],svg:<SvgTre/>,oppgave:"Pynt treet med kuler, lys, stjerner og engler! Gjør det så fint du vil!",samtale:"Hva har dere på juletreet hjemme? Når pynter dere det?",mal:"Tradisjoner og kreativ utfoldelse"},
-  {id:61,tittel:"Julehjerter",ikon:"❤️",kategori:"jul",alder:"2-5 år",rammeplan:["etikk","kunst"],svg:<SvgHjerte/>,oppgave:"Farg hjerter i røde og hvite julefarger. Tegn flere hjerter sammen.",samtale:"Hva betyr jula for deg? Hvem er du glad i?",mal:"Kjærlighet, omsorg og tradisjon"},
-  {id:62,tittel:"Julens pepperkake",ikon:"🍪",kategori:"jul",alder:"2-6 år",rammeplan:["kropp","kunst"],svg:<SvgKake/>,oppgave:"Farg pepperkaken brun. Tegn pyntelig glasur og fargerikt drys på toppen.",samtale:"Har du laget pepperkaker? Hva trenger vi til dem?",mal:"Mat, baking og juletradisjon"},
-  {id:63,tittel:"Snømann om julen",ikon:"⛄",kategori:"jul",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSnomann/>,oppgave:"Tegn en julesnømann med rødt skjerf og kanskje en nisseluen!",samtale:"Hva er forskjellen på vinterleker og julestemning?",mal:"Vinter og jul"},
-  {id:64,tittel:"Julens reinsdyr",ikon:"🦌",kategori:"jul",alder:"2-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgElg/>,oppgave:"Farg reinsdyret brunt med store gevir. Tegn en slede og snø rundt.",samtale:"Hva tror du reinsdyrene gjør sammen med julenissen?",mal:"Juletradisjoner og fantasi"},
-  {id:65,tittel:"Pakker under treet",ikon:"🎁",kategori:"jul",alder:"1-5 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgBallong/>,oppgave:"Tenk på pakkene som ballonger! Farg dem fargerikt med fine sløyfer.",samtale:"Hva er det fineste med å få en gave? Og det fineste med å gi en?",mal:"Glede ved å gi og motta"},
-  {id:66,tittel:"Påskeharen",ikon:"🐰",kategori:"paske",alder:"1-5 år",rammeplan:["kunst","etikk"],svg:<SvgKanin/>,oppgave:"Farg påskeharen og tegn fargerike egg gjemt rundt – kan du gjemme dem godt?",samtale:"Hvor gjemmer påskeharen eggene? Hva er gøy med påske?",mal:"Påsketradisjoner og lek"},
-  {id:67,tittel:"Den lille påskekyllingen",ikon:"🐣",kategori:"paske",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgHone/>,oppgave:"Farg påskekyllingen knall gul! Tegn et skall den nettopp har klekket ut av.",samtale:"Hvordan blir egg til kyllinger? Hva spiser en liten kylling?",mal:"Liv og kretsløp"},
-  {id:68,tittel:"Påskeliljer",ikon:"🌼",kategori:"paske",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgBlomst/>,oppgave:"Farg flere påskeliljer gule. Tegn en hage med grønne busker og gress.",samtale:"Hvorfor får vi påskeblomster om våren? Hvor vokser de?",mal:"Vår, påske og natur"},
-  {id:69,tittel:"Påsken kommer",ikon:"🥚",kategori:"paske",alder:"2-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgEple/>,oppgave:"Tenk på eplet som et stort påskeegg! Mal det fargerikt med fine mønstre.",samtale:"Hvilke farger har du sett på påskeegg? Hvilken er din favoritt?",mal:"Kreativ utfoldelse og farger"},
-  {id:70,tittel:"Påskekake",ikon:"🍰",kategori:"paske",alder:"2-6 år",rammeplan:["kropp","kunst"],svg:<SvgKake/>,oppgave:"Farg en påskekake med gul glasur og påskedeko – kyllinger og blomster på toppen!",samtale:"Hva pleier dere å spise i påsken? Har du bakt noe?",mal:"Mat, tradisjoner og fest"},
-  {id:71,tittel:"Halloween-gresskar med ansikt",ikon:"🎃",kategori:"halloween",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgGresskar/>,oppgave:"Farg gresskaret skinnende oransje. Tegn et lys inni som lyser ut ansiktet!",samtale:"Hva er gøy med Halloween? Hvilken kostyme vil du ha?",mal:"Tradisjoner og kreativitet"},
-  {id:72,tittel:"Svart Halloween-katt",ikon:"🐈‍⬛",kategori:"halloween",alder:"2-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgKatt/>,oppgave:"Farg katten helt svart med gule, skinnende øyne. Tegn fullmånen bak.",samtale:"Hvorfor er svart katt et Halloween-symbol? Liker du Halloween?",mal:"Kultur og fortelling"},
-  {id:73,tittel:"Halloween-ugla",ikon:"🦉",kategori:"halloween",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgUgleny/>,oppgave:"Farg ugla med Halloween-stemning – mørk og litt skummel. Tegn flaggermus og spindelvev.",samtale:"Er du redd om Halloween? Hva gjør det mindre skummelt?",mal:"Følelser og fortelling"},
-  {id:74,tittel:"Den lille Halloween-musen",ikon:"🐭",kategori:"halloween",alder:"2-5 år",rammeplan:["kunst","etikk"],svg:<SvgMus/>,oppgave:"Farg musen i mørke Halloween-farger. Tegn et lite gresskar og noen skygger.",samtale:"Hvorfor blir mange dyr symboler for Halloween?",mal:"Dyrekunnskap og kultur"},
-  {id:75,tittel:"17. mai med familien",ikon:"🇳🇴",kategori:"mai17",alder:"2-6 år",rammeplan:["naermiljo","etikk"],svg:<SvgFamilie/>,oppgave:"Farg familien i festklær. Tegn norske flagg, hatter og kanskje pølse og is!",samtale:"Hva gjør dere på 17. mai? Hvilke farger har det norske flagget?",mal:"Nasjonal identitet og fellesskap"},
-  {id:76,tittel:"Festballonger 17. mai",ikon:"🎈",kategori:"mai17",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgBallong/>,oppgave:"Farg ballongene rødt, hvitt og blått som det norske flagget!",samtale:"Hvorfor feirer vi 17. mai? Hva betyr de tre fargene?",mal:"Norsk kultur og fellesskap"},
-  {id:77,tittel:"Barnetoget",ikon:"🏠",kategori:"mai17",alder:"2-6 år",rammeplan:["naermiljo","kommunikasjon"],svg:<SvgHus/>,oppgave:"Farg huset med norske flagg på utsiden. Tegn et barnetog som går forbi!",samtale:"Hva er et barnetog? Har du gått i tog før?",mal:"Tradisjoner og nærmiljø"},
-  {id:78,tittel:"Naturens regnbue",ikon:"🌈",kategori:"natur",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgRegnbue/>,oppgave:"Farg regnbuen med alle 7 fargene i riktig rekkefølge: rød, oransje, gul, grønn, blå, indigo, fiolett.",samtale:"Hvor mange farger har regnbuen? Hva må til for at vi ser den?",mal:"Farger, vær og antall"},
-  {id:79,tittel:"Livet i havet",ikon:"🌊",kategori:"natur",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgFisk/>,oppgave:"Farg fisken og tegn et helt undervannsliv: tang, koraller, snegler og kanskje en sjøstjerne!",samtale:"Hvilke dyr lever i havet? Har du dykket eller snorklet?",mal:"Marine økosystemer"},
-  {id:80,tittel:"Vill blomstereng",ikon:"🌺",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgBlomst/>,oppgave:"Farg blomsten og tegn en hel eng med ville blomster i mange farger.",samtale:"Hva er en eng? Hvilke dyr lever i enga?",mal:"Naturmangfold"},
-  {id:81,tittel:"Den vakre fuglen",ikon:"🐤",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgFugl/>,oppgave:"Farg fuglen i regnbuens farger. Tegn et frodig tre der den kan synge.",samtale:"Hvilken fugl synger din favorittsang? Hva spiser fugler?",mal:"Fugleliv og naturglede"},
-  {id:82,tittel:"Stjernehimmelen om natten",ikon:"🌟",kategori:"natur",alder:"3-6 år",rammeplan:["natur","antall"],svg:<SvgStjerne/>,oppgave:"Farg stjernen sterk gul. Tegn mange små stjerner og en stor måne!",samtale:"Kan du se stjerner fra hjemmet ditt? Hvor mange tror du det er?",mal:"Astronomi og undring"},
-  {id:83,tittel:"Min familie i hagen",ikon:"🏡",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","naermiljo"],svg:<SvgFamilie/>,oppgave:"Farg familien din. Tegn et hus, en hage og familiens favorittaktiviteter!",samtale:"Hvem bor sammen med deg? Hva liker dere å gjøre i hagen?",mal:"Familie, identitet og samvær"},
-  {id:84,tittel:"Lek med beste venn",ikon:"👫",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgVennskap/>,oppgave:"Farg vennene. Tegn dere som leker sammen – sandkasse, sykling, ball?",samtale:"Hvem er din beste venn? Hva gjør dere sammen?",mal:"Vennskap og sosial læring"},
-  {id:85,tittel:"Storfamilien samlet",ikon:"👨‍👩‍👧‍👦",kategori:"mennesker",alder:"3-6 år",rammeplan:["etikk","naermiljo"],svg:<SvgFamilie/>,oppgave:"Farg en stor familie med besteforeldre, foreldre og barn. Alle er forskjellige!",samtale:"Hvem er i storfamilien din? Når møtes dere alle sammen?",mal:"Slekt og generasjoner"},
-  {id:86,tittel:"Hjertet og kjærlighet",ikon:"💖",kategori:"folelser",alder:"2-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgHjerte/>,oppgave:"Farg hjertet i din favorittfarge. Tegn flere små hjerter rundt for de du er glad i.",samtale:"Hvem er du glad i? Hvordan viser vi at vi er glad i noen?",mal:"Empati og uttrykk for følelser"},
-  {id:87,tittel:"Gleden med venner",ikon:"😀",kategori:"folelser",alder:"2-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgVennskap/>,oppgave:"Farg vennene med store smil. Tegn det dere gjør som gjør dere glade.",samtale:"Hva gjør deg glad? Hvordan ser ansiktet ditt ut når du smiler?",mal:"Gledesfølelse og ansiktsuttrykk"},
-  {id:88,tittel:"Trygghet hjemme",ikon:"🤗",kategori:"folelser",alder:"2-5 år",rammeplan:["etikk","naermiljo"],svg:<SvgFamilie/>,oppgave:"Farg familien som klemmer. Tegn et koselig hjem med myke pledd og puter.",samtale:"Hva gjør deg trygg? Hvem hjelper deg når du er redd?",mal:"Trygghetsfølelse og tilknytning"},
-  {id:89,tittel:"Omsorg og hjelp",ikon:"💝",kategori:"folelser",alder:"3-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgHjerte/>,oppgave:"Tegn et stort hjerte. Inni tegner du noen du vil hjelpe – mor, far, en venn.",samtale:"Hvordan kan vi hjelpe andre? Når har noen hjulpet deg?",mal:"Empati og prososial atferd"},
-  {id:90,tittel:"Et saftig eple",ikon:"🍎",kategori:"mat",alder:"1-5 år",rammeplan:["kropp","natur"],svg:<SvgEple/>,oppgave:"Farg eplet rødt, gult eller grønt. Tegn en bit ut av det – mmm!",samtale:"Hva er din favorittfrukt? Hva gir frukt oss?",mal:"Sunn mat og smakssanser"},
-  {id:91,tittel:"Den gule bananen",ikon:"🍌",kategori:"mat",alder:"1-4 år",rammeplan:["kropp","natur"],svg:<SvgBanan/>,oppgave:"Farg bananen knall gul. Tegn flere bananer som henger på et palmetre.",samtale:"Hvor vokser bananer? Hvilke andre frukter kjenner du?",mal:"Mat fra verden og naturkunnskap"},
-  {id:92,tittel:"Min favoritt-iskrem",ikon:"🍨",kategori:"mat",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgIskrem/>,oppgave:"Farg iskremen i dine favorittsmaker. Tegn fargerikt drys og et kirsebær på toppen!",samtale:"Hvilken er din favoritt-iskrem? Når spiser du iskrem?",mal:"Smaker, valg og uttrykk"},
-  {id:93,tittel:"Den fineste bursdagskake",ikon:"🎂",kategori:"mat",alder:"2-6 år",rammeplan:["antall","kommunikasjon"],svg:<SvgKake/>,oppgave:"Pynt kaken med fargerik glasur. Tegn lys – like mange som din alder!",samtale:"Når har du bursdag? Hvor mange lys skal du ha?",mal:"Tradisjoner, alder og antall"},
-  {id:94,tittel:"Frukt for kroppen",ikon:"🥕",kategori:"mat",alder:"3-6 år",rammeplan:["kropp","natur"],svg:<SvgEple/>,oppgave:"Farg eplet og tegn flere frukter og grønnsaker som er bra for kroppen.",samtale:"Hvorfor er frukt sunt? Hvilke vitaminer gir det?",mal:"Helse og kosthold"},
-  {id:95,tittel:"Den raske bilen",ikon:"🚗",kategori:"kjoretoy",alder:"1-5 år",rammeplan:["naermiljo","kropp"],svg:<SvgBil/>,oppgave:"Farg bilen din favorittfarge! Tegn en vei med skilt, hus og trafikklys.",samtale:"Har dere bil hjemme? Hvor liker du å kjøre? Hva betyr rødt lys?",mal:"Trafikkforståelse og nærmiljø"},
-  {id:96,tittel:"Båt på det blå hav",ikon:"⛵",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["naermiljo","natur"],svg:<SvgBat/>,oppgave:"Farg båten og seilet. Tegn bølger, måker og en stor sol.",samtale:"Hvilke båter kjenner du? Hvor liker man å seile?",mal:"Transport på sjø og natur"},
-  {id:97,tittel:"Flyet på himmelen",ikon:"✈️",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["naermiljo","natur"],svg:<SvgFly/>,oppgave:"Farg flyet hvitt med dine egne striper. Tegn skyer og himmelblå rundt.",samtale:"Har du sittet i fly? Hvor langt kan et fly fly?",mal:"Transport og reise"},
-  {id:98,tittel:"Toget på skinner",ikon:"🚂",kategori:"kjoretoy",alder:"1-5 år",rammeplan:["naermiljo","kropp"],svg:<SvgTog/>,oppgave:"Farg toget med dampende lokomotiv! Tegn skinner og et lite stoppested.",samtale:"Har du reist med tog? Hvilken lyd lager et tog?",mal:"Transport og bevegelse"},
-  {id:99,tittel:"Min nye sykkel",ikon:"🚲",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["kropp","naermiljo"],svg:<SvgSykkel/>,oppgave:"Farg sykkelen og legg til en hjelm. Tegn en gangvei gjennom parken.",samtale:"Kan du sykle? Hvilken hjelm bruker du? Hvorfor er hjelm viktig?",mal:"Trafikksikkerhet og motorikk"},
-  {id:100,tittel:"Mitt hjem",ikon:"🏠",kategori:"bygg",alder:"1-5 år",rammeplan:["naermiljo","kunst"],svg:<SvgHus/>,oppgave:"Farg huset slik ditt eget ser ut! Tegn hagen, blomster og vinduer.",samtale:"Hvordan ser hjemmet ditt ut? Hvor er ditt favorittrom?",mal:"Hjem og identitet"},
-  {id:101,tittel:"Barnehagen min",ikon:"🏫",kategori:"bygg",alder:"1-5 år",rammeplan:["naermiljo","etikk"],svg:<SvgHus/>,oppgave:"Tegn barnehagen din! Lekestativ ute og barn som leker, kanskje en barnehagelærer også!",samtale:"Hva er din favoritt-plass i barnehagen? Hvem er ofte der med deg?",mal:"Tilhørighet og nærmiljø"},
-  {id:102,tittel:"Drømmehuset",ikon:"🏰",kategori:"bygg",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgHus/>,oppgave:"Tegn ditt drømmehus! Det kan ha trampoline-tak eller godterifabrikk i kjelleren!",samtale:"Hvis du fikk lage et hus akkurat som du vil – hvordan ville det blitt?",mal:"Fantasi og kreativ tenkning"},
-  {id:103,tittel:"Fest med ballonger",ikon:"🎈",kategori:"festlig",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgBallong/>,oppgave:"Farg ballongene i alle regnbuens farger! Tegn snorer og noen som danser.",samtale:"Når har du vært på fest sist? Hva er gøy på fest?",mal:"Fest, glede og fellesskap"},
-  {id:104,tittel:"Stjernedryss i festen",ikon:"⭐",kategori:"festlig",alder:"2-5 år",rammeplan:["kunst","antall"],svg:<SvgStjerne/>,oppgave:"Farg stjernen gull. Tegn mange små stjerner overalt som om de drysser ned.",samtale:"Hvor mange stjerner kan du tegne? Når er det fest-stemning?",mal:"Glede, fantasi og antall"},
-  {id:105,tittel:"Bursdagskaken min",ikon:"🎂",kategori:"festlig",alder:"2-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgKake/>,oppgave:"Pynt din ideelle bursdagskake! Hvilken smak, hvilke farger, hvor mange lys?",samtale:"Når er din bursdag? Hva ønsker du deg til neste bursdag?",mal:"Tradisjoner og personlig markering"},
+  {id:1,tittel:"Kaninen med lange ører",ikon:"🐰",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgKanin/>,oppgave:"1. Farg pelsen lys brun eller hvit. 2. Farg innsiden av ørene lyserøde. 3. Tegn grønt gress og tre gulrøtter rundt. 4. Gi kaninen store runde øyne og en knopplignende hale.",samtale:"Hva er forskjellen på en kanin og en hare? Kan du telle frambeina og bakbeina – er det likt antall? Hva kalles kaninens unge?",mal:"Pattedyr og kroppsdeler. Rammeplanen: Natur – bli kjent med dyrs kjennetegn og levevis."},
+  {id:2,tittel:"Bjørnen i norsk skog",ikon:"🐻",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","etikk"],svg:<SvgBjorn/>,oppgave:"1. Farg kroppen mørk brun, snuten litt lysere. 2. Tegn et hi (hulrom i bakken eller under en rot). 3. Legg til blåbærbusker og en honningkube i treet. 4. Tegn bjørneunger som titter ut av hiet.",samtale:"Hva er vinterhvile – er det det samme som å sove? Hva spiser bjørnen for å legge på seg til vinteren? Hvor i Norge finnes bjørner?",mal:"Rovdyr og tilpasning til årstider. Rammeplanen: Natur – forstå dyrs livsstrategier og Norges dyreliv."},
+  {id:3,tittel:"Meisen på fuglebordet",ikon:"🐦",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgFugl/>,oppgave:"1. Farg brystet gult og vingen blågrønn. 2. Tegn et fuglebord den sitter på med frø. 3. Legg til snø rundt – det er vinter. 4. Tegn en menneskehånd som fyller på frø.",samtale:"Hva heter fuglen du ser mest i barnehagen? Hvorfor legger vi ut mat om vinteren? Hva er forskjellen på trekkfugler og vinterfugler?",mal:"Fugler i norsk natur og omsorg for dyr. Rammeplanen: Natur – observere og lære om lokalt dyreliv."},
+  {id:4,tittel:"Torsken i Nordsjøen",ikon:"🐟",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","naermiljo"],svg:<SvgFisk/>,oppgave:"1. Farg fisken gråbrun med hvit buk. 2. Tegn et hav med grønn tang og sand. 3. Legg til tre andre sjødyr: krabbe, sjøstjerne, snegl. 4. Tegn bobler som stiger opp fra fisken.",samtale:"Hva spiser torsk? Hva er et gjelle – og hva gjør det? Hva er Norges viktigste fiskeart?",mal:"Marine dyr og Norges kystkultur. Rammeplanen: Natur og nærmiljø – lære om havet som ressurs og leveområde."},
+  {id:5,tittel:"Sommerfuglens livssyklus",ikon:"🦋",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kunst"],svg:<SvgSommerfugl/>,oppgave:"1. Farg de to vingepar i tydelig mønster – prikkete eller stripete. 2. Bruk minst tre farger på vingene. 3. Tegn en blomst den suger nektar av. 4. Tegn en larve og en kokong i hjørnet av arket.",samtale:"Hva er en metamorfose? Hvilke fire stadier går en sommerfugl gjennom? Hva er forskjellen mellom en sommerfugl og en møll?",mal:"Insekters livssyklus og biologisk mangfold. Rammeplanen: Natur – forstå forvandlingsprosesser i naturen."},
+  {id:6,tittel:"Frosken i tjernet",ikon:"🐸",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFrosk/>,oppgave:"1. Farg frosken knall grønn med mørke flekker. 2. Tegn et tjern med vannliljeblader og siv. 3. Legg til tre rumpetroll i vannet. 4. Tegn insekter frosken kan spise.",samtale:"Hva er et rumpetroll? Hva skjer med det? Kan du hoppe som en frosk – prøv!",mal:"Amfibier og metamorfose. Rammeplanen: Natur og kropp – livssykluser og kople dem til kroppsbevegelse."},
+  {id:7,tittel:"Elgoksen i birkeskogen",ikon:"🦌",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","naermiljo"],svg:<SvgElg/>,oppgave:"1. Farg kroppen mørk brun og snuten beige. 2. Farg geviret beige – tell grenene! 3. Tegn bjørketrær rundt med gult løv. 4. Tegn dype spor i bakken.",samtale:"Hva er et gevir, og hvem har det? Hva spiser elgen om sommeren og om vinteren? Hvor stor er en voksen elg sammenlignet med en bil?",mal:"Norges storvilt og skogsøkologi. Rammeplanen: Natur og nærmiljø – kjenne til norske dyr og deres leveområder."},
+  {id:8,tittel:"Solen gir liv",ikon:"☀️",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSol/>,oppgave:"1. Farg solen sterkt gul med oransje stråler. 2. Tegn en blomst som vender mot solen. 3. Legg til et tre og en fugl. 4. Farg himmelen lys blå.",samtale:"Hva trenger planter for å vokse? Hva gir solen oss? Hva skjer hvis det er overskyet i lang tid?",mal:"Fotosyntese og solenergi. Rammeplanen: Natur – forstå solens rolle for alt liv."},
+  {id:9,tittel:"Regnbuen – naturens kunstverk",ikon:"🌈",kategori:"natur",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgRegnbue/>,oppgave:"1. Farg regnbuen i riktig rekkefølge: rød, oransje, gul, grønn, blå, indigo, fiolett. 2. Tegn regndråper på den ene siden og sol på den andre. 3. Skriv tallene 1–7 på hver bue.",samtale:"Hva må til for å se en regnbue? Kan du huske alle 7 fargene i riktig rekkefølge? Hva er lys egentlig laget av?",mal:"Farger og lysets spredning. Rammeplanen: Natur og antall – rekkefølge, mønster og fargeblanding."},
+  {id:10,tittel:"Høsttreet med fargerike blader",ikon:"🍂",kategori:"host",alder:"3-6 år",rammeplan:["natur","kunst"],svg:<SvgHost/>,oppgave:"1. Farg bladene i fire høstfarger: rødt, oransje, gult og brunt. 2. Tegn blader som virvler ned. 3. Legg til en bunke blader på bakken. 4. Tegn en kråke som sitter øverst.",samtale:"Hva skjer med klorofyllet om høsten? Hva finner vi i skogen om høsten? Hva heter prosessen der treet mister bladene?",mal:"Årstider og naturprosesser. Rammeplanen: Natur – forstå forandringer i naturen knyttet til årstidene."},
+  {id:11,tittel:"Snømannen med personlighet",ikon:"⛄",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSnomann/>,oppgave:"1. Farg snømannen med tre hvite kuler. 2. Gi ham en gulrotnese, mørke øyne og knapperekke. 3. Tegn fargerik lue og stripete skjerf. 4. Legg til to pinner som armer.",samtale:"Hva trenger vi for å lage en snømann? Hva skjer med snømannen når solen varmer? Hva er smeltepunktet for is?",mal:"Is og snø. Rammeplanen: Natur – forstå vann i ulike aggregattilstander."},
+  {id:12,tittel:"Vårblomstene er her",ikon:"🌸",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgVaar/>,oppgave:"1. Farg blomstene i lyse vårfarger – rosa, gul og hvit. 2. Tegn jord med knopper som piper opp. 3. Legg til tre bier som besøker blomstene. 4. Tegn grønne blader fra en tulipan.",samtale:"Hvilke blomster er de første vi ser om våren? Hva er en løkblomst? Hva er en krokus?",mal:"Vårblomster og planters livssyklus. Rammeplanen: Natur – observere og beskrive forandringer i naturen."},
+  {id:13,tittel:"Familien er forskjellig",ikon:"👨‍👩‍👧‍👦",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","naermiljo","kommunikasjon"],svg:<SvgFamilie/>,oppgave:"1. Farg hver person ulikt – ulik hudfarge, hår og klær. 2. Tegn dem i en felles aktivitet. 3. Legg til detaljer som viser personlighet. 4. Tegn et hjem rundt dem.",samtale:"Hvem er i din familie? Er alle familier like – hva er likt og hva er ulikt? Hva gjør familien din på helgene?",mal:"Familieformer og mangfold. Rammeplanen: Etikk og nærmiljø – respektere og verdsette ulike familier."},
+  {id:14,tittel:"Venner hjelper hverandre",ikon:"🤝",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","kommunikasjon","naermiljo"],svg:<SvgVennskap/>,oppgave:"1. Farg de to vennene med ulike utseender. 2. Tegn dem i en situasjon der den ene hjelper den andre. 3. Legg til en snakkeboble med noe hyggelig. 4. Tegn et smil på begge.",samtale:"Hva er en god venn? Hva gjør man om noen er lei seg? Hva betyr empati?",mal:"Empati og vennskap. Rammeplanen: Etikk og kommunikasjon – forstå andres perspektiv og vise omsorg."},
+  {id:15,tittel:"Blomsten vokser fra frø",ikon:"🌻",kategori:"natur",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgBlomst/>,oppgave:"1. Farg blomsten i kontrastrikt fargevalg. 2. Tegn røttene under bakken. 3. Legg til en bie som samler nektar. 4. Tegn frø som sprer seg fra blomsten.",samtale:"Hva er en frøkapsel? Hva trenger et frø for å spire? Hva er pollinering og hvorfor er bier så viktige?",mal:"Blomsters livssyklus og insekter. Rammeplanen: Natur – forstå pollinering og samspill mellom planter og dyr."},
+  {id:16,tittel:"Treets liv gjennom året",ikon:"🌳",kategori:"natur",alder:"3-6 år",rammeplan:["natur","kunst"],svg:<SvgTre/>,oppgave:"1. Farg treet med grønne blader og brun stamme. 2. Tegn et ekorn som sitter i kronen. 3. Legg til et fuglereir med egg. 4. Tegn epler eller kongler.",samtale:"Hva er forskjellen på et løvtre og et nåletre? Hva er treringer? Hvem bruker trær som hjem?",mal:"Treets biologi og årstidenes kretsløp. Rammeplanen: Natur – forstå forandringer over tid i naturen."},
+  {id:17,tittel:"Husdyret katten min",ikon:"🐱",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","etikk"],svg:<SvgKatt/>,oppgave:"1. Velg kattens farge: svart, hvit, oransje eller stripete – og farg den! 2. Tegn en varm kurv med pledd. 3. Tegn en skål med mat og vann. 4. Legg til en ball av garn.",samtale:"Hva trenger katten av stell og omsorg? Hva betyr det å være ansvarlig for et dyr? Hva gjør katten når den er fornøyd?",mal:"Husdyr og dyrevelferd. Rammeplanen: Etikk – ansvar og omsorg for levende vesener."},
+  {id:18,tittel:"Hunden som venn og hjelper",ikon:"🐶",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","etikk"],svg:<SvgHund/>,oppgave:"1. Farg hunden en valgfri rase og farge. 2. Tegn båndet den er i og den som holder det. 3. Tegn et hundehus med navn over døren. 4. Legg til bolle og bein.",samtale:"Hva gjør tjenestehunder – politihunder, blindehunder, redningshunder? Hva betyr det at hunden er 'menneskets beste venn'?",mal:"Husdyr og samarbeid med dyr. Rammeplanen: Etikk og nærmiljø – omsorg og respekt for dyr."},
+  {id:19,tittel:"Hesten på beite",ikon:"🐴",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgHest/>,oppgave:"1. Farg hesten kastanjebrun med svart man og hale. 2. Tegn et grønt beite med gjerde rundt. 3. Tegn en stall i bakgrunnen. 4. Legg til en hestesko på bakken.",samtale:"Hva er en fole (hesteunge)? Hvilke kroppsdeler har en hest som er spesielle? Hva spiser hester?",mal:"Husdyr og dyreanatomit. Rammeplanen: Natur og kropp – sammenligne dyrs og menneskers kropper."},
+  {id:20,tittel:"Kua på gården",ikon:"🐮",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","naermiljo"],svg:<SvgKu/>,oppgave:"1. Farg kua med svarte og hvite flekker. 2. Tegn en stor rød låve i bakgrunnen. 3. Tegn en bøtte under kua for melken. 4. Legg til en kalv ved siden av moren.",samtale:"Hva får vi fra kua? (Melk, ost, smør, yoghurt.) Hva heter kuungens unge? Hva er en gård?",mal:"Husdyr og matproduksjon. Rammeplanen: Nærmiljø og natur – forstå kopling mellom mat og dyr på gård."},
+  {id:21,tittel:"Grisen på gårdstunet",ikon:"🐷",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgGris/>,oppgave:"1. Farg grisen lyserosa med litt gjørme på snuten. 2. Tegn en liten griseflokk rundt den. 3. Tegn et gjørmebad. 4. Legg til mat i en trau.",samtale:"Hvorfor elsker griser å bade i gjørme? Hva er grisens snute god til? Visste du at griser er blant de smarteste dyrene?",mal:"Grisens intelligens og atferd. Rammeplanen: Natur og kommunikasjon – dyrs behov og adferd."},
+  {id:22,tittel:"Sauen med tykk ull",ikon:"🐑",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","naermiljo"],svg:<SvgSau/>,oppgave:"1. Farg ullen hvit og fluffy, bena og snuten svarte. 2. Tegn et lam som hopper ved siden av. 3. Tegn et gjerde og grønne åser i bakgrunnen. 4. Legg til en bjelle rundt halsen.",samtale:"Hva lager vi av saueull? Når klipper man sau og hvorfor er det viktig for sauen? Hva er en flokk?",mal:"Ull som ressurs og norsk tradisjon. Rammeplanen: Natur og nærmiljø – bærekraftig bruk av naturressurser."},
+  {id:23,tittel:"Høna og eggene",ikon:"🐔",kategori:"dyr",alder:"1-5 år",rammeplan:["natur","antall"],svg:<SvgHone/>,oppgave:"1. Farg høna rødoransje med rød kam. 2. Tegn et reir med fem egg – farg hvert egg ulikt. 3. Tegn to kyllinger som nettopp har klekket. 4. Legg til korn på bakken.",samtale:"Hvor mange egg la høna i tegningen? Hva er forskjellen på egg og kylling? Hva trenger et egg for å bli til en kylling?",mal:"Fuglenes livssyklus og antallsforståelse. Rammeplanen: Antall – telle egg og kople tall til mengde."},
+  {id:24,tittel:"Den lille musen i hulen",ikon:"🐭",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgMus/>,oppgave:"1. Farg musen lysegrå med store runde ører og lang hale. 2. Tegn et lite musehull i veggen. 3. Tegn matvarer musen har samlet: ost, frø, korn. 4. Legg til tre musunger inne i hulen.",samtale:"Hva spiser mus? Hva er forskjellen mellom mus og rotte? Hva betyr det å 'samle mat til vinteren'?",mal:"Gnagere og overlevelsesstrategier. Rammeplanen: Natur – forstå dyrs instinktive atferd."},
+  {id:25,tittel:"Uglen som jakter om natten",ikon:"🦉",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgUgleny/>,oppgave:"1. Farg uglen brun med store gule øyne. 2. Tegn mørkeblå nattehimmel med halvmåne og stjerner. 3. Tegn et tre med bare greiner der uglen sitter. 4. Legg til en liten mus nede på bakken.",samtale:"Hva er et rovdyr? Hva spiser ugler? Hva er spesielt med uglenes øyne og ører sammenlignet med andre fugler?",mal:"Nattdyr og sanser. Rammeplanen: Natur – dyrs tilpasning til mørke og jakt."},
+  {id:26,tittel:"Pingvinen og ungen sin",ikon:"🐧",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","etikk"],svg:<SvgPingvin/>,oppgave:"1. Farg pingvinen svart på baken og hvit foran. 2. Tegn en liten pingvinunge mellom beina. 3. Legg til isfjell og blågrønt hav. 4. Tegn snø som faller.",samtale:"Hvor bor pingviner – Nord- eller Sydpolen? Kan pingviner fly? Hvordan holder de seg varme?",mal:"Polardyr og foreldreinstinkt. Rammeplanen: Natur og etikk – foreldres omsorg på tvers av dyrearter."},
+  {id:27,tittel:"Løven – dyrenes konge",ikon:"🦁",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgLove/>,oppgave:"1. Farg kroppen sandgul og manken mørk oransjebrunt. 2. Tegn savannen med høyt gress og et akasietre. 3. Legg til to løveunger som leker. 4. Tegn solen som brenner høyt.",samtale:"Hva er en savanne? Hva spiser løver? Hvem jakter i en løveflokk – hannene eller hunnene?",mal:"Rovdyr og afrikansk fauna. Rammeplanen: Natur – mangfold av dyreliv på ulike kontintenter."},
+  {id:28,tittel:"Elefanten med stor snabel",ikon:"🐘",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgElefant/>,oppgave:"1. Farg elefanten grå med rynkete hud. 2. Tegn snabelen som spruter vann. 3. Legg til store vifteformede ører. 4. Tegn en elefantflokk ved et vanningshull i bakgrunnen.",samtale:"Hva bruker elefanten snabelen til? Er elefanten det største landdyret? Hva er elfenbein?",mal:"Verdens største landdyr og dets anatomi. Rammeplanen: Natur – verdens dyreliv og truede arter."},
+  {id:29,tittel:"T-Rex – den fryktelige dinosauren",ikon:"🦕",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgDinosaur/>,oppgave:"1. Farg T-Rex mørkegrønn med lysere buk og hvite tenner. 2. Tegn en urskogjungel med bregner og palmer. 3. Legg til et stort egg bak beina. 4. Tegn en vulkan som røyker i bakgrunnen.",samtale:"Levde dinosaurene og menneskene på samme tid? Hva betyr 'utdødd'? Hva er en fossil?",mal:"Prhistorisk liv og geologi. Rammeplanen: Natur – forstå tid, forandring og naturhistorie."},
+  {id:30,tittel:"Påskeliljene i hagen",ikon:"🌼",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgPaaskelilje/>,oppgave:"1. Farg blomsten klargul med hvit indre ring. 2. Tegn fem påskeliljer på rad. 3. Legg til et jordlag med en synlig løk under. 4. Tegn sol og varm luft over dem.",samtale:"Hva er en løkplante? Når planter vi påskeliljer? Hva er naturens 'våkning'?",mal:"Løkplanter og vårblomstring. Rammeplanen: Natur og kunst – forstå planters vekst og dekorasjon."},
+  {id:31,tittel:"Trekkfuglene er tilbake",ikon:"🐦",kategori:"vaar",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgFuglV/>,oppgave:"1. Farg svalen blå med hvit buk og rød hals. 2. Tegn et reir under et tak med to egg i. 3. Legg til V-formasjon av fugler på himmelen. 4. Tegn grønne trær – det er vår!",samtale:"Hvor har svalene vært om vinteren? Hva er lengden på en svales reise? Hva betyr 'trekkfugl'?",mal:"Trekkfugler og sesongmigrasjon. Rammeplanen: Natur – forstå fugletrekk og årsrytmer."},
+  {id:32,tittel:"Sommerfuglen om våren",ikon:"🦋",kategori:"vaar",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSommerfuglVaar/>,oppgave:"1. Farg de fire vingene i lyse vårfarger. 2. Tegn speilvendte mønstre – begge sider like. 3. Tegn en blomst den suger nektar av. 4. Legg til en larve på et blad i hjørnet.",samtale:"Hva er symmetri? Er en sommerfugls vinger symmetriske? Hva er det første den gjør om våren?",mal:"Symmetri og insektenes liv om våren. Rammeplanen: Natur og antall – oppdage mønstre og symmetri."},
+  {id:33,tittel:"Vårregnet og regnbuen",ikon:"🌈",kategori:"vaar",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSkyRegn/>,oppgave:"1. Farg regnbuen med alle 7 farger. 2. Tegn regndråper som faller fra skyer på venstre side. 3. Legg til sol på høyre side. 4. Tegn vårblomster nede på bakken.",samtale:"Hva er et vindkast? Hva er vårregn godt for? Hva er forskjellen mellom vår og sommerregn?",mal:"Vær om våren og naturprosesser. Rammeplanen: Natur – observere og beskrive vær og årstider."},
+  {id:34,tittel:"Vårsolen varmer",ikon:"☀️",kategori:"vaar",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgSolVaar/>,oppgave:"1. Farg solen knall gul med lange stråler. 2. Tegn en blomst som vender ansiktet mot solen. 3. Legg til en snø som smelter i hjørnet. 4. Tegn barn uten jakke – det er endelig varmt!",samtale:"Hva gjør solen for plantene? Hvorfor er solen ekstra viktig etter vinteren? Hva kjenner vi på huden i solen?",mal:"Vår, energi og kropp. Rammeplanen: Natur og kropp – forstå solens varme og virkning."},
+  {id:35,tittel:"Treet får nye blader",ikon:"🌳",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgTreVaar/>,oppgave:"1. Farg stammen brun. 2. Tegn lyse grønne knopper og friske blader som spirer frem. 3. Legg til en blomst ved foten. 4. Tegn en fugl som bygger reir i kronen.",samtale:"Hvor var bladene om vinteren? Hva er en bladknop? Hva skjer med treet om våren?",mal:"Trærs livssyklus og årstider. Rammeplanen: Natur – følge forandringer gjennom årstidene."},
+  {id:36,tittel:"Vårens lille kanin",ikon:"🐰",kategori:"vaar",alder:"1-5 år",rammeplan:["natur","etikk"],svg:<SvgKaninEng/>,oppgave:"1. Farg kaninen hvit med rosa ører. 2. Tegn en grønn vår-eng med gul løvetann og krokus. 3. Legg til en kaninunge ved siden av. 4. Tegn sollys som varmer.",samtale:"Hva er kaninungens navn? Hva spiser kaninen om våren? Hva er naturens 'våkning'?",mal:"Naturens vår og dyreunger. Rammeplanen: Natur og etikk – forstå ny vekst og dyreunger om våren."},
+  {id:37,tittel:"Rumpetrollet i dammen",ikon:"🐸",kategori:"vaar",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgRumpetroll/>,oppgave:"1. Farg frosken lysegrønn. 2. Tegn et tjern med fire rumpetroll i ulikt stadium. 3. Legg til vannliljeblader og siv. 4. Tegn en ferdig frosk på bredden.",samtale:"Hva er de fire stadiene i en frosks liv? Hva mister rumpetrollet etter hvert? Hva betyr metamorfose?",mal:"Amfibiers metamorfose om våren. Rammeplanen: Natur – følge livssyklusen og forstå forandring."},
+  {id:38,tittel:"Badedagen på stranda",ikon:"☀️",kategori:"sommer",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgStrand/>,oppgave:"1. Farg solen knall gul med lange stråler. 2. Tegn hav, sandstrand og to barn som bader. 3. Legg til en parasoll og et sandslott. 4. Tegn is i hendene til barna.",samtale:"Hva er viktig å gjøre i solen for å beskytte huden? Hva er solkrem og hva gjør den? Hva er heteslag?",mal:"Solsikkerhet og sommeropplevelser. Rammeplanen: Kropp og helse – ta vare på kroppen i ulike vær."},
+  {id:39,tittel:"Iskremen smelter i varmen",ikon:"🍦",kategori:"sommer",alder:"1-5 år",rammeplan:["kropp","kommunikasjon"],svg:<SvgIskrem/>,oppgave:"1. Farg iskremen med tre lag i ulike smaker: sjokolade, jordbær og vanilje. 2. Tegn en vaffelkjegle. 3. Legg til kirsebær og strø på toppen. 4. Tegn iskrem som drypper i varmen.",samtale:"Hva er din favorittiskrem? Hva lager vi iskrem av? Hva skjer med iskrem i varmen?",mal:"Mat og temperaturforståelse. Rammeplanen: Kommunikasjon – beskrive sanseopplevelser og smakspreferanser."},
+  {id:40,tittel:"Seiltur om sommeren",ikon:"⛵",kategori:"sommer",alder:"2-6 år",rammeplan:["naermiljo","natur"],svg:<SvgBat/>,oppgave:"1. Farg båten hvit med rødt seil. 2. Tegn bølger i grønnt og blått. 3. Legg til en måke som flyr over. 4. Tegn land i horisonten og en liten fyr.",samtale:"Hva er et seil og hva brukes det til? Hva er vindenergi? Hva er forskjellen mellom seilbåt og motorbåt?",mal:"Vannreiser og vindkraft. Rammeplanen: Nærmiljø – bli kjent med norsk kystliv og sjøfart."},
+  {id:41,tittel:"Sykkelturen i sommerparken",ikon:"🚲",kategori:"sommer",alder:"2-6 år",rammeplan:["kropp","naermiljo"],svg:<SvgSykkelVei/>,oppgave:"1. Farg sykkelen i dine farger med reflekser på hjulene. 2. Tegn en syklist med hjelm på en vei. 3. Legg til trær og blomster langs veien. 4. Tegn et trafikklys i bakgrunnen.",samtale:"Hva bruker vi hjelm til? Hva betyr rødt, gult og grønt lys? Hva er god trafikkatferd for syklister?",mal:"Trafikksikkerhet og kroppslig mestring. Rammeplanen: Kropp og nærmiljø – trygg ferdsel og fysisk aktivitet."},
+  {id:42,tittel:"Fisketur i solskinn",ikon:"🐟",kategori:"sommer",alder:"2-6 år",rammeplan:["natur","naermiljo"],svg:<SvgFiskestang/>,oppgave:"1. Farg fisken sølvblank med gullfinnet. 2. Tegn en fiskestang med snøre og krok. 3. Legg til en mark på kroken. 4. Tegn bobler fra fisken og grønt vann.",samtale:"Hva er et agn? Hva er et fiskekort og hvorfor finnes det? Hva er bærekraftig fiske?",mal:"Friluftsliv og naturtradisjoner. Rammeplanen: Nærmiljø – kjenne til norske friluftslivsaktiviteter."},
+  {id:43,tittel:"Frosken og varmedammen",ikon:"🐸",kategori:"sommer",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFroskBad/>,oppgave:"1. Farg frosken grønn med gul buk. 2. Tegn et varmt tjern med vannliljeblader. 3. Legg til insekter den prøver å fange. 4. Tegn den hoppe fra stein til stein.",samtale:"Hva gjør frosker om sommeren? Hva spiser de? Hva er et amfibium?",mal:"Amfibier og sommerøkologi. Rammeplanen: Natur og kropp – dyrs levevis og bevegelse."},
+  {id:44,tittel:"Solsikken i blomsterenga",ikon:"🌻",kategori:"sommer",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSolsikke/>,oppgave:"1. Farg blomsten knall gul med brun midtdel. 2. Tegn en hel blomstereng med mange farger. 3. Legg til bier og sommerfugler som besøker blomstene. 4. Tegn frø i midten av blomsten.",samtale:"Hvilken blomst er din favoritt? Hvorfor liker bier blomster? Hva er nektaret?",mal:"Naturglede og pollinering. Rammeplanen: Natur og kunst – kreativt uttrykk og naturforståelse."},
+  {id:45,tittel:"Sommerfuglene telles",ikon:"🦋",kategori:"sommer",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgSommerfuglMany/>,oppgave:"1. Farg én stor sommerfugl i detaljert mønster. 2. Tegn seks til rundt i ulike farger. 3. Legg til blomster de flyr mellom. 4. Tell alle sommerfuglene og skriv tallet.",samtale:"Hvor mange sommerfugler tegnet du? Hva spiser de? Hva betyr det å telle en naturbestand?",mal:"Natur, antall og estetikk. Rammeplanen: Antall – telle og sammenligne mengder i naturen."},
+  {id:46,tittel:"Høstens regnvær",ikon:"🍁",kategori:"host",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgHostRegn/>,oppgave:"1. Farg treet med røde, oransje og gule blader. 2. Tegn regn som faller ned. 3. Legg til to barn med regnfrakk og gummistøvler. 4. Tegn pyttene de hopper i.",samtale:"Hva er høst for deg? Hva skjer med klorofyllet om høsten? Hva slags klær trenger vi om høsten?",mal:"Høst, vær og påkledning. Rammeplanen: Kropp og kommunikasjon – kleskunnskap og årstidsforståelse."},
+  {id:47,tittel:"Gresskaret på tunet",ikon:"🎃",kategori:"host",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgGresskar/>,oppgave:"1. Farg gresskaret dypt oransje med grønn stilk og blader. 2. Tegn et morsomt ansikt: trekantøyne og taggete munn. 3. Lag en gul sirkel inni som lys. 4. Tegn tre gresskår rundt i ulike størrelser.",samtale:"Hva er et gresskar – er det en frukt eller grønnsak? Kan man spise gresskar? Hva er en innhøsting?",mal:"Grønnsaker om høsten og innhøsting. Rammeplanen: Natur og nærmiljø – mat fra jord til bord."},
+  {id:48,tittel:"Epleplukking om høsten",ikon:"🍎",kategori:"host",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgEpletre/>,oppgave:"1. Farg eplet rødt og blankt med en grønn stilk og blad. 2. Tegn tre epler til på et tre over. 3. Legg til en kurv med plukket frukt. 4. Tegn en barnehånd som strekker seg opp.",samtale:"Hvilke bær og frukter modner om høsten? Hva er syltetøy og hva lager vi det av? Hva gir epler oss av næring?",mal:"Høstens frukter og mattradisjoner. Rammeplanen: Natur og kropp – kople naturen til kosthold."},
+  {id:49,tittel:"Bjørnen samler seg til vinteren",ikon:"🐻",kategori:"host",alder:"2-6 år",rammeplan:["natur","kropp"],svg:<SvgBjornBaer/>,oppgave:"1. Farg bjørnen mørk brun med tykk pelskjole. 2. Tegn blåbærbusker og tyttebær rundt. 3. Legg til en honningkrukke. 4. Tegn et hi i bakgrunnen den skal inn i.",samtale:"Hvorfor spiser bjørnen mye om høsten? Hva er vinterhvile? Hva gjør den i hiet?",mal:"Dyr om høsten og forberedelse til vinter. Rammeplanen: Natur – forstå dyrs overvintringsstrategier."},
+  {id:50,tittel:"Elgen på høstvandring",ikon:"🦌",kategori:"host",alder:"3-6 år",rammeplan:["natur","naermiljo"],svg:<SvgElgHost/>,oppgave:"1. Farg elgen i rødbrun høstdrakt. 2. Tegn høstfargede trær – rød, oransje, gul. 3. Legg til spor i løvet på bakken. 4. Tegn morgendis i bakgrunnen.",samtale:"Hva er elgjakt og når er det elgjaktsesongen i Norge? Hva betyr 'bærekraftig jakt'? Hva spiser elgen om høsten?",mal:"Norsk jaktkultur og naturforvaltning. Rammeplanen: Nærmiljø og etikk – forstå jaktens rolle."},
+  {id:51,tittel:"Uglen om høsten",ikon:"🦉",kategori:"host",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgUgleHost/>,oppgave:"1. Farg ugla brun og kremhvit med store gule øyne. 2. Tegn den på en grein med fargerike høstblader. 3. Legg til fullmånen bak. 4. Tegn mus og mark på bakken under.",samtale:"Hva spiser uglen? Hva er spesielt med uglens roterende hode? Hvem kan imitere lyden av en ugle?",mal:"Nattdyr og rovfuglenes jakt om høsten. Rammeplanen: Natur – nattdyrs tilpasninger og jaktevner."},
+  {id:52,tittel:"Soppturen i skogen",ikon:"🍄",kategori:"host",alder:"3-6 år",rammeplan:["natur","etikk"],svg:<SvgSopp/>,oppgave:"1. Farg treet med gyllent høstbladverk. 2. Tegn sopp på skogbunnen – rødt hattsopp og brun kantarell. 3. Legg til en kurv med plukket sopp. 4. Tegn en voksen som viser soppen til et barn.",samtale:"Hva er matsopp og hva er giftig sopp? Hva er regelen om du er usikker? Hva er mycel?",mal:"Mykologi og trygghet i naturen. Rammeplanen: Natur og etikk – ferdes trygt i naturen."},
+  {id:53,tittel:"Vinterlandskapet",ikon:"❄️",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgVinter/>,oppgave:"1. Farg snøen hvit og himmelen kaldblå. 2. Tegn trær med snø på grenene. 3. Legg til et lite hus med gul glød fra vinduene. 4. Tegn den lave vintersolen nær horisonten.",samtale:"Hva er rimfrost? Hva er forskjellen mellom snø, hagl og is? Hva er kuldegrader?",mal:"Vinterens naturfenomener. Rammeplanen: Natur – observere og beskrive vinter, kulde og is."},
+  {id:54,tittel:"Snømannen bygges",ikon:"⛄",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSnøfnugg/>,oppgave:"1. Farg snømannen med tre hvite kuler. 2. Gi ham gulrotnese, mørke øyne og knapperekke. 3. Tegn fargerik lue og stripete skjerf. 4. Legg til to pinner som armer.",samtale:"Hva trenger vi for å lage en snømann? Hva skjer med snømannen når solen varmer? Hva er smeltepunktet til is?",mal:"Is og snø. Rammeplanen: Natur – forstå vann i ulike aggregattilstander."},
+  {id:55,tittel:"Pingvinfamilien på isen",ikon:"🐧",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","etikk"],svg:<SvgPingvinFam/>,oppgave:"1. Farg pingvinen svart og hvit med gult på bryst. 2. Tegn en liten pingvinunge mellom beina. 3. Legg til isfjell og blågrønt vann. 4. Tegn en pingvin som hopper i vannet.",samtale:"Hva er Sydpolen? Kan pingviner fly? Hvordan holder de seg varme og beskytter ungene?",mal:"Polardyr og familieatferd. Rammeplanen: Natur og etikk – dyrefamiliers samarbeid."},
+  {id:56,tittel:"Bjørnens vinterhvile",ikon:"🐻",kategori:"vinter",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgBjornHi/>,oppgave:"1. Farg bjørnen mørk brun i et hi. 2. Tegn hiet som en hule med snø over. 3. Legg til bjørneunger inni hiet. 4. Tegn bartrær med snø rundt.",samtale:"Hva er dvale og hva er vinterhvile? Hvem er inne i hiet i tillegg til bjørnmoren? Hva er det første bjørnen gjør om våren?",mal:"Vinterhvile og dyrs tilpasning. Rammeplanen: Natur – forstå dyrs overvintringsstrategier."},
+  {id:57,tittel:"Vintersolen er lav",ikon:"☀️",kategori:"vinter",alder:"3-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgSolLav/>,oppgave:"1. Farg solen gul men tegn den lavt over horisonten. 2. Tegn lange skygger fra trær. 3. Legg til snø som glitrer. 4. Tegn en figur som ser mot den lave solen.",samtale:"Hvorfor er solen lav om vinteren? Hva er solhverv? Hva er det korteste og lengste vi kan ha av dagslys i Norge?",mal:"Solens bane og årstider. Rammeplanen: Natur – forstå jordas bevegelse og lysets forandringer."},
+  {id:58,tittel:"Julenissen fra Nordpolen",ikon:"🎅",kategori:"jul",alder:"1-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgJulemann/>,oppgave:"1. Farg drakten rød og beltet svart. 2. Gi ham hvitt langt skjegg og røde kinn. 3. Tegn en stor sekk med gaver på ryggen. 4. Legg til et reinsdyr ved siden.",samtale:"Hva er julens tradisjon i din familie? Hva er juleaftens viktigste stund for deg? Hva er forskjellen mellom jul i Norge og i et varmt land?",mal:"Juletradisjoner og kulturforskjeller. Rammeplanen: Kunst og kommunikasjon – fortelle om og sammenligne tradisjoner."},
+  {id:59,tittel:"Adventsstjernen",ikon:"⭐",kategori:"jul",alder:"2-6 år",rammeplan:["kunst","antall"],svg:<SvgAdventlys/>,oppgave:"1. Farg stjernen gull med hvit glød rundt. 2. Tegn fire adventslys under stjernen. 3. Farg ett lys tent (gult) og tre utente (hvite). 4. Skriv tallene 1–4 på lysene.",samtale:"Hva er advent? Hva er adventsstid? Hva er de fire søndagene i advent?",mal:"Adventskalender og nedtelling. Rammeplanen: Antall og kommunikasjon – tellerekkefølge og kalendertid."},
+  {id:60,tittel:"Juletreet med lys",ikon:"🎄",kategori:"jul",alder:"1-6 år",rammeplan:["kunst","etikk"],svg:<SvgGran/>,oppgave:"1. Farg treet dypt grønt. 2. Tegn fargerike kuler, lametta og pepperkaker som henger. 3. Legg til en stjerne på toppen. 4. Tegn pakker under treet.",samtale:"Hva slags tre er et juletre? Hva er juletreets opprinnelse? Hvem i familien pynter treet hjemme?",mal:"Juletreet og norsk kulturtradisjon. Rammeplanen: Etikk og kunst – kjenne til og sette pris på egne tradisjoner."},
+  {id:61,tittel:"Julehjertene",ikon:"❤️",kategori:"jul",alder:"2-5 år",rammeplan:["etikk","kunst"],svg:<SvgHjerte/>,oppgave:"1. Farg et stort hjerte rødt og hvitt. 2. Legg til et flettet mønster – røde og hvite striper. 3. Tegn en sløyfe øverst for å henge det i treet. 4. Skriv et navn inni hjertet.",samtale:"Hva er et flettet julejhjerte, og hvem fant det opp? Hva er et symbol? Hva symboliserer et hjerte?",mal:"Julehjertetradisjon og symboler. Rammeplanen: Kunst og etikk – kulturarv og kreativt uttrykk."},
+  {id:62,tittel:"Pepperkakebaking",ikon:"🍪",kategori:"jul",alder:"2-6 år",rammeplan:["kropp","kunst"],svg:<SvgPepperkake/>,oppgave:"1. Farg pepperkaken gyldenbrun. 2. Tegn glasur i hvit og rød på toppen. 3. Legg til fargerikt sukkerstrø og julemotiver. 4. Tegn bakerutstyr rundt: kjevle og utstikkere.",samtale:"Hva er de viktigste ingrediensene i pepperkaker? Hva er kanel og ingefær? Hva er smaken av julen for deg?",mal:"Matlaging og juletradisjon. Rammeplanen: Kropp og kunst – sanseerfaringer knyttet til matlaging."},
+  {id:63,tittel:"Snømannen i julegardin",ikon:"⛄",kategori:"jul",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSnomannJul/>,oppgave:"1. Farg snømannen med tre kuler. 2. Gi ham julehatt og rødt skjerf. 3. Tegn juletreet i bakgrunnen med lys. 4. Legg til pakker rundt og snøfloker i luften.",samtale:"Hva er det koselige med en hvit jul? Hva gjør vi ute om vinteren? Hva er en hvit jul?",mal:"Vinter og julekultur. Rammeplanen: Kunst og natur – koble årstid med kulturelle tradisjoner."},
+  {id:64,tittel:"Reinsdyrene flyr",ikon:"🦌",kategori:"jul",alder:"2-6 år",rammeplan:["kommunikasjon","kunst"],svg:<SvgReinsdyr/>,oppgave:"1. Farg reinsdyret brun med rødbrun nese. 2. Tegn det i lufta med bena løftet. 3. Legg til en slede det trekker med gaver i. 4. Tegn stjerner og nattehimmel rundt.",samtale:"Hva heter Julenissens reinsdyr? Hva er Rudolphs spesielle kjennetegn? Er dette en sann eller en fiktiv fortelling?",mal:"Julefortellinger og fantasi. Rammeplanen: Kommunikasjon – høre og gjenfortelle eventyr og sagn."},
+  {id:65,tittel:"Gavene under treet",ikon:"🎁",kategori:"jul",alder:"1-5 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgGave/>,oppgave:"1. Farg ballongene som fargerike gaver i rødt, grønt og gull. 2. Tegn sløyfer og bånd på dem. 3. Legg til juletreet i bakgrunnen. 4. Tegn et barn som strekker seg mot en gave.",samtale:"Hva er det fineste med å gi en gave? Og det fineste med å få en? Hva er det beste med juleaften?",mal:"Glede ved å gi og motta. Rammeplanen: Etikk og kommunikasjon – empati og raushet."},
+  {id:66,tittel:"Påskeharen gjemmer egg",ikon:"🐰",kategori:"paske",alder:"1-5 år",rammeplan:["kunst","etikk"],svg:<SvgKaninEgg/>,oppgave:"1. Farg påskeharen lysegul med rosa ører. 2. Tegn fargerike egg gjemt i gress, bak steiner og i busker. 3. Legg til vårblomster rundt. 4. Tegn et barn som leter med en kurv.",samtale:"Hva er opprinnelsen til påskeharen og eggjaktingen? Hva er påsketradisjoner i Norge? Hva feirer vi egentlig i påsken?",mal:"Påsketradisjoner og kulturhistorie. Rammeplanen: Kommunikasjon og etikk – kjenne til og snakke om høytider."},
+  {id:67,tittel:"Påskekyllingen klekker ut",ikon:"🐣",kategori:"paske",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgKylling/>,oppgave:"1. Farg kyllingen knall gul med oransje nebb. 2. Tegn et eggeskall som kyllingen nettopp har sprukket. 3. Legg til gress og vårblomster rundt. 4. Tegn en varm solstråle ovenfra.",samtale:"Hva skjer inne i egget før det klekker? Hvem passer på egget? Hva er det første kyllingen gjør?",mal:"Fuglenes formering og egget. Rammeplanen: Natur – fuglenes livssyklus fra egg til fugl."},
+  {id:68,tittel:"Påskeliljene til påske",ikon:"🌼",kategori:"paske",alder:"2-5 år",rammeplan:["natur","kunst"],svg:<SvgPaaskelilje2/>,oppgave:"1. Farg blomsten klargul med hvit indre ring. 2. Tegn fem påskeliljer i en hage. 3. Legg til et jordlag med en synlig blomsterløk under. 4. Tegn sol og varm luft.",samtale:"Hva er en løkplante? Når planter vi påskeliljer? Hva er symbolikken i påskeliljer?",mal:"Løkplanter og vårblomstring. Rammeplanen: Natur og kunst – forstå planters vekst og dekorasjon."},
+  {id:69,tittel:"Påskeegget med mønster",ikon:"🥚",kategori:"paske",alder:"2-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgEgg/>,oppgave:"1. Tegn om frukten til et rundt påskeegg. 2. Del egget i tre deler og lag tre ulike mønstre: striper, prikker, blomster. 3. Bruk minst fire farger. 4. Tegn en kurv med tre egg.",samtale:"Hva symboliserer påskeegg? Hva er tradisjonelle påskefarger? Hva er den franske tradisjonen med sjokoladeegg?",mal:"Dekorasjon og mønstre. Rammeplanen: Kunst – kreativt uttrykk og mønsterforståelse."},
+  {id:70,tittel:"Påskekaken med kyllinger",ikon:"🍰",kategori:"paske",alder:"2-6 år",rammeplan:["kropp","kunst"],svg:<SvgKake/>,oppgave:"1. Farg kaken gul med glasur. 2. Tegn kyllingfigurer og fargerike egg på toppen. 3. Legg til grønt graspynt. 4. Tegn en påskeliljedekorasjon på siden.",samtale:"Hva pleier folk å spise i påsken i Norge? Hva er påskens symbolske farger? Har du bakt noe i påsken?",mal:"Påskemat og tradisjoner. Rammeplanen: Kropp og kommunikasjon – mat, tradisjoner og sanseerfaringer."},
+  {id:71,tittel:"Gresskaret lyser i mørket",ikon:"🎃",kategori:"halloween",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgGresskarNatt/>,oppgave:"1. Farg gresskaret sterkt oransje. 2. Tegn et hult innside med et lys. 3. Legg til et skremmende ansikt: trekantøyne og taggede tenner. 4. Tegn mørk nattehimmel rundt.",samtale:"Hva er Halloween og hva er opprinnelsen til skikken? Hva betyr 'trick or treat'? Hva er gresskaret symbol på?",mal:"Halloween og kulturtradisjoner. Rammeplanen: Kommunikasjon og kunst – lære om fremmede kulturskikker."},
+  {id:72,tittel:"Den svarte Halloween-katten",ikon:"🐈‍⬛",kategori:"halloween",alder:"2-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgSvartkatt/>,oppgave:"1. Farg katten helsvart med neongrønne øyne. 2. Tegn den på et gjerde i halvmånelys. 3. Legg til spindelvev og edderkopper rundt. 4. Tegn fullmånen bak.",samtale:"Hvorfor er svart katt forbundet med overtro? Hva er en overtro og hva er fakta? Hva er en myte?",mal:"Overtro og kritisk tenkning. Rammeplanen: Kommunikasjon og etikk – skille mellom fakta og myter."},
+  {id:73,tittel:"Halloween-ugla og flaggermusen",ikon:"🦉",kategori:"halloween",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgUgleHalloween/>,oppgave:"1. Farg ugla mørk brun med gule øyne. 2. Tegn to flaggermus rundt den. 3. Legg til et spøkelseshus i bakgrunnen. 4. Tegn fullmånen bak skyene.",samtale:"Hva er en flaggermus – er det en fugl? Hva er ekkolokalisering? Hvorfor flyr flaggermus om natten?",mal:"Nattdyr og ekkolokalisering. Rammeplanen: Natur og kommunikasjon – nattdyrs sanser."},
+  {id:74,tittel:"Halloween-musen med gresskar",ikon:"🐭",kategori:"halloween",alder:"2-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgMusHalloween/>,oppgave:"1. Farg musen mørkegrå med store ører. 2. Tegn den bærende en liten oransje gresskarekurv. 3. Legg til halloween-symboler rundt: flaggermus, edderkoppnett. 4. Tegn halloween-godteri i kurven.",samtale:"Hva er et kostyme? Hvorfor kler vi oss ut på Halloween? Hvilke halloween-symboler kjenner du til?",mal:"Rollelek og masker. Rammeplanen: Kommunikasjon og kunst – dramatisering og kreativ utfoldelse."},
+  {id:75,tittel:"17. mai-familien i tog",ikon:"🇳🇴",kategori:"mai17",alder:"2-6 år",rammeplan:["naermiljo","etikk"],svg:<SvgFamilieMai/>,oppgave:"1. Farg familien i finstasen. 2. Tegn norske flagg i hendene på alle. 3. Legg til 17. mai-rosetter på klærne. 4. Tegn et barnetog i bakgrunnen.",samtale:"Hva feirer vi 17. mai? Hva skjedde i 1814? Hva er en grunnlov?",mal:"Norsk nasjonaldag og demokrati. Rammeplanen: Nærmiljø og etikk – forstå norsk identitet og demokrati."},
+  {id:76,tittel:"Flaggballongene",ikon:"🎈",kategori:"mai17",alder:"1-5 år",rammeplan:["kunst","antall"],svg:<SvgBallong/>,oppgave:"1. Farg ballongene rødt, hvitt og blått som det norske flagget. 2. Tegn ti ballonger i ulike størrelser. 3. Legg til snorer som holder dem. 4. Tell og skriv antallet.",samtale:"Hva betyr fargen rød, hvit og blå på flagget? Hva er riksvåpenet? Hva er nasjonalsangen vår?",mal:"Norsk nasjonal symbolikk. Rammeplanen: Kunst og antall – farger, symboler og telleøvelser."},
+  {id:77,tittel:"Barnetoget og musikken",ikon:"🏠",kategori:"mai17",alder:"2-6 år",rammeplan:["naermiljo","kommunikasjon"],svg:<SvgHusNorge/>,oppgave:"1. Farg huset hvitt med norsk flagg ute. 2. Tegn et barnetog som passerer – barn med flagg. 3. Legg til folk langs veien som heier. 4. Tegn is og pølse i hendene.",samtale:"Hva synger vi i barnetoget? Hva er et skolekorps? Hva spiller skolekorpset på 17. mai?",mal:"17. mai-tradisjoner og musikk. Rammeplanen: Nærmiljø og kommunikasjon – delta i og forstå nasjonale markeringer."},
+  {id:78,tittel:"Regnbuen – 7 farger",ikon:"🌈",kategori:"natur",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgFarger/>,oppgave:"1. Farg regnbuen i riktig rekkefølge: rød, oransje, gul, grønn, blå, indigo, fiolett. 2. Tegn regndråper på venstre side og sol på høyre. 3. Skriv tallene 1–7 på buen. 4. Tegn blomster nede på bakken.",samtale:"Hvor mange farger har regnbuen? Hva må til for å se den? Kan man finne enden på regnbuen?",mal:"Farger, vær og antall. Rammeplanen: Natur og antall – rekkefølge og naturlige farger."},
+  {id:79,tittel:"Livet i havet",ikon:"🌊",kategori:"natur",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgHavbunn/>,oppgave:"1. Farg fisken sølvblank med gullfinnet. 2. Tegn et hav med tang, koraller og sand. 3. Legg til fire andre sjødyr: sjøstjerne, krabbe, blekksprut, sjøhest. 4. Tegn bobler som stiger opp.",samtale:"Hvilke dyr lever i havet? Hva er et korallrev? Hva er havets rolle for jordens klima?",mal:"Marine økosystemer og biologisk mangfold. Rammeplanen: Natur – forstå havets leveforhold."},
+  {id:80,tittel:"Blomsterenga og pollinererne",ikon:"🌺",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgEng/>,oppgave:"1. Farg blomsten i knallfager – gul, rød og lilla. 2. Tegn en hel eng med ville blomster. 3. Legg til tre bier og to sommerfugler. 4. Tegn sopp og gress mellom blomstene.",samtale:"Hva er en eng? Hva er en pollinerer? Hva skjer med insektene som samler nektar?",mal:"Naturmangfold og pollinering. Rammeplanen: Natur og kunst – forstå samspillet mellom blomster og dyr."},
+  {id:81,tittel:"Fuglen som synger",ikon:"🐤",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgFuglSang/>,oppgave:"1. Farg fuglen i lyse, vakre farger. 2. Tegn den sittende på en blomstrende gren. 3. Legg til noter eller snakkebobler med 'kvitreliret'. 4. Tegn et reir med egg på neste gren.",samtale:"Hvilken norsk fugl synger mest om morgenen? Hva er et fuglenavn – ornitologi? Hva spiser fugler?",mal:"Fugleliv og fuglenes sang. Rammeplanen: Natur og kommunikasjon – lytte til og lære om naturen."},
+  {id:82,tittel:"Stjernehimmelen",ikon:"🌟",kategori:"natur",alder:"3-6 år",rammeplan:["natur","antall"],svg:<SvgStjerne/>,oppgave:"1. Farg stjernen sterkt gul. 2. Tegn minst 10 stjerner i ulike størrelser. 3. Legg til en halvmåne og tre planeter. 4. Tegn Melkeveien som en lys stripe.",samtale:"Hva er et stjernebilde? Hva er den nærmeste stjernen til jorda? Hva er en planet?",mal:"Astronomi og undring. Rammeplanen: Natur og antall – telle, observere og undre seg over universet."},
+  {id:83,tittel:"Hjemmet og familien",ikon:"🏡",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","naermiljo"],svg:<SvgFamilieHjem/>,oppgave:"1. Farg hver person ulikt – ulik hudfarge, hår og klær. 2. Tegn dem i en felles aktivitet. 3. Legg til detaljer som viser personlighet. 4. Tegn et hjem med hage rundt.",samtale:"Hvem er i din familie? Er alle familier like – hva er likt og ulikt? Hva gjør din familie spesiell?",mal:"Familieformer og mangfold. Rammeplanen: Etikk og nærmiljø – respektere ulike familier."},
+  {id:84,tittel:"Venner leker sammen",ikon:"👫",kategori:"mennesker",alder:"2-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgVennerLeker/>,oppgave:"1. Farg de to vennene med ulike utseender og klær. 2. Tegn dem i en lek – sandkasse, ball eller sykkel. 3. Legg til en snakkeboble med noe hyggelig. 4. Tegn solen og et fint vær.",samtale:"Hva gjør gode venner for hverandre? Hva gjør man om en venn er lei seg? Hva er inkludering?",mal:"Vennskap og sosial læring. Rammeplanen: Etikk og kommunikasjon – forstå vennskap og inkludering."},
+  {id:85,tittel:"Besteforeldre og barnebarn",ikon:"👨‍👩‍👧‍👦",kategori:"mennesker",alder:"3-6 år",rammeplan:["etikk","naermiljo"],svg:<SvgFamilieEldre/>,oppgave:"1. Farg familien: bestemor, bestefar og barnebarn med ulike aldersdetaljer. 2. Tegn dem i en felles aktivitet: bakst, fiske eller lesing. 3. Legg til detaljer som viser kjærlighet. 4. Tegn et koselig hjem.",samtale:"Hva er besteforeldre? Hva kan vi lære av eldre? Hva er 'generasjoner'?",mal:"Generasjoner og familietilknytning. Rammeplanen: Etikk og nærmiljø – verdsette alle aldersgrupper."},
+  {id:86,tittel:"Gledens farger",ikon:"💖",kategori:"folelser",alder:"2-6 år",rammeplan:["etikk","kunst"],svg:<SvgGledefarge/>,oppgave:"1. Farg et stort hjerte i din 'gledsfarge'. 2. Tegn mange forskjellige glade ansikter rundt. 3. Legg til ballonger og konfetti. 4. Skriv noe fint inni hjertet.",samtale:"Hvilken farge er 'glede' for deg? Hva gjør deg glad? Hva er smil og latter godt for kroppen?",mal:"Emosjonelt vokabular og sinnstilstander. Rammeplanen: Etikk – forstå og sette ord på egne følelser."},
+  {id:87,tittel:"Glad og trist",ikon:"😀",kategori:"folelser",alder:"2-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgGladSorg/>,oppgave:"1. Farg de to vennene – én som smiler og én som gråter. 2. Tegn sol over den glade og sky over den triste. 3. Legg til den glade vennen som trøster. 4. Tegn en klemme mellom dem.",samtale:"Er det ok å gråte? Hva kan vi si til noen som er lei seg? Hva betyr å trøste?",mal:"Emosjonell intelligens og trøst. Rammeplanen: Etikk og kommunikasjon – forstå og respondere på andres følelser."},
+  {id:88,tittel:"Trygg og redd",ikon:"🤗",kategori:"folelser",alder:"2-5 år",rammeplan:["etikk","naermiljo"],svg:<SvgKlem/>,oppgave:"1. Farg en voksen som holder et barn. 2. Tegn trygge omgivelser: koselig hjem med pledd og puter. 3. Legg til hunder eller bamser som symboler for trygghet. 4. Tegn et smil på begge.",samtale:"Hva gjør deg trygg? Hvem henvender du deg til når du er redd? Hva er forskjellen mellom å være redd og å være modig?",mal:"Trygghetsfølelse og tilknytningspersoner. Rammeplanen: Etikk – bygge trygge relasjoner."},
+  {id:89,tittel:"Sinne og ro",ikon:"💝",kategori:"folelser",alder:"3-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgPust/>,oppgave:"1. Del hjertet i to – farg én halvdel rød (sint) og én blå (rolig). 2. Tegn et ansikt med sinne på én side og ro på den andre. 3. Legg til puste-bobler: 'inn... ut...' 4. Tegn en person som puster dypt.",samtale:"Hva er sinne? Hva kan vi gjøre når vi er veldig sinte? Hva er 'pusteøvelser'?",mal:"Følelsesregulering og sinnsro. Rammeplanen: Etikk – strategier for å håndtere sterke følelser."},
+  {id:90,tittel:"Eplet som er sunt",ikon:"🍎",kategori:"mat",alder:"1-5 år",rammeplan:["kropp","natur"],svg:<SvgEple/>,oppgave:"1. Farg eplet rødt med et glinsende hvit felt. 2. Tegn stilken og et lite blad. 3. Legg til et bitt tatt ut av eplet. 4. Tegn et lite 'C' symbol for vitamin C.",samtale:"Hva er et vitamin og hva gjør vitaminer for oss? Hva er vitamin C? Hva er frukt og grønt godt for?",mal:"Ernæring og vitaminer. Rammeplanen: Kropp – forstå sunn mat og næringstoffer."},
+  {id:91,tittel:"Bananen fra tropene",ikon:"🍌",kategori:"mat",alder:"1-4 år",rammeplan:["kropp","natur"],svg:<SvgBanan/>,oppgave:"1. Farg bananen knall gul med brune flekker for å vise den er moden. 2. Tegn den i en fruktskål med andre frukter. 3. Legg til et palmetre bananene vokser på. 4. Tegn en ape som spiser en banan.",samtale:"Hva er et tropisk land? Hvilke frukter dyrkes i Norge og hvilke importeres? Hva er kali (mineral i banan)?",mal:"Mat fra ulike verdensdeler. Rammeplanen: Natur og kropp – forstå matens opprinnelse."},
+  {id:92,tittel:"Min favorittiskrem",ikon:"🍨",kategori:"mat",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgIskremBoks/>,oppgave:"1. Farg iskrem med minst fire lag i ulike farger. 2. Tegn strø, kjeks og kirsebær. 3. Legg til en serviett og en skje. 4. Tegn solen som smelter den litt.",samtale:"Hva er iskrem laget av? Hva er fløte? Hva er forskjellen mellom iskrem og sorbet?",mal:"Matprosessering og meieriprodukter. Rammeplanen: Kropp og kommunikasjon – lære om matproduksjon."},
+  {id:93,tittel:"Bursdagskaken min",ikon:"🎂",kategori:"mat",alder:"2-6 år",rammeplan:["antall","kommunikasjon"],svg:<SvgCupcake/>,oppgave:"1. Farg kaken med glasur og fargerike lag. 2. Tegn lys på toppen – like mange som du er år gammel. 3. Legg til pynt: ballonger, konfetti, figurer. 4. Skriv en gratulasjon.",samtale:"Hvem er du – hvor mange år fyller du? Hva er tradisjonen med lys på kaken? Hva er en overraskelseskake?",mal:"Tall og bursdagstradisjoner. Rammeplanen: Antall – telle antall år og kople til bursdagsritual."},
+  {id:94,tittel:"Grønnsaker er sunne",ikon:"🥕",kategori:"mat",alder:"3-6 år",rammeplan:["kropp","natur"],svg:<SvgGulrot/>,oppgave:"1. Farg frukten grønn og tegn en gulrot ved siden. 2. Tegn en tallerken med minst fem grønnsaker. 3. Legg til tekst ved siden: 'vitamin', 'fiber'. 4. Tegn et gledelig barn som spiser.",samtale:"Hva er en grønnsak og hva er en frukt? Hva er fibrer? Hvilke grønnsaker vokser under jorda?",mal:"Kosthold og helse. Rammeplanen: Kropp – forstå grønnsakers ernæringsmessige verdi."},
+  {id:95,tittel:"Bilen og trafikken",ikon:"🚗",kategori:"kjoretoy",alder:"2-5 år",rammeplan:["naermiljo","kommunikasjon"],svg:<SvgBil/>,oppgave:"1. Farg bilen din favorittfarge med klar lakk. 2. Tegn en vei med trafikklys og et fotgjengerfelt. 3. Legg til skilt: stopp, vikeplass, 30 km/t. 4. Tegn tre barn som venter ved fotgjengerfeltet.",samtale:"Hva betyr de forskjellige trafikksignalene? Hva er et fotgjengerfelt? Hva er 30-sone?",mal:"Trafikkregler og sikker ferdsel. Rammeplanen: Nærmiljø – forstå trafikk og trygg ferdsel."},
+  {id:96,tittel:"Seilbåten på havet",ikon:"⛵",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["naermiljo","natur"],svg:<SvgFyr/>,oppgave:"1. Farg skroget hvitt og seilet stripete rødt og hvitt. 2. Tegn bølger i blå nyanser. 3. Legg til en kompass på dekket. 4. Tegn en fyr på land i horisonten.",samtale:"Hva er et kompass? Hva er en fyr og hva brukes den til? Hva er vindenergi?",mal:"Sjøfart og navigasjon. Rammeplanen: Nærmiljø – bli kjent med norsk sjøfartstradisjon."},
+  {id:97,tittel:"Flyet i lufta",ikon:"✈️",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["naermiljo","kommunikasjon"],svg:<SvgFly/>,oppgave:"1. Farg flyet hvitt med fargerik hale og logo. 2. Tegn hvite kondensstriper etter flyet. 3. Legg til skyer i ulike høyder. 4. Tegn bakken under med byer, fjell og hav.",samtale:"Hva er en kondensstripe? Hva driver et fly fremover? Hva er den høyeste flygehøyden?",mal:"Luftfart og fysikk. Rammeplanen: Nærmiljø – forstå moderne transportmidler."},
+  {id:98,tittel:"Toget på langtur",ikon:"🚂",kategori:"kjoretoy",alder:"1-5 år",rammeplan:["naermiljo","kropp"],svg:<SvgTog/>,oppgave:"1. Farg lokomotivet rødt med svart røykpipe. 2. Tegn skinner som strekker seg ut i fjerneten. 3. Legg til tunneler og broer langs ruten. 4. Tegn passasjerer som vinker fra vinduene.",samtale:"Hva er et lokomotiv? Hva er forskjellen mellom tog og trikk? Er tog eller bil mest miljøvennlig?",mal:"Skinnegående transport og miljø. Rammeplanen: Nærmiljø – forstå offentlig transport og bærekraft."},
+  {id:99,tittel:"Sykkelen med hjelm",ikon:"🚲",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["kropp","naermiljo"],svg:<SvgSykkel/>,oppgave:"1. Farg sykkelen og alle deler: hjul, kjede, styre. 2. Legg til en hjelm, reflekser og lys. 3. Tegn en sykkelsti med klar merking. 4. Tegn et barn med hjelm og sykkelbriller.",samtale:"Hva er de forskjellige delene på en sykkel? Hva er en sykkelsti? Hva er refleks og hva gjør den?",mal:"Sykling og trafikksikkerhet. Rammeplanen: Kropp og nærmiljø – motorikk og sikker ferdsel."},
+  {id:100,tittel:"Hjemmet mitt",ikon:"🏠",kategori:"bygg",alder:"1-5 år",rammeplan:["naermiljo","kunst"],svg:<SvgHus/>,oppgave:"1. Farg huset slik ditt ser ut – farge på vegg, vindu, tak. 2. Tegn hagen med planter og gjerde. 3. Legg til din favorittdetalj av huset. 4. Tegn en fuglekasse i hagen.",samtale:"Hva er ditt favorittrom? Hva gjøres i stuen, kjøkkenet og badet? Hva er 'hjem' for deg?",mal:"Hjem og identitet. Rammeplanen: Nærmiljø – forstå nærsamfunnets strukturer og personlig tilhørighet."},
+  {id:101,tittel:"Barnehagen vår",ikon:"🏫",kategori:"bygg",alder:"1-5 år",rammeplan:["naermiljo","etikk"],svg:<SvgBarnehage/>,oppgave:"1. Farg barnehagen med store vinduer og fargerike vegger. 2. Tegn lekestativ, sandkasse og gynger ute. 3. Legg til barn og barnehagelærere som leker. 4. Tegn et norsk flagg utenfor.",samtale:"Hva er din favorittdel av barnehagen? Hva er de voksnes oppgave her? Hva betyr 'fellesskap'?",mal:"Barnehagens rolle og fellesskap. Rammeplanen: Nærmiljø og etikk – forstå fellesskapet i barnehagen."},
+  {id:102,tittel:"Drømmehuset mitt",ikon:"🏰",kategori:"bygg",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgDrommehus/>,oppgave:"1. Begynn med husformen og legg til tårn, balkonger og terrasser. 2. Legg til noe fantasifullt: taubane, basseng, trampoline. 3. Farg det i fantasifulle farger. 4. Tegn naboer og omgivelser rundt.",samtale:"Hvis du fikk designe ditt drømmehus, hva ville det ha? Hva er en arkitekt? Hva er de viktigste rommene i et hus?",mal:"Kreativ tenkning og arkitektur. Rammeplanen: Kunst og kommunikasjon – uttrykke ideer gjennom tegning."},
+  {id:103,tittel:"Ballongene flyr",ikon:"🎈",kategori:"festlig",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgBallongMany/>,oppgave:"1. Farg ballongene i regnbuens farger – minst fem. 2. Tegn snorer og et barn som holder dem. 3. Legg til konfetti rundt. 4. Tegn én ballong som slipper unna og flyr opp.",samtale:"Hva er helium og hva gjør at ballonger flyr opp? Hva er en fest for deg? Hva er konfetti?",mal:"Festglede og fysikk. Rammeplanen: Kunst og kommunikasjon – kreativ utfoldelse og naturforståelse."},
+  {id:104,tittel:"Stjerneregnet",ikon:"⭐",kategori:"festlig",alder:"2-5 år",rammeplan:["kunst","antall"],svg:<SvgStjerneSkudd/>,oppgave:"1. Farg en stor stjerne gullgul. 2. Tegn 12 stjerner i ulike størrelser rundt. 3. Legg til glitter-kryss rundt de største. 4. Tell alle stjernene og skriv tallet.",samtale:"Hva er et stjernebilde? Hva er solen – er den en stjerne? Hvem kan telle høyest?",mal:"Astronomi og antall. Rammeplanen: Kunst og antall – estetisk utfoldelse og telling."},
+  {id:105,tittel:"Bursdagsfesten",ikon:"🎂",kategori:"festlig",alder:"2-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgBursdagKake/>,oppgave:"1. Farg en flott bursdagskake med lag og glasur. 2. Tegn lys – ett for hvert år du er gammel. 3. Legg til gaver, ballonger og festpynt rundt. 4. Skriv bursdagsbarnets navn på kaken.",samtale:"Hva er det spesielle med bursdagen din? Hva er den beste gaven du har fått? Hva betyr det å bli et år eldre?",mal:"Milepæler og personlig vekst. Rammeplanen: Kommunikasjon – fortelle om seg selv, sin alder og familie."},
+  {id:106,tittel:"Roboten min venn",ikon:"🤖",kategori:"teknologi",alder:"3-6 år",rammeplan:["kommunikasjon","etikk"],svg:<SvgRobot/>,oppgave:"1. Farg robotens hode sølv eller blå. 2. Gi øynene fargerike lysdioder – en farge du velger! 3. Tegn knapper og skjermer på magen. 4. Legg til ledninger og gnister rundt roboten.",samtale:"Hva er en robot? Hva kan roboter gjøre som mennesker ikke kan? Er en robot levende?",mal:"Teknologi og menneskelige egenskaper. Rammeplanen: Kommunikasjon – undre seg over teknologi og sammenligne med mennesker."},
+  {id:107,tittel:"Roboten hjelper i barnehagen",ikon:"🤖",kategori:"teknologi",alder:"4-6 år",rammeplan:["etikk","naermiljo"],svg:<SvgRobot2/>,oppgave:"1. Farg roboten i barnehagens farger. 2. Tegn den bærende en bok eller ryddende leker. 3. Legg til barn som ser på og vinker. 4. Tegn et hjerte på robotens bryst.",samtale:"Hva ville du lært en robot å gjøre? Kan en robot være venn? Hva er forskjellen på en maskin og et menneske?",mal:"Teknologi i hverdagen og etiske spørsmål. Rammeplanen: Etikk og nærmiljø – reflektere over teknologiens rolle."},
+  {id:108,tittel:"Raketten skytes opp",ikon:"🚀",kategori:"romfart",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgRakette/>,oppgave:"1. Farg raketten hvit med fargerike striper. 2. Tegn flammene nederst i gult og oransje. 3. Legg til stjerner og planeter rundt. 4. Tegn røykspor etter raketten.",samtale:"Hva er et rakettdrivstoff? Hvorfor skytes raketter opp med så mye fart? Hva er verdensrommet?",mal:"Romfart og tyngdekraft. Rammeplanen: Natur – undre seg over universet og teknologi."},
+  {id:109,tittel:"Astronauten i verdensrommet",ikon:"👨‍🚀",kategori:"romfart",alder:"3-6 år",rammeplan:["natur","kropp"],svg:<SvgAstronaut/>,oppgave:"1. Farg romdressen hvit med fargerik nasjonalitet-stripe. 2. Tegn visir med speilblankt glass. 3. Legg til oksygentanken på ryggen. 4. Tegn jorden i bakgrunnen sett fra verdensrommet.",samtale:"Hva spiser astronauter i verdensrommet? Hva er tyngdeløshet? Hva er ISS – den internasjonale romstasjonen?",mal:"Romfart og menneskekroppen. Rammeplanen: Natur og kropp – forstå rommet og astronautenes liv."},
+  {id:110,tittel:"Gitarspilleren på scenen",ikon:"🎸",kategori:"musikk",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgGitar/>,oppgave:"1. Farg gitarkroppen i en varm farge – brun, rød eller oransje. 2. Tegn strengene i sølv og gull. 3. Legg til noter som flyr fra gitaren. 4. Tegn en person som spiller den.",samtale:"Hva er en gitar laget av? Hva er forskjellen mellom akustisk og elektrisk gitar? Hva er din favorittlåt?",mal:"Musikkinstrumenter og lydlære. Rammeplanen: Kunst og kultur – utforske musikk som kunstform."},
+  {id:111,tittel:"Orkesteret spiller",ikon:"🥁",kategori:"musikk",alder:"3-6 år",rammeplan:["kunst","etikk"],svg:<SvgTrommer/>,oppgave:"1. Farg gitaren i kontrastfull farge. 2. Tegn et band rundt: trommer, mikrofon, keyboard. 3. Legg til et publikum med glade ansikter. 4. Tegn lys og konfetti over scenen.",samtale:"Hva er et orkester? Hva er forskjellen mellom et band og et orkester? Hvilke instrumenter kjenner du til?",mal:"Musikksamarbeid og ulike instrumenter. Rammeplanen: Etikk og kunst – samspill og respekt i fellesskap."},
+  {id:112,tittel:"Fotballkampen",ikon:"⚽",kategori:"sport",alder:"3-6 år",rammeplan:["kropp","etikk"],svg:<SvgFotball/>,oppgave:"1. Farg ballen svart og hvit i klassisk mønster. 2. Tegn et mål med nett bak. 3. Legg til to lag med fargerike drakter. 4. Tegn jubel fra banen.",samtale:"Hva er reglene i fotball? Hva er fair play? Hva betyr det å samarbeide i et lag?",mal:"Lagsport og samarbeid. Rammeplanen: Kropp og etikk – motorisk mestring og sportslig adferd."},
+  {id:113,tittel:"Målvakten redder",ikon:"⚽",kategori:"sport",alder:"2-6 år",rammeplan:["kropp","kommunikasjon"],svg:<SvgMaalvakt/>,oppgave:"1. Farg fotballen i dine favorittfarger. 2. Tegn en målvakt som hopper og strekker seg. 3. Legg til et mål med keeper-hansker. 4. Tegn publikum som heier.",samtale:"Hva gjør en målvakt? Hva er de vanskeligste skuddene å redde? Hva er det som gjør fotball spennende?",mal:"Idrett og kroppsmestring. Rammeplanen: Kropp – utfordre og utvikle motoriske ferdigheter."},
 ];
 const TEGNEKAT = [
   ["alle","Alle 🖍️"],
@@ -1725,6 +2856,10 @@ const TEGNEKAT = [
   ["kjoretoy","Kjøretøy 🚗"],
   ["bygg","Bygg 🏠"],
   ["festlig","Fest 🎉"],
+  ["teknologi","Teknologi 🤖"],
+  ["romfart","Romfart 🚀"],
+  ["musikk","Musikk 🎵"],
+  ["sport","Sport ⚽"],
 ];
 
 function FagTag({ rid }) {
@@ -1828,24 +2963,316 @@ function NyttSkjemaForm({ onSave, onNavigate }) {
 
 // ─── Standalone search/list components ─────────────────────────
 // Defined OUTSIDE the main component so they never remount on parent re-renders
-function SangerSideComp({ favoritter, toggleFav }) {
+function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
+  const w = window.open("", "_blank");
+  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}
+.print-btn{display:block;margin:0 auto 20px;padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
+</style></head><body>
+<button class="print-btn no-print" onclick="window.print()">🖨️ Skriv ut</button>
+${html}
+</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 500);
+}
+
+const SvgPlaceholder = ()=>(
+  <svg viewBox="0 0 300 240" fill="none">
+    <rect x="12" y="12" width="276" height="216" rx="16" stroke="#c4d6ec" strokeWidth="2.5" strokeDasharray="10 5"/>
+    <circle cx="90" cy="90" r="32" stroke="#d8e8f5" strokeWidth="2.5"/>
+    <circle cx="98" cy="83" r="8" fill="#d8e8f5"/>
+    <path d="M70 112 Q90 126 110 112" stroke="#d8e8f5" strokeWidth="2.5" fill="none"/>
+    <ellipse cx="202" cy="95" rx="55" ry="40" stroke="#d8e8f5" strokeWidth="2.5"/>
+    <path d="M172 82 Q202 72 232 82" stroke="#d8e8f5" strokeWidth="1.5" fill="none"/>
+    <path d="M65 165 Q150 130 235 160" stroke="#d8e8f5" strokeWidth="2" fill="none" strokeDasharray="6 4"/>
+    <ellipse cx="150" cy="210" rx="85" ry="15" stroke="#d8e8f5" strokeWidth="1.5"/>
+  </svg>
+);
+
+async function hentUserTegneark(userId) {
+  const { data } = await supabase.from("user_tegneark").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+  return data || [];
+}
+async function lagreUserTegneark(ark) {
+  const { data, error } = await supabase.from("user_tegneark").insert(ark).select().single();
+  return { data, error };
+}
+async function slettUserTegneark(id) {
+  return await supabase.from("user_tegneark").delete().eq("id", id);
+}
+
+function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
+  const [form, setForm] = useState({ tema:"", alder:"3-6", fagomrade:"", vanskelighet:"enkel" });
+  const [genererer, setGenererer] = useState(false);
+  const [resultat, setResultat] = useState(null);
+  const [feil, setFeil] = useState(null);
+  const [lagrer, setLagrer] = useState(false);
+  const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
+  const generer = async () => {
+    if (!form.tema.trim()) return;
+    setGenererer(true); setFeil(null); setResultat(null);
+    const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag et tegneark-opplegg for barn i alderen ${form.alder} år.\n\nTema: ${form.tema}${form.fagomrade?"\nFagområde: "+form.fagomrade:""}${form.vanskelighet?"\nVanskelighetsgrad: "+form.vanskelighet:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på tegnearket",\n  "ikon": "ett passende emoji",\n  "oppgave": "fire nummererte tegnetrinn (1. ... 2. ... 3. ... 4. ...)",\n  "samtale": "tre åpne samtalespørsmål separert med spørsmålstegn",\n  "mal": "rammeplanmål – én setning",\n  "kategori": "passende kategori (dyr/natur/mennesker/mat/sport/teknologi/romfart/musikk/festlig/folelser)",\n  "alder": "${form.alder} år",\n  "rammeplan": ["id-er fra: kropp, kunst, natur, antall, etikk, naermiljo, kommunikasjon"]\n}`;
+    try {
+      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:800 }) });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      const raw = json.text || "";
+      const cleaned = raw.replace(/```json|```/g,"").trim();
+      setResultat(JSON.parse(cleaned));
+    } catch(e) { setFeil("Klarte ikke å generere tegneark. Prøv igjen."); }
+    finally { setGenererer(false); }
+  };
+  const lagre = async () => {
+    if (!resultat || !aktivBruker?.id) return;
+    setLagrer(true);
+    const { data, error } = await lagreUserTegneark({ user_id:aktivBruker.id, tittel:resultat.tittel||"Tegneark", ikon:resultat.ikon||"🖍️", oppgave:resultat.oppgave||"", samtale:resultat.samtale||"", mal:resultat.mal||"", kategori:resultat.kategori||"natur", alder:resultat.alder||form.alder+" år", rammeplan:resultat.rammeplan||[], ai_generert:true });
+    setLagrer(false);
+    if (error) { setFeil("Feil ved lagring: "+error.message); return; }
+    onLagre(data);
+  };
+  return (
+    <div className="fade" style={{background:C.w,borderRadius:16,padding:22,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
+      <Tilbake onClick={onAvbryt}/>
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,marginBottom:4}}>🤖 AI-tegneark</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:18}}>La AI lage et unikt tegneark med oppgave, samtale og rammeplankoblinger</p>
+      {!resultat ? (
+        <>
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Tema / motiv *</label>
+            <input value={form.tema} onChange={e=>setForm(p=>({...p,tema:e.target.value}))} placeholder="f.eks. dinosaurer, romskip, bakeri, norsk natur..." style={iS}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Aldersgruppe</label>
+              <select value={form.alder} onChange={e=>setForm(p=>({...p,alder:e.target.value}))} style={iS}>
+                <option value="1-3">1–3 år</option>
+                <option value="2-4">2–4 år</option>
+                <option value="3-6">3–6 år</option>
+                <option value="4-6">4–6 år</option>
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Vanskelighetsgrad</label>
+              <select value={form.vanskelighet} onChange={e=>setForm(p=>({...p,vanskelighet:e.target.value}))} style={iS}>
+                <option value="enkel">Enkel</option>
+                <option value="middels">Middels</option>
+                <option value="utfordrende">Utfordrende</option>
+              </select>
+            </div>
+          </div>
+          <div style={{marginBottom:18}}>
+            <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Fagområde (valgfritt)</label>
+            <select value={form.fagomrade} onChange={e=>setForm(p=>({...p,fagomrade:e.target.value}))} style={iS}>
+              <option value="">– Velg –</option>
+              {FAGOMRADER.map(f=><option key={f.id} value={f.navn}>{f.ikon} {f.navn}</option>)}
+            </select>
+          </div>
+          {feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"10px 13px",fontSize:13,marginBottom:14}}>{feil}</div>}
+          <button className="btn" onClick={generer} disabled={genererer||!form.tema.trim()} style={{width:"100%",padding:"12px 0",fontSize:14,background:genererer?C.gr:"linear-gradient(135deg,#7c3aed,#5b21b6)",color:"#fff"}}>
+            {genererer?"⏳ Genererer tegneark...":"✨ Generer tegneark"}
+          </button>
+        </>
+      ) : (
+        <div className="fade">
+          <div style={{background:"#f5f9fd",borderRadius:12,padding:18,marginBottom:16,border:"1.5px solid #c4d6ec"}}>
+            <div style={{fontWeight:800,fontSize:18,color:C.t,marginBottom:2}}>{resultat.ikon} {resultat.tittel}</div>
+            <div style={{fontSize:11,color:C.gr,marginBottom:14}}>{resultat.kategori} · {resultat.alder}</div>
+            <div style={{background:"#fff9c4",borderRadius:9,padding:"10px 13px",marginBottom:10}}>
+              <div style={{fontWeight:800,color:"#795548",fontSize:11,marginBottom:5,textTransform:"uppercase"}}>🖍️ Tegneoppgave</div>
+              <div style={{fontSize:13,color:C.t,lineHeight:1.65}}>{resultat.oppgave}</div>
+            </div>
+            <div style={{background:"#e8f5e9",borderRadius:9,padding:"10px 13px",marginBottom:10}}>
+              <div style={{fontWeight:800,color:"#2e7d32",fontSize:11,marginBottom:5,textTransform:"uppercase"}}>💬 Samtale</div>
+              <div style={{fontSize:13,color:C.t,lineHeight:1.65}}>{resultat.samtale}</div>
+            </div>
+            <div style={{background:"#e3f2fd",borderRadius:9,padding:"10px 13px"}}>
+              <div style={{fontWeight:800,color:"#1565c0",fontSize:11,marginBottom:4,textTransform:"uppercase"}}>📖 Mål</div>
+              <div style={{fontSize:13,color:C.t}}>{resultat.mal}</div>
+            </div>
+          </div>
+          {feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"10px 13px",fontSize:13,marginBottom:14}}>{feil}</div>}
+          <div style={{display:"flex",gap:10}}>
+            <button className="btn" onClick={lagre} disabled={lagrer} style={{flex:1,padding:"11px 0",fontSize:14,background:lagrer?C.gr:"#2e7d32",color:"#fff"}}>
+              {lagrer?"⏳ Lagrer...":"💾 Lagre i Mine tegneark"}
+            </button>
+            <button className="btn" onClick={()=>setResultat(null)} style={{padding:"11px 18px",fontSize:13,background:C.lg2,color:C.t}}>↩ Prøv igjen</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+async function hentUserSanger(userId) {
+  const { data } = await supabase.from("user_sanger").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+  return data || [];
+}
+async function lagreUserSang(sang) {
+  const { data, error } = await supabase.from("user_sanger").insert(sang).select().single();
+  return { data, error };
+}
+async function slettUserSang(id) {
+  return await supabase.from("user_sanger").delete().eq("id", id);
+}
+
+function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
+  const [form, setForm] = useState({ sjanger:"sang", tema:"", aldersgruppe:"3-6", antallVers:"2", melodi:"", fagomrade:"", ekstra:"" });
+  const [genererer, setGenererer] = useState(false);
+  const [resultat, setResultat] = useState(null);
+  const [feil, setFeil] = useState(null);
+  const [lagrer, setLagrer] = useState(false);
+  const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
+  const generer = async () => {
+    if (!form.tema.trim()) return;
+    setGenererer(true); setFeil(null); setResultat(null);
+    const sjangerTekst = {sang:"sang",rim:"rim",regle:"regle"}[form.sjanger]||"sang";
+    const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag en original ${sjangerTekst} for barn i alderen ${form.aldersgruppe} år.\n\nTema: ${form.tema}\nAntall vers: ${form.antallVers}${form.melodi?"\nMelodi/toneleie: "+form.melodi:""}${form.fagomrade?"\nKobling til fagområde: "+form.fagomrade:""}${form.ekstra?"\nØnsker: "+form.ekstra:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på sangen",\n  "tekst": "hele teksten med vers og evt. refreng, formatert med linjeskift",\n  "kategori": "${form.sjanger}",\n  "alder": "${form.aldersgruppe} år",\n  "melodi": "eventuell melodi-anbefaling eller null",\n  "tips": "pedagogisk tips til pedagogen eller null",\n  "rammeplan": ["id-er fra: kropp_bevegelse, kunst_kultur, natur_miljo, antall_rom_form, etikk_religion, naerlighet_vennskap, kommunikasjon_sprak"]\n}`;
+    try {
+      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer og forfatter av barnesanger. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:1200 }) });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      const raw = json.text || "";
+      const cleaned = raw.replace(/```json|```/g,"").trim();
+      setResultat(JSON.parse(cleaned));
+    } catch(e) { setFeil("Klarte ikke å generere sang. Prøv igjen."); }
+    finally { setGenererer(false); }
+  };
+  const lagre = async () => {
+    if (!resultat || !aktivBruker?.id) return;
+    setLagrer(true);
+    const { data, error } = await lagreUserSang({ user_id:aktivBruker.id, tittel:resultat.tittel, tekst:resultat.tekst, kategori:resultat.kategori||form.sjanger, alder:resultat.alder||form.aldersgruppe+" år", melodi:resultat.melodi||null, tips:resultat.tips||null, rammeplan:resultat.rammeplan||[], ai_generert:true });
+    setLagrer(false);
+    if (error) { setFeil("Feil ved lagring: "+error.message); return; }
+    onLagre(data);
+  };
+  return (
+    <div className="fade" style={{background:C.w,borderRadius:16,padding:22,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
+      <Tilbake onClick={onAvbryt}/>
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,marginBottom:4}}>🤖 AI-sanger</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:18}}>La AI lage en original sang, rim eller regle tilpasset barnegruppen din</p>
+      {!resultat ? (
+        <>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Sjanger</label>
+              <select value={form.sjanger} onChange={e=>setForm(p=>({...p,sjanger:e.target.value}))} style={iS}>
+                <option value="sang">🎤 Sang</option>
+                <option value="rim">📝 Rim</option>
+                <option value="regle">📣 Regle</option>
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Aldersgruppe</label>
+              <select value={form.aldersgruppe} onChange={e=>setForm(p=>({...p,aldersgruppe:e.target.value}))} style={iS}>
+                <option value="1-2">1–2 år</option>
+                <option value="2-3">2–3 år</option>
+                <option value="3-4">3–4 år</option>
+                <option value="3-6">3–6 år</option>
+                <option value="4-6">4–6 år</option>
+              </select>
+            </div>
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Tema / innhold *</label>
+            <input value={form.tema} onChange={e=>setForm(p=>({...p,tema:e.target.value}))} placeholder="f.eks. dyr i skogen, årstider, vennskap, tall..." style={iS}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Antall vers</label>
+              <select value={form.antallVers} onChange={e=>setForm(p=>({...p,antallVers:e.target.value}))} style={iS}>
+                <option value="1">1 vers</option>
+                <option value="2">2 vers</option>
+                <option value="3">3 vers + refreng</option>
+                <option value="4">4 vers + refreng</option>
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Fagområde (valgfritt)</label>
+              <select value={form.fagomrade} onChange={e=>setForm(p=>({...p,fagomrade:e.target.value}))} style={iS}>
+                <option value="">– Velg –</option>
+                {FAGOMRADER.map(f=><option key={f.id} value={f.navn}>{f.ikon} {f.navn}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{marginBottom:18}}>
+            <label style={{fontSize:12,fontWeight:700,color:C.gr,display:"block",marginBottom:5}}>Melodi-ønske (valgfritt)</label>
+            <input value={form.melodi} onChange={e=>setForm(p=>({...p,melodi:e.target.value}))} placeholder="f.eks. Byssan lull, enkel melodi barna kan synge..." style={iS}/>
+          </div>
+          {feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"10px 13px",fontSize:13,marginBottom:14}}>{feil}</div>}
+          <button className="btn" onClick={generer} disabled={genererer||!form.tema.trim()} style={{width:"100%",padding:"12px 0",fontSize:14,background:genererer?C.gr:C.g,color:"#fff"}}>
+            {genererer?"⏳ Genererer sang...":"✨ Generer sang"}
+          </button>
+        </>
+      ) : (
+        <div className="fade">
+          <div style={{background:"#f5f9fd",borderRadius:12,padding:18,marginBottom:16,border:"1.5px solid #c4d6ec"}}>
+            <div style={{fontWeight:800,fontSize:18,color:C.t,marginBottom:4}}>{resultat.tittel}</div>
+            <div style={{fontSize:11,color:C.gr,marginBottom:14}}>{resultat.kategori} · {resultat.alder}{resultat.melodi?" · 🎼 "+resultat.melodi:""}</div>
+            <pre style={{whiteSpace:"pre-wrap",fontFamily:"'Nunito',sans-serif",fontSize:15,lineHeight:2,color:C.t,marginBottom:12}}>{resultat.tekst}</pre>
+            {resultat.tips&&<div style={{background:"#fffde7",borderRadius:8,padding:"10px 13px",fontSize:13,color:"#795548"}}><strong>💡 Tips:</strong> {resultat.tips}</div>}
+          </div>
+          {feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"10px 13px",fontSize:13,marginBottom:14}}>{feil}</div>}
+          <div style={{display:"flex",gap:10}}>
+            <button className="btn" onClick={lagre} disabled={lagrer} style={{flex:1,padding:"11px 0",fontSize:14,background:lagrer?C.gr:"#2e7d32",color:"#fff"}}>
+              {lagrer?"⏳ Lagrer...":"💾 Lagre i Mine sanger"}
+            </button>
+            <button className="btn" onClick={()=>setResultat(null)} style={{padding:"11px 18px",fontSize:13,background:C.lg2,color:C.t}}>↩ Prøv igjen</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
   const [sok, setSok] = useState("");
   const [filter, setFilter] = useState("alle");
   const [valgt, setValgt] = useState(null);
+  const [visAiPanel, setVisAiPanel] = useState(false);
+  const [userSanger, setUserSanger] = useState([]);
+  const [lasterMine, setLasterMine] = useState(false);
   const favSet = new Set(favoritter?.sanger || []);
+
+  useEffect(() => {
+    if (!aktivBruker?.id) return;
+    setLasterMine(true);
+    hentUserSanger(aktivBruker.id).then(s => { setUserSanger(s); setLasterMine(false); });
+  }, [aktivBruker?.id]);
+
+  const userSangerMapped = userSanger.map(s => ({ id:"user_"+s.id, tittel:s.tittel, tekst:s.tekst, kategori:s.kategori, alder:s.alder, melodi:s.melodi, tips:s.tips, rammeplan:s.rammeplan||[], _dbId:s.id, _erMin:true }));
+  const alleData = [...userSangerMapped, ...SANGER];
   const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
-  const data = SANGER.filter(s=>{
+  const data = alleData.filter(s=>{
+    if (filter==="mine") return !!s._erMin && (!sok||s.tittel.toLowerCase().includes(sok.toLowerCase()));
     if (filter==="favoritter") return favSet.has(s.id) && (!sok||s.tittel.toLowerCase().includes(sok.toLowerCase()));
     return (filter==="alle"||s.kategori===filter)&&(!sok||s.tittel.toLowerCase().includes(sok.toLowerCase()));
   });
+  const skrivUtSang = (s) => {
+    const melodiHtml = s.melodi ? ' · 🎼 ' + s.melodi : '';
+    const tipsHtml = s.tips ? '<div style="margin-top:12px;padding:12px;background:#fffde7;border-radius:8px;font-size:13px;"><strong>💡 Tips:</strong> ' + s.tips + '</div>' : '';
+    skrivUtVindu('<div style="max-width:620px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + s.tittel + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + s.kategori + ' · ' + s.alder + melodiHtml + '</div><pre style="font-size:16px;line-height:2.1;white-space:pre-wrap;font-family:inherit;background:#f5f9fd;padding:18px;border-radius:10px;border:1px solid #c4d6ec;">' + s.tekst + '</pre>' + tipsHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', s.tittel);
+  };
+  const slettMin = async (dbId) => {
+    await slettUserSang(dbId);
+    setUserSanger(p => p.filter(s => s.id !== dbId));
+    setValgt(null);
+  };
+  if (visAiPanel) return <AiSangerView aktivBruker={aktivBruker} onLagre={(ny) => { setUserSanger(p => [ny, ...p]); onNyUserSang?.(ny); setVisAiPanel(false); }} onAvbryt={() => setVisAiPanel(false)} />;
   return (
     <div className="fade">
-      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>🎵 Sanger, Rim og Regler</div>
-      <p style={{color:C.gr,fontSize:12,marginBottom:12}}>{SANGER.length} tilgjengelige – kobler språk, bevegelse og glede til rammeplanen</p>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t}}>🎵 Sanger, Rim og Regler</div>
+        {aktivBruker&&<button className="btn" onClick={()=>setVisAiPanel(true)} style={{padding:"7px 13px",fontSize:12,background:"linear-gradient(135deg,#7c3aed,#5b21b6)",color:"#fff",whiteSpace:"nowrap"}}>🤖 AI-sanger</button>}
+      </div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:12}}>{SANGER.length} tilgjengelige{userSangerMapped.length?" + "+userSangerMapped.length+" egne":""} – kobler språk, bevegelse og glede til rammeplanen</p>
       <input value={sok} onChange={e=>setSok(e.target.value)} placeholder="🔍 Søk etter sang eller rim..." style={{...iS,marginBottom:12}}/>
       <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:16,paddingBottom:3}}>
         <div style={{display:"flex",gap:7,flexWrap:"nowrap",width:"max-content"}}>
-          {[["alle","Alle"],["favoritter",`⭐ Favoritter${favSet.size?" ("+favSet.size+")":""}`],["sang","🎤 Sanger"],["rim","📝 Rim"],["regle","📣 Regler"]].map(([v,l])=>(
+          {[["alle","Alle"],aktivBruker?["mine",`🤖 Mine${userSangerMapped.length?" ("+userSangerMapped.length+")":""}`]:null,["favoritter",`⭐ Favoritter${favSet.size?" ("+favSet.size+")":""}`],["sang","🎤 Sanger"],["rim","📝 Rim"],["regle","📣 Regler"]].filter(Boolean).map(([v,l])=>(
             <button key={v} className="btn" onClick={()=>setFilter(v)} style={{padding:"6px 13px",fontSize:11,background:filter===v?C.g:C.lg2,color:filter===v?"#fff":C.t,whiteSpace:"nowrap",flexShrink:0}}>{l}</button>
           ))}
         </div>
@@ -1855,32 +3282,38 @@ function SangerSideComp({ favoritter, toggleFav }) {
           <Tilbake onClick={()=>setValgt(null)}/>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:21,color:C.t,flex:1}}>{valgt.tittel}</div>
-            <button className={`fav-btn ${favSet.has(valgt.id)?"aktiv":""}`} onClick={()=>toggleFav("sanger",valgt.id)} title={favSet.has(valgt.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
-              {favSet.has(valgt.id)?"⭐":"☆"}
-            </button>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {valgt._erMin&&<button className="btn" onClick={()=>slettMin(valgt._dbId)} style={{padding:"5px 10px",fontSize:11,background:"#ffebee",color:"#c62828"}}>🗑 Slett</button>}
+              <button className="btn" onClick={()=>skrivUtSang(valgt)} style={{padding:"5px 10px",fontSize:11,background:"#e8f5e9",color:"#2e7d32"}}>🖨️ Skriv ut</button>
+              <button className={`fav-btn ${favSet.has(valgt.id)?"aktiv":""}`} onClick={()=>toggleFav("sanger",valgt.id)} title={favSet.has(valgt.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
+                {favSet.has(valgt.id)?"⭐":"☆"}
+              </button>
+            </div>
           </div>
           <div style={{display:"flex",gap:7,margin:"10px 0 14px",flexWrap:"wrap"}}>
             <span className="tag" style={{background:C.mint,color:C.g}}>{valgt.kategori}</span>
             <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>👶 {valgt.alder}</span>
             {valgt.melodi&&<span className="tag" style={{background:"#f3e5f5",color:"#b5179e"}}>🎼 {valgt.melodi}</span>}
+            {valgt._erMin&&<span className="tag" style={{background:"#ede9fe",color:"#6d28d9"}}>🤖 AI-generert</span>}
           </div>
           <pre style={{background:"#f5f9fd",borderRadius:11,padding:16,fontSize:15,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.9,fontFamily:"'Nunito',sans-serif",marginBottom:12,border:"1px solid #c4d6ec"}}>{valgt.tekst}</pre>
           {valgt.tips&&<div style={{background:"#fffde7",borderRadius:9,padding:12,fontSize:13,color:"#795548",marginBottom:12}}><strong>💡 Tips:</strong> {valgt.tips}</div>}
           <div style={{fontSize:12,fontWeight:700,color:C.gr,marginBottom:7}}>Kobling til rammeplan:</div>
-          <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{valgt.rammeplan.map(r=><FagTag key={r} rid={r}/>)}</div>
+          <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{(valgt.rammeplan||[]).map(r=><FagTag key={r} rid={r}/>)}</div>
         </div>
       ) : (
         <div style={{display:"grid",gap:9}}>
-          {data.length===0&&<div style={{textAlign:"center",padding:28,color:C.gr}}>{filter==="favoritter"?"Du har ingen favoritter ennå – trykk på ⭐ for å lagre":`Ingen treff for «${sok}»`}</div>}
+          {lasterMine&&filter==="mine"&&<div style={{textAlign:"center",padding:18,color:C.gr,fontSize:13}}>⏳ Laster dine sanger...</div>}
+          {data.length===0&&!lasterMine&&<div style={{textAlign:"center",padding:28,color:C.gr}}>{filter==="mine"?"Du har ingen AI-sanger ennå – trykk 🤖 AI-sanger for å lage din første!":filter==="favoritter"?"Du har ingen favoritter ennå – trykk på ⭐ for å lagre":`Ingen treff for «${sok}»`}</div>}
           {data.map(s=>(
             <div key={s.id} className="hover fade" onClick={()=>setValgt(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}</div>
+                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}{s._erMin&&<span style={{marginLeft:6,fontSize:10,background:"#ede9fe",color:"#6d28d9",borderRadius:6,padding:"1px 6px",fontWeight:700}}>🤖</span>}</div>
                   <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
                     <span className="tag" style={{background:C.mint,color:C.g}}>{s.kategori}</span>
                     <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{s.alder}</span>
-                    {s.rammeplan.map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>
                 <button className={`fav-btn ${favSet.has(s.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("sanger",s.id);}} title={favSet.has(s.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
@@ -1900,7 +3333,7 @@ const AKTIV_KATS = [["alle","Alle"],["kreativ","🎨 Kreativ"],["ute","🌳 Ute"
 
 // Standalone-komponent for søkeboks – holder fokus selv om parent re-rendrer.
 // Lokal state for input-verdien, kaller onChange-prop ved hver endring.
-function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, aapneTegneark, aapneFagomrade, aapneRammeplan, C }) {
+function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, C }) {
   return (
     <div style={{marginBottom:18}}>
       <div style={{position:"relative"}}>
@@ -1989,6 +3422,17 @@ function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, 
                 </div>
               )}
 
+              {sokeResultat.skjemaer && sokeResultat.skjemaer.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#6a1b9a",background:"#f9f3fd",textTransform:"uppercase",letterSpacing:0.5}}>📋 Mine skjemaer ({sokeResultat.skjemaer.length})</div>
+                  {sokeResultat.skjemaer.slice(0,5).map(s=>(
+                    <div key={"sk"+s.id} onClick={()=>{navigerTil("skjemaer");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{s.tittel||"Skjema"}</div>
+                      {s.type&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{s.type}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
               {sokeResultat.ukeplaner && sokeResultat.ukeplaner.length > 0 && (
                 <div>
                   <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#1565c0",background:"#f5f9fd",textTransform:"uppercase",letterSpacing:0.5}}>📅 Dine ukeplaner ({sokeResultat.ukeplaner.length})</div>
@@ -1998,6 +3442,73 @@ function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, 
                       {(p.uke||p.tema) && <div style={{fontSize:11,color:C.gr,marginTop:1}}>{p.uke?`Uke ${p.uke}`:""}{p.uke&&p.tema?" • ":""}{p.tema||""}</div>}
                     </div>
                   ))}
+                </div>
+              )}
+              {sokeResultat.maanedsplaner && sokeResultat.maanedsplaner.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#6a1b9a",background:"#f9f3fd",textTransform:"uppercase",letterSpacing:0.5}}>🗓️ Dine månedsplaner ({sokeResultat.maanedsplaner.length})</div>
+                  {sokeResultat.maanedsplaner.slice(0,5).map(p=>(
+                    <div key={"mp"+p.id} onClick={()=>{navigerTil("maanedsplan");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{p.tittel}</div>
+                      {p.tema&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{p.tema}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sokeResultat.maanedsbrev && sokeResultat.maanedsbrev.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#2d6a4f",background:"#f0faf4",textTransform:"uppercase",letterSpacing:0.5}}>📨 Dine månedsbrev ({sokeResultat.maanedsbrev.length})</div>
+                  {sokeResultat.maanedsbrev.slice(0,5).map(b=>(
+                    <div key={"mb"+b.id} onClick={()=>{navigerTil("maanedsbrev");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{b.tittel}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sokeResultat.arsplaner && sokeResultat.arsplaner.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#1b5e20",background:"#f1f8e9",textTransform:"uppercase",letterSpacing:0.5}}>📆 Dine årsplaner ({sokeResultat.arsplaner.length})</div>
+                  {sokeResultat.arsplaner.slice(0,5).map((p,i)=>(
+                    <div key={"ap"+i} onClick={()=>{navigerTil("arsplan");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{p.tittel||"Årsplan"}</div>
+                      {(p.aar||p.tema)&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{p.aar?p.aar+"":""}{p.aar&&p.tema?" • ":""}{p.tema||""}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sokeResultat.boker && sokeResultat.boker.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#00695c",background:"#e0f2f1",textTransform:"uppercase",letterSpacing:0.5}}>📚 Bøker ({sokeResultat.boker.length})</div>
+                  {sokeResultat.boker.slice(0,5).map(b=>(
+                    <div key={"bk"+b.id} onClick={()=>{navigerTil("boker");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{b.tittel}</div>
+                      {b.forfatter&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{b.forfatter}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sokeResultat.aktivitetskort && sokeResultat.aktivitetskort.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#f57f17",background:"#fff8e1",textTransform:"uppercase",letterSpacing:0.5}}>🃏 Aktivitetskort ({sokeResultat.aktivitetskort.length})</div>
+                  {sokeResultat.aktivitetskort.slice(0,5).map(k=>(
+                    <div key={"ak"+k.id} onClick={aapneAktivitetskort} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{k.title}</div>
+                      {k.category&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{k.category}{k.age_group?" · "+k.age_group:""}</div>}
+                    </div>
+                  ))}
+                  {sokeResultat.aktivitetskort.length>5&&<div style={{padding:"6px 14px",fontSize:11,color:C.gr,fontStyle:"italic"}}>+{sokeResultat.aktivitetskort.length-5} flere</div>}
+                </div>
+              )}
+              {sokeResultat.dokumentasjon && sokeResultat.dokumentasjon.length > 0 && (
+                <div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#455a64",background:"#eceff1",textTransform:"uppercase",letterSpacing:0.5}}>📔 Dokumentasjon ({sokeResultat.dokumentasjon.length})</div>
+                  {sokeResultat.dokumentasjon.slice(0,5).map(d=>(
+                    <div key={"dk"+d.id} onClick={aapneDokumentasjon} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{d.tittel}</div>
+                      {d.dato&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{d.dato}</div>}
+                    </div>
+                  ))}
+                  {sokeResultat.dokumentasjon.length>5&&<div style={{padding:"6px 14px",fontSize:11,color:C.gr,fontStyle:"italic"}}>+{sokeResultat.dokumentasjon.length-5} flere</div>}
                 </div>
               )}
             </>
@@ -2015,7 +3526,7 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
   useEffect(() => {
     // Nullstill preselect i parent etter at vi har brukt den
     if (preselectId && clearPreselect) clearPreselect();
-  }, []);
+  }, [preselectId, clearPreselect]);
   const favSet = new Set(favoritter?.aktiviteter || []);
   const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
   const data = AKTIVITETER.filter(a=>{
@@ -2024,6 +3535,13 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
     return (filter==="alle"||a.kategori===filter) && matchSok;
   });
   const filtre = [["alle","Alle"],["favoritter",`⭐ Favoritter${favSet.size?" ("+favSet.size+")":""}`],...AKTIV_KATS.filter(k=>k[0]!=="alle")];
+  const skrivUtAktivitet = (a) => {
+    const tidHtml = a.tid ? ' · ⏱ ' + a.tid : '';
+    const gruppeHtml = a.gruppe ? ' · 👥 ' + a.gruppe : '';
+    const matHtml = a.materialer ? '<div style="background:#fce4ec;border-radius:8px;padding:12px 14px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:#c62828;margin-bottom:4px;">🧰 Materialer</div><div style="font-size:13px;">' + a.materialer + '</div></div>' : '';
+    const seksjoner = [['🎯 HVA – Beskrivelse', a.hva, '#fffde7', '#795548'], ['⚙️ HVORDAN – Gjennomføring', a.hvordan, '#e8f5e9', '#2e7d32'], ['❓ HVORFOR – Pedagogisk begrunnelse', a.hvorfor, '#e3f2fd', '#1565c0']].map(([t,v,bg,tc]) => '<div style="background:' + bg + ';border-radius:8px;padding:12px 14px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:' + tc + ';margin-bottom:4px;">' + t + '</div><div style="font-size:13px;line-height:1.7;">' + v + '</div></div>').join('');
+    skrivUtVindu('<div style="max-width:640px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + a.tittel + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + a.kategori + ' · ' + a.alder + tidHtml + gruppeHtml + '</div>' + seksjoner + matHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', a.tittel);
+  };
   return (
     <div className="fade">
       <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>🏃 Aktiviteter</div>
@@ -2041,9 +3559,12 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
           <Tilbake onClick={()=>setValgt(null)}/>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:8}}>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,flex:1}}>{valgt.tittel}</div>
-            <button className={`fav-btn ${favSet.has(valgt.id)?"aktiv":""}`} onClick={()=>toggleFav("aktiviteter",valgt.id)} title={favSet.has(valgt.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
-              {favSet.has(valgt.id)?"⭐":"☆"}
-            </button>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <button className="btn" onClick={()=>skrivUtAktivitet(valgt)} style={{padding:"5px 10px",fontSize:11,background:"#e8f5e9",color:"#2e7d32"}}>🖨️ Skriv ut</button>
+              <button className={`fav-btn ${favSet.has(valgt.id)?"aktiv":""}`} onClick={()=>toggleFav("aktiviteter",valgt.id)} title={favSet.has(valgt.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
+                {favSet.has(valgt.id)?"⭐":"☆"}
+              </button>
+            </div>
           </div>
           <div style={{display:"flex",gap:7,marginBottom:14,flexWrap:"wrap"}}>
             <span className="tag" style={{background:C.mint,color:C.g}}>{valgt.kategori}</span>
@@ -2059,7 +3580,7 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
           ))}
           {valgt.materialer&&<div style={{background:"#fce4ec",borderRadius:11,padding:"12px 14px",marginBottom:10}}><div style={{fontWeight:800,color:"#c62828",marginBottom:4,fontSize:13}}>🧰 Materialer</div><div style={{color:C.t,fontSize:13}}>{valgt.materialer}</div></div>}
           <div style={{fontSize:12,fontWeight:700,color:C.gr,marginBottom:7}}>Kobling til rammeplan:</div>
-          <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{valgt.rammeplan.map(r=><FagTag key={r} rid={r}/>)}</div>
+          <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{(valgt.rammeplan||[]).map(r=><FagTag key={r} rid={r}/>)}</div>
         </div>
       ) : (
         <div style={{display:"grid",gap:9}}>
@@ -2203,44 +3724,96 @@ const UKEPLAN_MAL = {
 };
 
 // Hjelpefunksjon: bygg en grundig system-prompt med rammeplan-kontekst
-function byggPrompt({ type, fagomrade, alder, arstid, vanskelighet, brukertekst }) {
+// Statisk system-melding – sendes som system-felt i API-kallet og caches automatisk
+const BARNEHAGE_SYSTEM = `Du er Barnehageguiden — en svært erfaren norsk barnehagelærer, pedagogisk leder og fagperson med 20+ års erfaring fra norske barnehager. Du vet hva som faktisk virker i praksis, og du skriver innhold som en barnehagelærer kan bruke direkte i arbeidet sitt.
+
+RAMMEPLAN FOR BARNEHAGEN 2017 — GRUNNPRINSIPPER:
+• Barnets beste er overordnet hensyn i alle avgjørelser
+• Lek har egenverdi — den er ikke bare et middel for læring, men et mål i seg selv
+• Barns medvirkning: barna skal bli hørt, tatt på alvor og ha reell innflytelse på hverdagen
+• Danning og læring skjer i samspill med omgivelsene, ikke som overføring av kunnskap
+• Inkludering og mangfold: barnehagen speiler og feirer barnas ulike bakgrunner og kulturer
+• Bærekraftig utvikling: barna lærer å ta vare på seg selv, hverandre og naturen
+• Progresjon: innhold tilpasses barnets alder, modenhet og den konkrete barnegruppen
+• Helhetssyn: kropp, lek, utforsking, kommunikasjon og sosial kompetanse henger uatskillelig sammen
+• De 7 fagområdene er ikke separate fag — de gjennomsyrer alt barnehagen gjør
+
+NORSK BARNEHAGEKONTEKST:
+• Friluftsliv og natur er prioritert uansett vær — «det finnes ikke dårlig vær, bare dårlige klær»
+• Årstidene er rike pedagogiske ressurser: høst (bær, sopp, farger), vinter (snø, mørketid, lys), vår (spirer, fugler, lys), sommer (hage, vann, lek ute)
+• Norske høytider med pedagogisk potensial: jul, påske, 17. mai, fastelavn, halloween, midtsommer
+• Faste pedagogiske rammer: turdag, samlingstund, måltidet som pedagogisk arena, ro-/hviletid
+• Aldersgrupper: småbarn 0–2 år (kroppsnær, rutinebasert), mellombarn 3–4 år (symbollek, språk), storbarn 5–6 år (skoleforbereding, kompleks lek)
+• Foreldresamarbeid er lovfestet — månedsbrev, foreldremøter, daglig kontakt er viktige arenaer
+
+REGLER FOR ALLE SVAR:
+• Alltid norsk bokmål — varmt, faglig og direkte
+• Alltid konkret og handlingsorientert — ikke generell pedagogisk teori
+• Spørsmål til barn er alltid åpne og undrende: «Hva tror du ...?» aldri «Liker du ...?»
+• Følg nøyaktig det formatet og de ordgrensene som er oppgitt i forespørselen
+• Innholdet skal kunne brukes direkte av en barnehagelærer uten videre bearbeiding`;
+
+function byggPrompt({ type, fagomrade, alder, arstid, vanskelighet, brukertekst, alleFagomrader }) {
   const fag = FAGOMRADER.find(f=>f.id===fagomrade);
   const ald = ALDER_GRUPPER.find(a=>a.id===alder);
   const ars = ARSTID_HOYTID.find(a=>a.id===arstid);
   const van = VANSKELIGHET.find(v=>v.id===vanskelighet);
   const inntype = INNHOLDSTYPER.find(i=>i.id===type);
-  let sys = `Du er en svært erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Du svarer ALLTID på norsk bokmål, ALLTID konkret og praktisk, og du forankrer hvert innhold i rammeplanen.\n\n`;
-  sys += `═══ OPPDRAG ═══\nDu skal lage: ${inntype?.navn || type}\nBeskrivelse: ${inntype?.beskrivelse || ""}\n\n`;
-  if (fag && fagomrade !== "alle") {
+
+  // Alle valgte fagområder (for flerfaglig støtte)
+  const valgteFag = (alleFagomrader && alleFagomrader.length > 0)
+    ? alleFagomrader.map(id => FAGOMRADER.find(f=>f.id===id)).filter(Boolean)
+    : (fag ? [fag] : []);
+
+  // user-meldingen inneholder det spesifikke oppdraget (varierer per forespørsel)
+  let sys = `═══ OPPDRAG ═══\nDu skal lage: ${inntype?.navn || type}\nBeskrivelse: ${inntype?.beskrivelse || ""}\n\n`;
+
+  if (valgteFag.length > 1) {
+    sys += `═══ VALGTE FAGOMRÅDER (${valgteFag.length} stk.) ═══\n`;
+    valgteFag.forEach(f => {
+      sys += `\n▸ ${f.ikon} ${f.navn}\n`;
+      sys += `  Rammeplanen: ${f.innhold.slice(0,200)}...\n`;
+      sys += `  Mål for barna: ${f.malBarna.slice(0,3).join(" • ")}\n`;
+      sys += `  Progresjon: ${f.progresjon}\n`;
+    });
+    sys += `\nKoble innholdet tydelig til alle ${valgteFag.length} fagområdene ovenfor.\n\n`;
+  } else if (fag && fagomrade !== "alle") {
     sys += `═══ FAGOMRÅDE: ${fag.navn} ${fag.ikon} ═══\n`;
     sys += `Hva rammeplanen sier: ${fag.innhold}\n`;
     sys += `Mål for barna: ${fag.malBarna.join(" • ")}\n`;
-    sys += `Arbeidsmåter: ${fag.arbeidsmater.slice(0,4).join(", ")}\n\n`;
+    sys += `Arbeidsmåter: ${fag.arbeidsmater.join(", ")}\n`;
+    sys += `Progresjon: ${fag.progresjon}\n\n`;
   } else if (fagomrade === "alle") {
-    sys += `═══ TVERRFAGLIG (alle 7 fagområder) ═══\nKoble innholdet til minst 2-3 fagområder fra rammeplanen.\n\n`;
+    sys += `═══ TVERRFAGLIG (alle 7 fagområder) ═══\n`;
+    FAGOMRADER.forEach(f => {
+      sys += `${f.ikon} ${f.navn}: ${f.malBarna.slice(0,2).join("; ")}\n`;
+    });
+    sys += `\nKoble innholdet til minst 3 fagområder fra listen ovenfor.\n\n`;
   }
-  if (ald) sys += `═══ ALDER: ${ald.navn} ═══\nFokus: ${ald.fokus}\nTilpass språk, tidslengde og kompleksitet til denne alderen.\n\n`;
+  if (ald) {
+    sys += `═══ ALDER: ${ald.navn} ═══\nFokus: ${ald.fokus}\nTilpass språk, tidslengde og kompleksitet til denne alderen.\n\n`;
+  }
   if (ars && arstid !== "ingen") sys += `═══ ÅRSTID/HØYTID: ${ars.navn} ═══\nMåneder: ${ars.maaneder}. Motiver: ${ars.motiv}.\n\n`;
   if (van) sys += `═══ VANSKELIGHETSGRAD: ${van.navn} ═══\n${van.beskrivelse}\n\n`;
   // Type-spesifikke instruksjoner
   const formater = {
-    aktivitet: `Bruk dette formatet:\n📌 TITTEL\n🎯 RAMMEPLAN-MÅL (2-3 konkrete mål fra fagområdet)\n👶 ALDER\n⏱️ VARIGHET\n📦 MATERIALER (konkret liste)\n📝 SLIK GJØR DU (nummererte steg)\n💬 SAMTALE MED BARNA (3-4 åpne spørsmål)\n✨ TIPS OG VARIASJONER`,
-    samling: `Bruk dette formatet:\n📌 TITTEL\n🎯 RAMMEPLAN-MÅL\n⏱️ VARIGHET (totalt)\n🌅 ÅPNING (5 min – sang/rituale)\n🎯 HOVEDDEL (10-15 min – kjerneaktivitet)\n🌙 AVSLUTNING (5 min – oppsummering/sang)\n💬 SAMTALE-SPØRSMÅL\n✨ VOKSENROLLEN`,
-    sang: `Lag en ORIGINAL sang/regle (ingen kopi av eksisterende verker). Format:\n🎵 TITTEL\n🎼 MELODIFORSLAG (eller 'egenkomponert')\n👶 ALDER\n📝 TEKST (3-4 vers eller en regle)\n💃 BEVEGELSER (hva barna kan gjøre)\n💡 PEDAGOGISK BRUK`,
-    tegneark: `Format:\n🖍️ TITTEL (kort, konkret)\n🎯 RAMMEPLAN-MÅL (2 konkrete mål)\n👶 ALDER\n🎨 MOTIV (hva tegnearket viser – beskriv enkelt og tydelig)\n📝 TEGNEOPPGAVE (hva barna skal gjøre – konkret, alderstilpasset)\n💬 SAMTALE MENS DERE TEGNER (4-5 åpne, undrende spørsmål som åpner opp – ikke ja/nei-spørsmål)\n🔍 SENSORISKE OG MOTORISKE TIPS (hvilke fargestifter, blyantgrep, finmotorikk)\n✨ UTVIDELSE (hvordan jobbe videre med temaet i andre situasjoner)\n💡 TIL VOKSNE (faglig veiledning – hva ser dere etter, hvordan støtte uten å overstyre)`,
-    prosjekt: `Format:\n📚 PROSJEKTTITTEL\n🎯 RAMMEPLAN-MÅL (flere fagområder)\n⏱️ VARIGHET (typisk 2-4 uker)\n📋 UKE-FOR-UKE PLAN (hva skjer hver uke)\n👶 BARNAS MEDVIRKNING (hvordan får barna påvirke?)\n📦 MATERIELL\n📸 DOKUMENTASJON (hvordan synliggjøre prosessen)`,
-    ukeplan: `Format:\n📅 UKETEMA\n🎯 RAMMEPLAN-MÅL\nMANDAG: aktivitet og fagområde\nTIRSDAG: aktivitet og fagområde\nONSDAG: aktivitet og fagområde\nTORSDAG: aktivitet og fagområde\nFREDAG: aktivitet og fagområde\n💬 SAMLINGSSTUND-TEMA\n📝 NOTAT TIL PERSONALET`,
-    manedsplan: `Format:\n🗓️ MÅNEDSTEMA\n🎯 RAMMEPLAN-MÅL (alle relevante fagområder)\nUKE 1: tema og hovedaktivitet\nUKE 2: tema og hovedaktivitet\nUKE 3: tema og hovedaktivitet\nUKE 4: tema og hovedaktivitet\n📚 BØKER/SANGER for måneden\n🎉 HØYTID/MARKERINGER\n📸 DOKUMENTASJON`,
+    aktivitet: `Bruk ALLTID denne strukturen (markdown-format, kompakt og punktvis):\n\n## 🎯 Aktivitet\nKort, tydelig tittel og beskrivelse (1-2 linjer).\n\n## 🏷️ Fagområder\n• [fagområde fra rammeplanen]\n• [fagområde]\n\n## 📦 Du trenger\n• [materiale 1]\n• [materiale 2]\n• [materiale 3]\n\n## ⚙️ Gjennomføring\n\n### 1. Forberedelse\nKort og konkret.\n\n### 2. Aktivitet\nKort og konkret.\n\n### 3. Samtale og refleksjon\nKort og konkret.\n\n## 💬 Samtalespørsmål\n• [åpent spørsmål]\n• [åpent spørsmål]\n• [åpent spørsmål]\n\n## ❓ Pedagogisk hensikt\n1-2 linjer: hva barna erfarer og hvorfor aktiviteten er verdifull.\n\n## 📖 Rammeplan 2017\n### [emoji + fagområdenavn]\n• [relevant punkt fra rammeplanen]\n• [relevant punkt]`,
+    samling: `Bruk dette formatet (kort og direkte – maks 200 ord totalt):\n📌 TITTEL\n🏷️ FAGOMRÅDER: [navngi relevante fagområder]\n🌅 ÅPNING (2-3 linjer)\n🎯 HOVEDDEL (3-5 konkrete steg)\n🌙 AVSLUTNING (1-2 linjer)\n💬 ETT SAMTALE-SPØRSMÅL`,
+    sang: `Lag en ORIGINAL sang/regle. Format (maks 150 ord):\n🎵 TITTEL\n🏷️ FAGOMRÅDER: [relevante fagområder]\n🎼 MELODI: [melodiforslag]\n📝 TEKST: [2-3 vers eller en regle]\n💃 BEVEGELSER: [1-2 linjer]`,
+    tegneark: `Format (maks 200 ord):\n🖍️ TITTEL\n🏷️ FAGOMRÅDER: [relevante fagområder]\n🎨 MOTIV: [kort beskrivelse]\n📝 TEGNEOPPGAVE: [1-2 linjer]\n💬 SAMTALE (3 åpne spørsmål)`,
+    prosjekt: `Format (maks 250 ord):\n📚 PROSJEKTTITTEL\n🏷️ FAGOMRÅDER: [relevante fagområder]\n⏱️ VARIGHET\nUKE 1–2: [fokus]\nUKE 3–4: [fokus]\n👶 BARNAS MEDVIRKNING: [1-2 linjer]\n📸 DOKUMENTASJON: [1 linje]`,
+    ukeplan: `Format:\n📅 UKETEMA\n🏷️ FAGOMRÅDER: [relevante fagområder]\nMAN: [aktivitet]\nTIR: [aktivitet]\nONS: [aktivitet]\nTOR: [aktivitet]\nFRE: [aktivitet]\n💬 SAMLINGSTEMA`,
+    manedsplan: `Format (maks 250 ord):\n🗓️ MÅNEDSTEMA\n🏷️ FAGOMRÅDER: [alle relevante fagområder]\nUKE 1: [tema og aktivitet]\nUKE 2: [tema og aktivitet]\nUKE 3: [tema og aktivitet]\nUKE 4: [tema og aktivitet]\n🎉 MARKERINGER: [hvis aktuelt]`,
     arsplan: `Lag en pedagogisk årsplan. Format:\n📆 OVERORDNET TEMA FOR ÅRET\n🎯 PEDAGOGISK GRUNNSYN (kort, knyttet til rammeplanen)\n🌿 SATSNINGSOMRÅDER (2-3 hovedområder fra fagområdene)\n\n📅 ÅRSHJUL (måned for måned):\nAUGUST – tilvenning og bli kjent\nSEPTEMBER – tema og fokus\nOKTOBER – tema og fokus\nNOVEMBER – tema og fokus\nDESEMBER – jul og advent\nJANUAR – tema og fokus\nFEBRUAR – tema og fokus\nMARS – tema og fokus\nAPRIL – tema og fokus (påske)\nMAI – tema og fokus (17. mai)\nJUNI – tema og fokus, sommeravslutning\n\n🤝 SAMARBEID HJEM-BARNEHAGE\n📊 VURDERING OG DOKUMENTASJON\n🎓 OVERGANGER (tilvenning, til skole)\n💡 NOTAT TIL PERSONALET`,
     manedsbrev: `Lag et månedsbrev til foreldre. Varmt, konkret og inviterende språk. Format:\n✉️ MÅNED OG ÅR\n💝 HILSEN (kort åpning)\n\n🌟 DETTE HAR VI GJORT (3-5 høydepunkter fra måneden, konkrete fortellinger uten å nevne enkeltbarn)\n\n📚 PEDAGOGISK FOKUS (fagområder vi har jobbet med, knyttet til rammeplanen)\n\n📅 DETTE SKJER FREMOVER (kommende uker)\n\n📌 PRAKTISK INFO (klær, husk på, viktige datoer)\n\n💬 SAMTALETIPS (hva kan dere snakke med barna deres om hjemme?)\n\n🙏 AVSLUTNING (takk, ønske god måned)`,
     samtale: `Lag 5-7 åpne, filosofiske eller undrende spørsmål. Format:\n💬 TEMA\n🎯 RAMMEPLAN-MÅL\n👶 ALDER\n1. [spørsmål]\n2. [spørsmål]\n...\n✨ VEILEDNING TIL VOKSNE (hvordan lede samtalen, lytte aktivt, ikke vurdere svar)`,
     fritekst: `Svar konkret, praktisk og fagligt. Strukturer svaret med overskrifter og kulepunkter når det passer.`,
   };
   sys += `═══ FORMAT FOR SVARET ═══\n${formater[type] || formater.fritekst}\n\n`;
-  sys += `═══ KVALITETSKRAV ═══\n• Konkret og direkte anvendbart – en barnehagelærer skal kunne bruke det i morgen\n• Forankret i rammeplanen 2017 – bruk fagspråket korrekt (ikke "leke", men "lek som arbeidsform"; ikke "lære", men "danning")\n• Alderstilpasset – tenk barnets utviklingsnivå, oppmerksomhetsspenn, motorikk og språk\n• Inkluderende språk (alle barn, alle familietyper, alle bakgrunner)\n• Spørsmål til barn skal være ÅPNE og UNDRENDE – aldri ja/nei. Bruk "Hvordan tror du...", "Hva tenker du om...", "Fortell meg om..."\n• Voksenrollen: STØTTENDE, ikke instruerende. Følg barnets initiativ\n• Ikke gjenta lange fraser fra rammeplanen ordrett\n• Originalt innhold (ikke kopier eksisterende sanger eller verker)\n• Norsk bokmål, varmt og inviterende språk\n\n═══ STRENGT KRAV: PRAKTISK GJENNOMFØRING ═══\nI "SLIK GJØR DU" / "HOVEDDEL" / "FORLØP" / praktisk gjennomføring skriver du KUN det de ansatte gjør, steg for steg. Skriv som en oppskrift de kan følge direkte.\n\nFORBUDT i gjennomføringen:\n• IKKE skriv mål eller hensikt ("for å styrke...", "som utvikler...")\n• IKKE skriv refleksjoner eller pedagogiske begrunnelser\n• IKKE skriv læringsutbytte eller utviklingsperspektiv\n• IKKE skriv hvorfor aktiviteten er viktig\n• IKKE bruk ord som "rammeplan", "fagområde", "danning", "kompetanse" i denne seksjonen\n\nTILLATT i gjennomføringen:\n• Hva personalet gjør konkret ("Personalet legger frem ark og fargestifter på bordet")\n• Hvilke materialer som brukes\n• Hvordan barna inviteres med, deltar og fordeles\n• Tidsangivelser ("Etter 5 minutter samles gruppa")\n• Hvordan rommet eller bordet organiseres\n• Praktiske tips for ulike situasjoner ("Hvis et barn ikke vil delta, ...")\n\nALT om mål, hensikt, læringsutbytte og rammeplan-forankring skal stå i "RAMMEPLAN-MÅL"-seksjonen – ALDRI i "SLIK GJØR DU".\n\nEKSEMPEL – RIKTIG "SLIK GJØR DU":\n"1. Dekk bordet med voksduk. Sett frem ark, pensler og høstfarger (rød, gul, oransje, brun).\n2. Samle barna ved bordet. Vis dem fargene og la dem velge en pensel hver.\n3. Personalet maler først et eksempel mens barna ser på.\n4. La barna male fritt i 15-20 minutter. Voksne sitter ved bordet og hjelper ved behov.\n5. Heng opp bildene på vegg når de er tørre."\n\nEKSEMPEL – GALT (inneholder mål og begrunnelse):\n"Barna maler med høstfarger for å styrke kreativitet og finmotorikk. Denne aktiviteten utvikler deres estetiske sans og knytter dem til årstidens farger. Personalet observerer barnas uttrykk..."\n\n`;
+  sys += `═══ KRAV ═══\n• Kortfattet og direkte – følg ordgrensene i formatet\n• Konkret og praktisk – kan brukes i morgen uten videre bearbeiding\n• Norsk bokmål, varmt og profesjonelt språk\n• Spørsmål til barn: åpne og undrende, aldri ja/nei-spørsmål\n• I gjennomføringsstegene: beskriv kun hva personalet gjør konkret\n\n`;
   if (brukertekst && brukertekst.trim()) sys += `═══ BRUKERENS EKSTRA ØNSKE ═══\n${brukertekst.trim()}\n\n`;
   sys += `Lever et komplett, brukbart svar nå.`;
-  return sys;
+  return { system: BARNEHAGE_SYSTEM, user: sys };
 }
 
 // Fallback-generator: bygger et innholdsrikt svar fra databasen når AI ikke svarer
@@ -2407,6 +3980,37 @@ const AI_EKSEMPLER = {
   ],
 };
 
+// Delt tekst-renderer: håndterer ##/### overskrifter, punktlister og nummererte steg
+function renderInline(tekst) {
+  const deler = tekst.split(/(\*\*[^*\n]+\*\*)/g);
+  if (deler.length === 1) return tekst;
+  return deler.map((d, i) =>
+    d.startsWith("**") && d.endsWith("**")
+      ? <strong key={i} style={{fontWeight:800}}>{d.slice(2,-2)}</strong>
+      : d
+  );
+}
+
+function RenderTekst({ tekst }) {
+  if (!tekst) return null;
+  return (
+    <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#1a2c45"}}>
+      {tekst.split("\n").map((l, i) => {
+        const t = l.trim();
+        if (!t) return <div key={i} style={{height:4}}/>;
+        if (t.startsWith("## ")) return <div key={i} style={{fontWeight:800,color:"#fff",background:"#2c5b8e",fontSize:11,marginTop:i===0?0:12,marginBottom:4,padding:"4px 9px",borderRadius:6,display:"inline-block"}}>{renderInline(t.slice(3))}</div>;
+        if (t.startsWith("### ")) return <div key={i} style={{fontWeight:700,color:"#2c5b8e",fontSize:12,marginTop:8,marginBottom:3,borderLeft:"3px solid #2c5b8e",paddingLeft:7}}>{renderInline(t.slice(4))}</div>;
+        if (/^[-•*]\s/.test(t)) return <div key={i} style={{display:"flex",gap:6,marginBottom:3,paddingLeft:6,lineHeight:1.5}}><span style={{color:"#2d7d4f",fontWeight:700,flexShrink:0}}>•</span><span>{renderInline(t.replace(/^[-•*]\s*/,""))}</span></div>;
+        if (/^\d+[.)]\s/.test(t)) {
+          const nr = t.match(/^\d+/)[0];
+          return <div key={i} style={{display:"flex",gap:8,marginBottom:5,alignItems:"flex-start"}}><span style={{background:"#2c5b8e",color:"#fff",borderRadius:"50%",minWidth:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0,marginTop:2}}>{nr}</span><span style={{lineHeight:1.55}}>{renderInline(t.replace(/^\d+[.)]\s*/,""))}</span></div>;
+        }
+        return <div key={i} style={{lineHeight:1.6,marginBottom:2,paddingLeft:2}}>{renderInline(t)}</div>;
+      })}
+    </div>
+  );
+}
+
 // Hjelper: finn relevante eksempler basert på brukerens valg
 function relevanteEksempler({ type, fagomrade, alder, arstid }, maks=4) {
   const liste = AI_EKSEMPLER[type] || [];
@@ -2439,6 +4043,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
   const [aiResultat, setAiResultat] = useState("");
   const [aiFeedback, setAiFeedback] = useState("");
   const [aiVisFilter, setAiVisFilter] = useState(true);
+  const [lagringsTittel, setLagringsTittel] = useState("");
 
   // Hvis parent sender initialType (f.eks. fra hurtigknapp på Hjem), oppdater type og nullstill prop
   useEffect(() => {
@@ -2446,14 +4051,23 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
       setType(initialType);
       setAiResultat("");
       setAiVisFilter(true);
+      setLagringsTittel("");
       if (clearInitialType) clearInitialType();
     }
-  }, [initialType]);
+  }, [initialType, clearInitialType]);
+
+  // Trekk ut tittel automatisk når AI-svar kommer inn
+  useEffect(() => {
+    if (!aiResultat) { setLagringsTittel(""); return; }
+    const linje1 = aiResultat.split("\n").find(l => l.trim()) || "";
+    const eksTittel = linje1.replace(/^[^\p{L}\p{N}]+/u, "").slice(0, 80);
+    setLagringsTittel(eksTittel);
+  }, [aiResultat]);
 
   const visMelding = (m) => { setAiFeedback(m); setTimeout(()=>setAiFeedback(""), 3000); };
 
   const genAI = async () => {
-    setAiLoading(true); setAiResultat(""); setAiFeedback("");
+    setAiLoading(true); setAiResultat(""); setAiFeedback(""); setLagringsTittel("");
 
     // Konverter fagomrade-array til parametere som passer eksisterende prompt-bygging.
     // Primær = første valgte (eller "alle" hvis ingen). Ekstra = de andre valgte fagområdene
@@ -2475,27 +4089,29 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
     }
 
     const utvidetBrukertekst = ekstraFagTekst + (brukertekst || "");
-    const params = { type, fagomrade: primaerFag, alder, arstid, vanskelighet, brukertekst: utvidetBrukertekst };
-    const prompt = byggPrompt(params);
+    const params = { type, fagomrade: primaerFag, alder, arstid, vanskelighet, brukertekst: utvidetBrukertekst, alleFagomrader: rensetFag };
+    const { system: aiSystem, user: aiPrompt } = byggPrompt(params);
     const fallback = fallbackInnhold(params);
 
-    // AI_ENDPOINT kan settes til "/api/ai" når du har deployet en backend.
-    // Standard: direkte til Anthropic (fungerer kun i claude.ai-forhåndsvisning).
-    const AI_ENDPOINT = (typeof window !== "undefined" && window.__BH_AI_ENDPOINT) || "https://api.anthropic.com/v1/messages";
+    // Lengre svar for innholdsrike typer
+    const tokenMap = { aktivitet:2500, prosjekt:3000, arsplan:3500, manedsplan:2500, ukeplan:2000 };
+    const ønsketTokens = tokenMap[type] || 1800;
+
+    const AI_ENDPOINT = (typeof window !== "undefined" && window.__BH_AI_ENDPOINT) || "/api/ai";
     const BRUK_BACKEND = AI_ENDPOINT !== "https://api.anthropic.com/v1/messages";
 
-    // Bygg request basert på endpoint-type
+    // Bygg request basert på endpoint-type – sender system separat for bedre kvalitet og caching
     const requestBody = BRUK_BACKEND
-      ? { prompt }  // Backend forventer bare prompt, legger til modell og nøkkel selv
-      : {           // Direkte Anthropic-kall (kun for claude.ai-forhåndsvisning)
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1500,
-          messages: [{ role: "user", content: prompt }],
+      ? { system: aiSystem, prompt: aiPrompt, max_tokens: ønsketTokens }
+      : {
+          model: "claude-sonnet-4-6",
+          max_tokens: ønsketTokens,
+          system: aiSystem,
+          messages: [{ role: "user", content: aiPrompt }],
         };
 
-    // Timeout-kontroller – avbryt etter 30 sek så UI-et aldri henger
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
 
     // Hjelpefunksjon: ett forsøk
     const forsok = async () => {
@@ -2507,12 +4123,11 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
       });
       if (!r.ok) {
         const status = r.status;
-        // Hent feilmelding fra body hvis mulig
         let detalj = "";
         try { detalj = (await r.text()).slice(0, 200); } catch (_) {}
         const err = new Error(`HTTP ${status}${detalj ? ": " + detalj : ""}`);
         err.status = status;
-        err.transient = status >= 500 || status === 429; // 5xx og rate-limit kan forsøkes igjen
+        err.transient = status >= 500 || status === 429;
         throw err;
       }
       return r.json();
@@ -2525,7 +4140,6 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
       try {
         data = await forsok();
       } catch (e1) {
-        // Retry én gang hvis feilen er transient (5xx, 429, eller nettverk)
         const erNettverk = e1.name === "TypeError" || e1.message?.includes("Failed to fetch");
         if (e1.transient || erNettverk) {
           await new Promise(r => setTimeout(r, 600));
@@ -2535,7 +4149,6 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
         }
       }
 
-      // Pakk ut tekst – støtter både backend-format ({text:...}) og Anthropic-format ({content:[...]})
       let tekst = "";
       if (typeof data?.text === "string") {
         tekst = data.text.trim();
@@ -2551,27 +4164,24 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
       }
     } catch (e) {
       resultat = fallback;
-      if (e.name === "AbortError") feilGrunn = "AI-tidsavbrudd (>30s)";
+      if (e.name === "AbortError") feilGrunn = "AI-tidsavbrudd";
       else if (e.status === 401 || e.status === 403) feilGrunn = "Manglende API-tilgang";
-      else if (e.status === 429) feilGrunn = "For mange forespørsler – prøv igjen senere";
+      else if (e.status === 429) feilGrunn = "For mange forespørsler – prøv igjen";
       else if (e.status >= 500) feilGrunn = "AI-tjeneste utilgjengelig";
-      else if (e.name === "TypeError") feilGrunn = "Nettverks-/CORS-feil (krever backend i produksjon)";
+      else if (e.name === "TypeError") feilGrunn = "Nettverksfeil";
       else feilGrunn = "AI-feil";
-      // Logg detaljer til konsollen for diagnostikk
-      console.warn("[AI-generering feilet]", { feilGrunn, error: e, status: e.status, message: e.message });
+      console.warn("[AI-generering feilet]", { feilGrunn, error: e });
+    } finally {
+      clearTimeout(timeoutId);
+      setAiResultat(resultat);
+      if (feilGrunn) {
+        visMelding(`ℹ️ Brukte database (${feilGrunn})`);
+      } else {
+        visMelding("✅ Generert med AI");
+      }
+      setAiLoading(false);
+      setAiVisFilter(false);
     }
-
-    clearTimeout(timeoutId);
-
-    // Sett resultat – garantert at brukeren alltid får noe
-    setAiResultat(resultat);
-    if (feilGrunn) {
-      visMelding(`ℹ️ Brukte database (${feilGrunn})`);
-    } else {
-      visMelding("✅ Generert med AI");
-    }
-    setAiLoading(false);
-    setAiVisFilter(false);
   };
 
   const kopierResultat = async () => {
@@ -2594,7 +4204,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
     } catch { visMelding("❌ Kunne ikke kopiere"); }
   };
 
-  const nullstill = () => { setAiResultat(""); setAiVisFilter(true); };
+  const nullstill = () => { setAiResultat(""); setAiVisFilter(true); setLagringsTittel(""); };
 
   // Hurtigtips som setter filtrene direkte
   const presets = [
@@ -2765,14 +4375,20 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
 
       {aiResultat && !aiLoading && (
         <div className="fade" style={{background:C.w,borderRadius:13,padding:16,boxShadow:"0 2px 10px rgba(44,91,142,0.09)",marginBottom:14}}>
+          {onLagreSomSkjema && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:800,color:C.g,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:5}}>Navn på skjema</div>
+              <input type="text" value={lagringsTittel} onChange={e=>setLagringsTittel(e.target.value)}
+                placeholder="Gi aktiviteten et navn før lagring"
+                style={{width:"100%",padding:"9px 12px",border:`1px solid ${C.mint}`,borderRadius:9,fontSize:13,fontFamily:"'Nunito',sans-serif",color:C.t,boxSizing:"border-box"}} />
+            </div>
+          )}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9,gap:8,flexWrap:"wrap"}}>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t}}>✨ Resultat</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
               {onLagreSomSkjema && (
                 <button className="btn" onClick={()=>{
-                  // Bruk første linje (eller første 60 tegn) som tittel
-                  const linje1 = aiResultat.split("\n").find(l=>l.trim()) || "AI-generert plan";
-                  const tittel = linje1.replace(/^[^\p{L}\p{N}]+/u, "").slice(0, 80);
+                  const tittel = lagringsTittel.trim() || (INNHOLDSTYPER.find(t=>t.id===type)?.navn || "Plan") + " fra AI";
                   const valgtType = INNHOLDSTYPER.find(t=>t.id===type);
 
                   // Smart parsing: del AI-teksten i seksjoner basert på vanlige overskrifter
@@ -2872,20 +4488,15 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
                     if (annet) hva = hva ? (hva + "\n\n" + annet) : annet;
                   }
 
-                  // Berik hvorfor med rammeplan-kontekst fra appens egne data
+                  // Legg til kort rammeplan-referanse
                   const valgteFagIder = Array.isArray(fagomrade) ? fagomrade.filter(f => f !== "alle") : (fagomrade !== "alle" ? [fagomrade] : []);
                   const rammeplanTekst = (() => {
                     if (valgteFagIder.length === 0) return "";
-                    const blokker = valgteFagIder.map(fid => {
+                    return valgteFagIder.map(fid => {
                       const f = FAGOMRADER.find(x => x.id === fid);
                       if (!f) return "";
-                      let blokk = `📖 ${f.ikon} ${f.navn.toUpperCase()}\n`;
-                      blokk += `Fra Rammeplan for barnehagen (2017):\n${f.innhold}\n\n`;
-                      blokk += `Mål for barna:\n${f.malBarna.map(m => "• " + m).join("\n")}\n\n`;
-                      blokk += `Arbeidsmåter:\n${f.arbeidsmater.slice(0, 4).map(a => "• " + a).join("\n")}`;
-                      return blokk;
-                    }).filter(Boolean);
-                    return blokker.join("\n\n―――\n\n");
+                      return `${f.ikon} ${f.navn}\n${f.malBarna.slice(0, 2).map(m => "• " + m).join("\n")}`;
+                    }).filter(Boolean).join("\n\n");
                   })();
 
                   // Sett sammen endelig hvorfor: AI-mål øverst, så rammeplan-kontekst, så metadata
@@ -2901,14 +4512,10 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
                   metadataLinjer.push(`📝 Innholdstype: ${valgtType?.navn || "Plan"}`);
 
                   const hvorforDeler = [];
-                  if (hvorfor && hvorfor.trim()) {
-                    hvorforDeler.push("🎯 PEDAGOGISKE MÅL FOR DENNE AKTIVITETEN\n" + hvorfor.trim());
-                  }
-                  if (rammeplanTekst) {
-                    hvorforDeler.push("📚 FORANKRING I RAMMEPLANEN\n\n" + rammeplanTekst);
-                  }
-                  hvorforDeler.push("ℹ️ INFORMASJON\n" + metadataLinjer.join("\n"));
-                  const hvorforEndelig = hvorforDeler.join("\n\n―――――――――――――\n\n");
+                  if (hvorfor && hvorfor.trim()) hvorforDeler.push(hvorfor.trim());
+                  if (rammeplanTekst) hvorforDeler.push("📖 Rammeplan 2017\n" + rammeplanTekst);
+                  hvorforDeler.push(metadataLinjer.join("\n"));
+                  const hvorforEndelig = hvorforDeler.join("\n\n");
 
                   onLagreSomSkjema({
                     tittel: tittel || `${valgtType?.navn || "Plan"} fra AI`,
@@ -2926,7 +4533,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
               <button className="btn" onClick={nullstill} style={{background:"#e8eff8",color:C.t,padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>🔄 Ny</button>
             </div>
           </div>
-          <pre style={{whiteSpace:"pre-wrap",fontSize:13,color:C.t,lineHeight:1.75,fontFamily:"'Nunito',sans-serif",margin:0}}>{aiResultat}</pre>
+          <RenderTekst tekst={aiResultat} />
         </div>
       )}
 
@@ -2958,10 +4565,12 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
 const storageStatus = { persistent: true, diagnostisert: true, detaljer: "Supabase Auth" };
 async function diagnostiserStorage() { return storageStatus; }
 
-// Helper: hent brukerprofil fra user_profiles
+// Helper: hent brukerprofil fra user_profiles – maks 4s timeout
 async function hentProfil(userId) {
-  const { data } = await supabase.from("user_profiles").select("*").eq("id", userId).single();
-  return data;
+  const tidsbegrensning = new Promise(resolve => setTimeout(() => resolve(null), 4000));
+  const spørring = supabase.from("user_profiles").select("*").eq("id", userId).single()
+    .then(({ data }) => data).catch(() => null);
+  return Promise.race([spørring, tidsbegrensning]);
 }
 
 // Helper: bygg aktivBruker-objekt fra Supabase user + profil
@@ -2978,6 +4587,20 @@ function byggBruker(user, profil) {
   };
 }
 
+function skrivUtGenerell({ tittel, meta, seksjoner, logoTekst }) {
+  const esc = (s) => String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const seksHTML = (seksjoner||[]).filter(s=>s?.tekst?.trim()).map(s=>`
+    <section style="margin-bottom:16px;padding:13px 15px;background:${s.bg||"#f5f9fd"};border-radius:10px;border-left:4px solid ${s.farge||"#2c5b8e"}">
+      ${s.label?`<div style="font-size:11px;font-weight:800;color:${s.farge||"#2c5b8e"};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px">${esc(s.label)}</div>`:""}
+      <div style="font-size:13px;color:#1a2c45;line-height:1.75;white-space:pre-wrap">${esc(s.tekst)}</div>
+    </section>`).join("");
+  const html=`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${esc(tittel)} – Barnehagehjelpen</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;background:#f3f7fc;color:#1a2c45;padding:24px 20px;line-height:1.6}.topp{max-width:700px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{font-size:22px;color:#2c5b8e}.meta{font-size:12px;color:#5d7390;margin-top:4px}.innhold{max-width:700px;margin:0 auto}.knapp{padding:9px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.bunn{font-size:11px;color:#8a9bb0;text-align:center;margin-top:28px}@media print{@page{margin:12mm}.knapp{display:none}body{background:white;padding:0}}</style></head>
+<body><div class="topp"><div><h1>${esc(tittel)}</h1>${meta?`<div class="meta">${esc(meta)}</div>`:""}</div><button class="knapp" onclick="window.print()">🖨️ Skriv ut</button></div><div class="innhold">${seksHTML}</div><div class="bunn">${esc(logoTekst||"Barnehagehjelpen • Rammeplan 2017")}</div></body></html>`;
+  const v=window.open("","_blank","width=820,height=720");
+  if(v){v.document.write(html);v.document.close();}
+}
+
 async function registrerBruker({ brukernavn, epost, passord, telefon }) {
   brukernavn = brukernavn.trim();
   epost = epost.trim().toLowerCase();
@@ -2987,15 +4610,34 @@ async function registrerBruker({ brukernavn, epost, passord, telefon }) {
   const tlfV = validerTelefon(telefon);
   if (!tlfV.ok) return { ok: false, feil: tlfV.feil };
 
-  const { data, error } = await supabase.auth.signUp({ email: epost, password: passord });
-  if (error) return { ok: false, feil: error.message };
-  const user = data.user;
-  if (!user) return { ok: false, feil: "Registrering feilet – sjekk e-posten for bekreftelse" };
+  const { data, error } = await supabase.auth.signUp({
+    email: epost, password: passord,
+    options: { data: { brukernavn, phone: tlfV.renset } },
+  });
+  if (error) {
+    const msg = error.message || "";
+    if (msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("email rate"))
+      return { ok: false, feil: "For mange forsøk på kort tid. Vent noen minutter og prøv igjen." };
+    if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already exists") || msg.toLowerCase().includes("user already"))
+      return { ok: false, feil: "E-postadressen er allerede registrert. Prøv å logge inn i stedet." };
+    if (msg.toLowerCase().includes("invalid email"))
+      return { ok: false, feil: "Ugyldig e-postadresse." };
+    if (msg.toLowerCase().includes("password"))
+      return { ok: false, feil: "Passordet oppfyller ikke kravene (minst 6 tegn)." };
+    return { ok: false, feil: "Registrering feilet. Prøv igjen." };
+  }
+
+  // E-postbekreftelse er påkrevd – sjekk session FØR user, da Supabase kan
+  // returnere user:null når bekreftelsesmail er sendt (avhengig av konfig).
+  if (!data?.session) return { ok: true, bekreftEpost: true, epost };
+
+  const user = data?.user;
+  if (!user) return { ok: false, feil: "Registrering feilet – prøv igjen" };
 
   const { count } = await supabase.from("user_profiles").select("id", { count: "exact", head: true });
   const erAdmin = (count || 0) === 0;
 
-  await supabase.from("user_profiles").insert({
+  const { error: insertErr } = await supabase.from("user_profiles").insert({
     id: user.id,
     brukernavn,
     epost,
@@ -3003,7 +4645,10 @@ async function registrerBruker({ brukernavn, epost, passord, telefon }) {
     is_admin: erAdmin,
     display_name: brukernavn,
     visningsnavn: "",
+    vilkaar_akseptert: true,
+    vilkaar_akseptert_dato: new Date().toISOString(),
   });
+  if (insertErr) return { ok: false, feil: "Kunne ikke opprette brukerprofil: " + insertErr.message };
 
   const profil = await hentProfil(user.id);
   return { ok: true, bruker: byggBruker(user, profil) };
@@ -3014,9 +4659,27 @@ async function loggInnBruker({ epost, passord }) {
   if (!e || !passord) return { ok: false, feil: "Fyll ut alle felt" };
 
   const { data, error } = await supabase.auth.signInWithPassword({ email: e, password: passord });
-  if (error) return { ok: false, feil: "Feil e-post eller passord" };
+  if (error) return { ok: false, feil: error.message || "Feil e-post eller passord" };
 
-  const profil = await hentProfil(data.user.id);
+  let profil = null;
+  try { profil = await hentProfil(data.user.id); } catch (_) {}
+
+  if (!profil) {
+    const meta = data.user.user_metadata || {};
+    const brukernavn = meta.brukernavn || data.user.email.split("@")[0];
+    const { count } = await supabase.from("user_profiles").select("id", { count: "exact", head: true }).then(r => r).catch(() => ({ count: 1 }));
+    const erAdmin = (count || 0) === 0;
+    try {
+      await supabase.from("user_profiles").insert({
+        id: data.user.id, brukernavn, epost: data.user.email,
+        phone: meta.phone || "", is_admin: erAdmin, display_name: brukernavn,
+        visningsnavn: "", vilkaar_akseptert: true,
+        vilkaar_akseptert_dato: new Date().toISOString(),
+      });
+      profil = await hentProfil(data.user.id);
+    } catch (_) {}
+  }
+
   return { ok: true, bruker: byggBruker(data.user, profil) };
 }
 
@@ -3036,7 +4699,8 @@ async function hentSesjon() {
 }
 
 async function slettSesjon() {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  if (error) console.error("[slettSesjon]", error.message);
 }
 
 // ─── Profilendringer ───
@@ -3171,7 +4835,8 @@ async function oppdaterEpost(brukerId, nyEpost) {
   if (!epost.includes("@") || !epost.includes(".")) return { ok: false, feil: "Ugyldig e-postadresse" };
   const { error } = await supabase.auth.updateUser({ email: epost });
   if (error) return { ok: false, feil: error.message };
-  await supabase.from("user_profiles").update({ epost }).eq("id", brukerId);
+  const { error: profileErr } = await supabase.from("user_profiles").update({ epost }).eq("id", brukerId);
+  if (profileErr) return { ok: false, feil: "E-post oppdatert i auth, men profil-oppdatering feilet: " + profileErr.message };
   const profil = await hentProfil(brukerId);
   const { data } = await supabase.auth.getUser();
   return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
@@ -3200,7 +4865,7 @@ function passordStyrke(p) {
   if (/[0-9]/.test(p)) score++;
   if (/[^a-zA-Z0-9]/.test(p)) score++;
   if (score <= 1) return { nivaa: 2, tekst: "Svakt", farge: "#f4a261" };
-  if (score <= 2) return { nivaa: 3, tekst: "OK", farge: "#fbc02d" };
+  if (score <= 2) return { nivaa: 3, tekst: "Passe", farge: "#fbc02d" };
   if (score <= 3) return { nivaa: 4, tekst: "Sterkt", farge: "#52b788" };
   return { nivaa: 5, tekst: "Veldig sterkt", farge: "#2d6a4f" };
 }
@@ -3216,86 +4881,372 @@ function supportMailto() {
 }
 
 const FAQ_DATA = [
-  { sp:"Hvordan lager jeg en aktivitet med AI?", svar:"Gå til AI-assistent i menyen, velg innholdstype 'Pedagogisk aktivitet', fyll inn alder, fagområde og eventuelt årstid. Trykk 'Generer'. Hvis AI ikke svarer, bruker appen automatisk innhold fra databasen." },
-  { sp:"Hvorfor husker ikke appen at jeg er innlogget?", svar:"Hvis du ser advarselen 'Begrenset lagring' på innloggingsskjermen, kjører appen i et miljø som ikke tillater varig lagring (typisk en forhåndsvisning). På et publisert domene vil 'Husk meg' fungere normalt." },
-  { sp:"Hvordan skriver jeg ut et tegneark?", svar:"Åpne tegnearket, trykk 'Skriv ut'. Hvis nettleseren blokkerer utskrift, lastes det automatisk ned som HTML-fil du kan åpne og skrive ut derfra. Du kan også trykke 'Last ned' direkte." },
-  { sp:"Kan jeg bruke appen offline?", svar:"Mesteparten av innholdet (sanger, aktiviteter, tegneark) fungerer offline siden det ligger lokalt. AI-genereringen krever internett. Hvis nettet er nede henter appen automatisk lignende innhold fra databasen." },
-  { sp:"Hvordan endrer jeg passord?", svar:"Gå til 'Min profil' i menyen → 'Endre passord'. Du må oppgi gjeldende passord for å sette et nytt." },
-  { sp:"Hvor lagres dataene mine?", svar:"Brukerkonto, favoritter, skjemaer og profilbilde lagres lokalt i nettleseren din. Passord er hashed med SHA-256 + unik salt. Ingen data sendes til en server uten at du eksplisitt deler noe (f.eks. via e-post til support)." },
-  { sp:"Hva er forskjellen mellom Aktiviteter og Tegneark?", svar:"Aktiviteter er pedagogiske opplegg med HVA, HVORDAN og HVORFOR knyttet til rammeplanmål. Tegneark er fargeleggingsark med tegneoppgaver, samtalespørsmål og rammeplankobling." },
-  { sp:"Hvordan blir noen admin?", svar:"Den første brukeren som registrerer seg blir automatisk admin. Admin kan deretter gjøre andre brukere til admin eller fjerne admin-rettigheter via Admin-panelet." },
-  { sp:"Kan jeg slette kontoen min?", svar:"Ja – be en admin om å slette kontoen. Hvis du er eneste bruker kan du tømme nettleserens data for å fjerne alt." },
-  { sp:"Hvorfor får jeg ikke AI-svar?", svar:"AI-generering krever at appen kan koble seg til Anthropic API. I forhåndsvisning fungerer det automatisk. På et publisert nettsted må backend-endepunktet være satt opp (se AI-ARKITEKTUR.md). Uansett hva som skjer, vil du alltid få et svar fra databasen." },
+  { sp:"Hvordan lager jeg en aktivitet med AI?", svar:"Gå til 🤖 AI-assistent i menyen, velg innholdstype (f.eks. 'Pedagogisk aktivitet'), fyll inn alder, fagområde og eventuelt årstid, og trykk 'Generer'. Får du ikke svar, henter appen automatisk lignende innhold fra databasen." },
+  { sp:"Hvordan deler jeg en plan med en kollega?", svar:"Gå til 👥 Samarbeid i menyen og trykk '+ Del en plan'. Velg innholdstype og hvilken plan du vil dele. Deretter åpner du planen og går til 'Tilgang'-fanen for å invitere kolleger ved å søke på navn eller skrive inn e-postadresse. Du kan gi tilgang som 'Kan redigere' eller 'Kun lese'." },
+  { sp:"Kan flere redigere samme plan samtidig?", svar:"Ja. Åpner dere samme delte plan på ulike enheter, vises et 'Inne nå'-felt øverst med hvem som er aktive. Lagrer noen endringer mens du redigerer, får du et gult varsel og kan velge å hente inn den nye versjonen eller beholde dine egne endringer." },
+  { sp:"Kan jeg angre endringer i en delt plan?", svar:"Ja – gå inn på den delte planen og trykk på 'Historikk'-fanen. Der ser du alle tidligere versjoner med dato og hvem som lagret. Trykk '↩️ Gjenopprett' for å rulle tilbake til en eldre versjon." },
+  { sp:"Hvordan lager jeg AI-tegneark eller AI-sanger?", svar:"Gå til 🖍️ Tegneark og trykk '🤖 Lag AI-tegneark', eller gå til 🎵 Sanger og trykk '🤖 Lag AI-sang/rim'. Fyll inn tema og trykk 'Generer'. Innholdet lagres automatisk under 'Mine' og kan brukes med en gang." },
+  { sp:"Hvordan endrer jeg navn på et skjema?", svar:"Gå til 📋 Mine skjemaer, åpne skjemaet og trykk '✏️ Endre navn' ved siden av tittelen. Skriv nytt navn og trykk Enter eller 'Lagre'." },
+  { sp:"Hvordan skriver jeg ut et tegneark?", svar:"Åpne tegnearket og trykk 'Skriv ut'. Nettleseren åpner en utskriftsdialog. Du kan også trykke 'Last ned' for å laste det ned som HTML-fil og skrive ut fra den." },
+  { sp:"Kan jeg bruke appen offline?", svar:"Sanger, aktiviteter og tegneark fungerer uten internett siden innholdet ligger lokalt i appen. AI-generering og synkronisering av planer krever internettilgang." },
+  { sp:"Hvordan endrer jeg passord?", svar:"Gå til 👤 Min profil i menyen og trykk 'Endre passord'. Du må oppgi gjeldende passord for å sette et nytt." },
+  { sp:"Hvor lagres dataene mine?", svar:"Brukerkonto, favoritter, skjemaer, planer og dokumentasjon lagres sikkert i skyen og er tilgjengelig på alle enheter når du er innlogget. Passord håndteres av Supabase Auth og lagres aldri i klartekst." },
+  { sp:"Hva er forskjellen mellom Aktiviteter og Tegneark?", svar:"Aktiviteter er pedagogiske opplegg med HVA, HVORDAN og HVORFOR knyttet til rammeplanmål. Tegneark er fargeleggingsark med tegneoppgave, samtalespørsmål og rammeplankobling – beregnet for barna å bruke direkte." },
+  { sp:"Hvorfor får jeg ikke AI-svar?", svar:"AI-generering krever internett. Prøv igjen om litt – får du fortsatt ikke svar vil appen automatisk hente lignende innhold fra databasen slik at du aldri står uten noe å bruke." },
+  { sp:"Kan jeg slette kontoen min?", svar:"Ja – kontakt en administrator eller send oss en e-post via 'Kontakt support'-knappen nedenfor, så sletter vi kontoen din." },
 ];
 
 // ─── Favoritter per bruker ───
 function tomFav() { return { sanger: [], aktiviteter: [], tegneark: [] }; }
 async function hentFavoritter(brukerId) {
   if (!brukerId) return tomFav();
-  const raw = await authStorage.get("bh_fav_" + brukerId);
-  if (!raw) return tomFav();
   try {
-    const parsed = JSON.parse(raw);
-    return { sanger: parsed.sanger || [], aktiviteter: parsed.aktiviteter || [], tegneark: parsed.tegneark || [] };
+    const { data } = await supabase.from("favoritter").select("sanger,aktiviteter,tegneark").eq("user_id", brukerId).maybeSingle();
+    return data ? { sanger: data.sanger||[], aktiviteter: data.aktiviteter||[], tegneark: data.tegneark||[] } : tomFav();
   } catch { return tomFav(); }
 }
 async function lagreFavoritter(brukerId, fav) {
   if (!brukerId) return;
-  await authStorage.set("bh_fav_" + brukerId, JSON.stringify(fav));
+  try {
+    await supabase.from("favoritter").upsert({ user_id: brukerId, sanger: fav.sanger||[], aktiviteter: fav.aktiviteter||[], tegneark: fav.tegneark||[], updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  } catch(e) { console.error("[Favoritter]", e); }
 }
 
 // ─── Dokumentasjon (praksisfortellinger og refleksjoner) per bruker ───
 async function hentDokumentasjon(brukerId) {
   if (!brukerId) return [];
-  const raw = await authStorage.get("bh_dok_" + brukerId);
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
+  try {
+    const { data } = await supabase.from("dokumentasjon").select("payload").eq("user_id", brukerId).order("created_at", { ascending: false });
+    return (data||[]).map(r => r.payload).filter(Boolean);
+  } catch { return []; }
 }
 async function lagreDokumentasjon(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await authStorage.set("bh_dok_" + brukerId, JSON.stringify(liste));
+    await supabase.from("dokumentasjon").delete().eq("user_id", brukerId);
+    if (liste.length > 0) await supabase.from("dokumentasjon").insert(liste.map(d => ({ user_id: brukerId, payload: d })));
     return true;
-  } catch (e) {
-    console.error("[Dokumentasjon] Lagring feilet:", e);
-    return false;
-  }
+  } catch(e) { console.error("[Dokumentasjon] Lagring feilet:", e); return false; }
 }
 
 // ─── Ukeplaner per bruker ───
 async function hentUkeplaner(brukerId) {
   if (!brukerId) return [];
-  const raw = await authStorage.get("bh_ukeplan_" + brukerId);
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
+  try {
+    const { data } = await supabase.from("ukeplaner").select("payload").eq("user_id", brukerId).order("created_at", { ascending: false });
+    return (data||[]).map(r => r.payload).filter(Boolean);
+  } catch { return []; }
 }
 async function lagreUkeplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await authStorage.set("bh_ukeplan_" + brukerId, JSON.stringify(liste));
+    await supabase.from("ukeplaner").delete().eq("user_id", brukerId);
+    if (liste.length > 0) await supabase.from("ukeplaner").insert(liste.map(p => ({ user_id: brukerId, payload: p })));
     return true;
-  } catch (e) {
-    console.error("[Ukeplan] Lagring feilet:", e);
-    return false;
-  }
+  } catch(e) { console.error("[Ukeplan] Lagring feilet:", e); return false; }
 }
 
 // ─── Årsplaner per bruker ───
 async function hentArsplaner(brukerId) {
   if (!brukerId) return [];
-  const raw = await authStorage.get("bh_arsplan_" + brukerId);
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
+  try {
+    const { data } = await supabase.from("arsplaner").select("payload").eq("user_id", brukerId).order("created_at", { ascending: false });
+    return (data||[]).map(r => r.payload).filter(Boolean);
+  } catch { return []; }
 }
 async function lagreArsplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await authStorage.set("bh_arsplan_" + brukerId, JSON.stringify(liste));
+    await supabase.from("arsplaner").delete().eq("user_id", brukerId);
+    if (liste.length > 0) await supabase.from("arsplaner").insert(liste.map(p => ({ user_id: brukerId, tittel: p.tittel||"", aar: parseInt(p.aar)||2025, payload: p })));
     return true;
-  } catch (e) {
-    console.error("[Årsplan] Lagring feilet:", e);
-    return false;
-  }
+  } catch(e) { console.error("[Årsplan] Lagring feilet:", e); return false; }
+}
+
+// ─── Månedsplaner per bruker ───
+async function hentMaanedsplaner(brukerId) {
+  if (!brukerId) return [];
+  try {
+    const { data } = await supabase.from("maanedsplaner").select("*").eq("user_id", brukerId).order("aar", { ascending: false }).order("maaned", { ascending: false });
+    return (data||[]).map(r => {
+      let extra = {};
+      try { extra = JSON.parse(r.innhold||"{}"); } catch {}
+      return { id: r.id, tittel: r.tittel, aar: r.aar, maaned: r.maaned, tema: r.tema, fagomrader: r.fagomrader||[], opprettet: r.created_at, ...extra };
+    });
+  } catch { return []; }
+}
+async function lagreMaanedsplaner(brukerId, liste) {
+  if (!brukerId) return false;
+  try {
+    await supabase.from("maanedsplaner").delete().eq("user_id", brukerId);
+    if (liste.length > 0) {
+      await supabase.from("maanedsplaner").insert(liste.map(p => {
+        const { id, tittel, aar, maaned, tema, fagomrader, opprettet, ...rest } = p;
+        return { user_id: brukerId, tittel: tittel||"", aar: parseInt(aar)||new Date().getFullYear(), maaned: parseInt(maaned)||1, tema: tema||"", fagomrader: fagomrader||[], innhold: JSON.stringify(rest) };
+      }));
+    }
+    return true;
+  } catch(e) { console.error("[Månedsplan] Lagring feilet:", e); return false; }
+}
+
+// ─── Månedsbrev per bruker ───
+async function hentMaanedsbrev(brukerId) {
+  if (!brukerId) return [];
+  try {
+    const { data } = await supabase.from("maanedbrev").select("*").eq("user_id", brukerId).order("aar", { ascending: false }).order("maaned", { ascending: false });
+    return (data||[]).map(r => {
+      let extra = {};
+      try { extra = JSON.parse(r.innhold||"{}"); } catch {}
+      return { id: r.id, tittel: r.tittel, aar: r.aar, maaned: r.maaned, hilsen: r.hilsen, opprettet: r.created_at, ...extra };
+    });
+  } catch { return []; }
+}
+async function lagreMaanedsbrev(brukerId, liste) {
+  if (!brukerId) return false;
+  try {
+    await supabase.from("maanedbrev").delete().eq("user_id", brukerId);
+    if (liste.length > 0) {
+      await supabase.from("maanedbrev").insert(liste.map(b => {
+        const { id, tittel, aar, maaned, hilsen, opprettet, ...rest } = b;
+        return { user_id: brukerId, tittel: tittel||"", aar: parseInt(aar)||new Date().getFullYear(), maaned: parseInt(maaned)||1, hilsen: hilsen||"", innhold: JSON.stringify(rest) };
+      }));
+    }
+    return true;
+  } catch(e) { console.error("[Månedsbrev] Lagring feilet:", e); return false; }
+}
+
+// ── Aktivitetskort: Supabase CRUD ──
+async function hentAktivitetskort(userId) {
+  if (!userId) return [];
+  try {
+    const { data, error } = await supabase
+      .from("activity_cards")
+      .select("*")
+      .or(`created_by.eq.${userId},is_public.eq.true`)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (e) { console.error("[Aktivitetskort] hent:", e); return []; }
+}
+async function lagreNyttAktivitetskort(payload) {
+  const { id, ...insertData } = payload;
+  const { data, error } = await supabase.from("activity_cards").insert([insertData]).select().single();
+  if (error) throw error;
+  return data;
+}
+async function oppdaterAktivitetskort(id, oppdateringer) {
+  const { data, error } = await supabase.from("activity_cards").update(oppdateringer).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+async function slettAktivitetskort(id) {
+  const { error } = await supabase.from("activity_cards").delete().eq("id", id);
+  if (error) throw error;
+}
+async function hentKortFavoritter(userId) {
+  if (!userId) return new Set();
+  const { data } = await supabase.from("activity_card_favorites").select("card_id").eq("user_id", userId);
+  return new Set((data || []).map(r => r.card_id));
+}
+
+// ═══════════════════════════════════════════
+//  PERSONVERN / BRUKSVILKÅR – MODALER
+// ═══════════════════════════════════════════
+function VilkaarModal({ type, onLukk }) {
+  const erPersonvern = type === "personvern";
+  return (
+    <div
+      onClick={onLukk}
+      style={{
+        position: "fixed", inset: 0, background: "rgba(15,30,55,0.65)",
+        zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "16px", backdropFilter: "blur(4px)",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: 18, maxWidth: 560, width: "100%",
+          maxHeight: "88vh", display: "flex", flexDirection: "column",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
+          fontFamily: "'Nunito', sans-serif",
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          background: "linear-gradient(135deg,#2c5b8e,#4178bd)",
+          borderRadius: "18px 18px 0 0", padding: "18px 22px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <div style={{ fontFamily: "'Fredoka One',cursive", fontSize: 20, color: "#fff" }}>
+              {erPersonvern ? "🔒 Personvernerklæring" : "📋 Bruksvilkår"}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>
+              Barnehagehjelpen · Sist oppdatert mai 2026
+            </div>
+          </div>
+          <button
+            onClick={onLukk}
+            style={{
+              background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 10,
+              color: "#fff", fontSize: 18, cursor: "pointer", padding: "6px 11px",
+              fontWeight: 700, lineHeight: 1,
+            }}
+          >✕</button>
+        </div>
+
+        {/* Innhold */}
+        <div style={{ overflowY: "auto", padding: "22px 24px", flex: 1 }}>
+          {erPersonvern ? (
+            <>
+              <Section ikon="🏢" tittel="Behandlingsansvarlig">
+                Barnehagehjelpen v/Joel Ingvoldstad er behandlingsansvarlig for personopplysninger som samles inn via denne tjenesten. Kontakt: <a href="mailto:joel94@live.no" style={{color:"#2c5b8e",fontWeight:700}}>joel94@live.no</a>
+              </Section>
+              <Section ikon="⚖️" tittel="Behandlingsgrunnlag (GDPR art. 6)">
+                Behandlingen av dine personopplysninger er basert på <strong>samtykke</strong> (GDPR art. 6 nr. 1 bokstav a), som du gir ved registrering og aksept av disse vilkårene. Du kan trekke tilbake samtykket når som helst ved å slette kontoen din.
+              </Section>
+              <Section ikon="🛠" tittel="Databehandlere og tredjeparter">
+                <p>Tjenesten benytter følgende tredjepartsleverandører som behandler data på vegne av oss:</p>
+                <ul style={ulStil}>
+                  <li><strong>Supabase Inc. (USA)</strong> – database, autentisering og fillagring. Dataoverføring til USA er sikret gjennom Standard Contractual Clauses (SCC).</li>
+                  <li><strong>Cloudflare Inc. (USA)</strong> – nettverksbeskyttelse, DDoS-beskyttelse og ytelsesoptimalisering. Fungerer som nettverksproxy.</li>
+                  <li><strong>Anthropic, PBC (USA)</strong> – AI-generering av pedagogisk innhold. Tekst du skriver inn i AI-assistenten sendes til Anthropic for behandling. Anthropic lagrer ikke input utover det som er nødvendig for svargenereringen. Se Anthropics personvernerklæring for detaljer.</li>
+                </ul>
+                <p style={{marginTop:8, fontSize:12, color:"#795548"}}>⚠️ Alle tre leverandører er amerikanske selskaper. Dataoverføringer er sikret gjennom EU-godkjente mekanismer (SCC/Privacy Framework), men du bør være oppmerksom på at data kan behandles utenfor EU/EØS.</p>
+              </Section>
+              <Section ikon="📂" tittel="Data som lagres">
+                <ul style={ulStil}>
+                  <li>E-postadresse og brukernavn (nødvendig for konto)</li>
+                  <li>Telefonnummer (valgfritt)</li>
+                  <li>Pedagogisk innhold du oppretter: ukeplaner, årsplaner, skjemaer, dokumentasjon, sanger og tegneark</li>
+                  <li>Tidspunkt for samtykke til personvern og bruksvilkår</li>
+                  <li>Tekniske logger ved feilsøking (midlertidig)</li>
+                </ul>
+              </Section>
+              <Section ikon="🎯" tittel="Formål med lagringen">
+                <ul style={ulStil}>
+                  <li>Innlogging og autentisering</li>
+                  <li>Lagring og synkronisering av pedagogisk innhold på tvers av enheter</li>
+                  <li>AI-generering av innhold på brukerens forespørsel</li>
+                  <li>Sikker drift og feilsøking</li>
+                  <li>Dokumentasjon av samtykke (lovpålagt)</li>
+                </ul>
+              </Section>
+              <Section ikon="⏱" tittel="Lagringstid">
+                Personopplysninger og brukerinnhold lagres så lenge kontoen er aktiv. Ved sletting av konto slettes alle tilknyttede personopplysninger og brukerdata innen 30 dager. Tekniske logger slettes løpende.
+              </Section>
+              <Section ikon="👶" tittel="Særlig om barns personvern">
+                <p style={{fontWeight:700, color:"#c62828", marginBottom:6}}>Viktig for barnehageansatte:</p>
+                <p>Barnehagehjelpen er et verktøy for <strong>pedagogisk planlegging</strong> – ikke for lagring av personopplysninger om enkeltbarn. Barnehageloven §23 og GDPR stiller strenge krav til behandling av barns personopplysninger.</p>
+                <ul style={ulStil}>
+                  <li>Lagre <strong>ikke</strong> navn, fødselsdato, helseopplysninger eller andre personopplysninger om enkeltbarn i tjenesten</li>
+                  <li>Last <strong>ikke</strong> opp bilder som identifiserer enkeltbarn</li>
+                  <li>Barnehagen er selv behandlingsansvarlig for data de legger inn, og må sikre at bruken er i samsvar med barnehagens egne personvernrutiner</li>
+                </ul>
+              </Section>
+              <Section ikon="⚖️" tittel="Dine rettigheter (GDPR)">
+                <ul style={ulStil}>
+                  <li><strong>Innsyn</strong> – be om kopi av alle opplysninger vi har om deg</li>
+                  <li><strong>Retting</strong> – be om å få feilaktige opplysninger rettet</li>
+                  <li><strong>Sletting</strong> – be om at kontoen og all data slettes («retten til å bli glemt»)</li>
+                  <li><strong>Dataportabilitet</strong> – be om å få utlevert dine data i maskinlesbart format</li>
+                  <li><strong>Innsigelse</strong> – protestere mot behandlingen av dine opplysninger</li>
+                </ul>
+                <p style={{marginTop:8}}>Send forespørsel til <a href="mailto:joel94@live.no" style={{color:"#2c5b8e",fontWeight:700}}>joel94@live.no</a>. Vi besvarer henvendelser innen 30 dager.</p>
+              </Section>
+              <Section ikon="🏛" tittel="Klagerett">
+                Hvis du mener vi behandler personopplysningene dine i strid med personvernregelverket, har du rett til å klage til <strong>Datatilsynet</strong> (datatilsynet.no).
+              </Section>
+              <Section ikon="🔐" tittel="Sikkerhet">
+                Passord lagres aldri i klartekst – Supabase Auth håndterer sikker hashing. All kommunikasjon er kryptert med HTTPS/TLS. Tilgang til data er begrenset via Row Level Security (RLS) i databasen.
+              </Section>
+            </>
+          ) : (
+            <>
+              <Section ikon="✅" tittel="Om tjenesten">
+                Barnehagehjelpen er et pedagogisk planleggingsverktøy for norske barnehageansatte. Tjenesten er utviklet i tråd med Rammeplan for barnehagen (2017) og skal brukes i samsvar med norsk lov, herunder barnehageloven, opplæringsloven og personvernregelverket (GDPR).
+              </Section>
+              <Section ikon="👤" tittel="Hvem kan bruke tjenesten">
+                Tjenesten er forbeholdt <strong>voksne personer (18 år eller eldre)</strong> som er ansatt i eller jobber med norske barnehager. Tjenesten er ikke beregnet for direkte bruk av barn.
+              </Section>
+              <Section ikon="🛡" tittel="Beskyttelse av barns personvern">
+                <p style={{fontWeight:700, color:"#c62828", marginBottom:6}}>Dette er ditt ansvar som ansatt:</p>
+                <ul style={ulStil}>
+                  <li>Lagre <strong>aldri</strong> navn, fødselsdato, helseopplysninger, bilder eller andre personopplysninger om enkeltbarn i tjenesten</li>
+                  <li>Pedagogiske planer og dokumentasjon skal utformes uten identifiserbare opplysninger om enkeltbarn</li>
+                  <li>Barnehagen er selv behandlingsansvarlig og må ha eget rettslig grunnlag for all behandling av barns personopplysninger</li>
+                  <li>Taushetsplikten etter barnehageloven §23 gjelder for alt du skriver inn – del ikke sensitiv informasjon om barn eller familier</li>
+                </ul>
+              </Section>
+              <Section ikon="👥" tittel="Ditt ansvar for innhold">
+                <ul style={ulStil}>
+                  <li>Du er ansvarlig for alt innhold du oppretter, lagrer og deler via tjenesten</li>
+                  <li>Innhold du deler med kolleger via Samarbeid-funksjonen er ditt ansvar</li>
+                  <li>Du skal ikke dele innloggingsopplysninger med andre</li>
+                  <li>Ved bruk av AI-assistenten: ikke skriv inn personopplysninger om enkeltbarn i prompten</li>
+                </ul>
+              </Section>
+              <Section ikon="🚫" tittel="Forbud mot misbruk">
+                <p>Det er ikke tillatt å:</p>
+                <ul style={ulStil}>
+                  <li>Lagre personopplysninger om barn i strid med GDPR og barnehageloven</li>
+                  <li>Laste opp eller distribuere bilder eller informasjon som kan identifisere enkeltbarn</li>
+                  <li>Sende spam, massemeldinger eller uønsket innhold</li>
+                  <li>Forsøke å få uautorisert tilgang til andres kontoer</li>
+                  <li>Bruke automatiserte verktøy (bots, scrapers) uten tillatelse</li>
+                  <li>Omgå sikkerhetstiltak</li>
+                </ul>
+              </Section>
+              <Section ikon="⚠️" tittel="Konsekvenser ved misbruk">
+                Brudd på disse vilkårene kan føre til at kontoen din begrenses, suspenderes eller slettes. Ved alvorlige brudd, særlig brudd på barns personvern, forbeholder vi oss retten til å rapportere forholdet til Datatilsynet eller annen relevant myndighet.
+              </Section>
+              <Section ikon="🏛" tittel="Gjeldende lov">
+                Disse vilkårene er underlagt <strong>norsk lov</strong>. Tvister løses ved norske domstoler.
+              </Section>
+              <Section ikon="🔄" tittel="Endringer i vilkårene">
+                Vi kan oppdatere disse vilkårene ved behov. Vesentlige endringer varsles via tjenesten. Fortsatt bruk etter varsling regnes som aksept av de nye vilkårene.
+              </Section>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          borderTop: "1px solid #e8eff8", padding: "14px 24px",
+          display: "flex", justifyContent: "flex-end",
+        }}>
+          <button
+            onClick={onLukk}
+            style={{
+              background: "linear-gradient(135deg,#2c5b8e,#4178bd)",
+              color: "#fff", border: "none", borderRadius: 10,
+              padding: "10px 24px", fontSize: 13, fontWeight: 800,
+              cursor: "pointer", fontFamily: "'Nunito',sans-serif",
+            }}
+          >
+            Lukk
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ulStil = { paddingLeft: 18, marginTop: 6, lineHeight: 1.9 };
+
+function Section({ ikon, tittel, children }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        fontWeight: 800, color: "#1a2c45", fontSize: 13,
+        marginBottom: 6, display: "flex", alignItems: "center", gap: 7,
+      }}>
+        <span>{ikon}</span>{tittel}
+      </div>
+      <div style={{ fontSize: 12.5, color: "#3a4a5c", lineHeight: 1.75 }}>{children}</div>
+    </div>
+  );
 }
 
 // ═══════════════════════════════════════════
@@ -3311,6 +5262,7 @@ function AuthScreen({ onLoginSuccess }) {
   const [li_epost, setLiEpost] = useState("");
   const [li_pw, setLiPw] = useState("");
   const [visPassord, setVisPassord] = useState(false);
+  const [huskMeg, setHuskMeg] = useState(localStorage.getItem("bh_husk_meg") !== "false");
 
   // Register
   const [r_brukernavn, setRBrukernavn] = useState("");
@@ -3319,34 +5271,57 @@ function AuthScreen({ onLoginSuccess }) {
   const [r_passord, setRPassord] = useState("");
   const [r_passord2, setRPassord2] = useState("");
 
+  // Modaler
+  const [visModal, setVisModal] = useState(null); // "personvern" | "bruksvilkaar" | null
+
+  // Vilkår-checkbox
+  const [vilkaarAkseptert, setVilkaarAkseptert] = useState(false);
+
+  // E-postbekreftelse
+  const [bekreftEpostAdresse, setBekreftEpostAdresse] = useState(null);
+
   // Glemt passord
   const [g_epost, setGEpost] = useState("");
 
-  const skiftModus = (m) => { setModus(m); setFeil(""); setSuksess(""); };
+  const skiftModus = (m) => { setModus(m); setFeil(""); setSuksess(""); setBekreftEpostAdresse(null); };
 
   const handleLogin = async (e) => {
     e?.preventDefault?.();
     setFeil(""); setSuksess(""); setLoading(true);
-    const r = await loggInnBruker({ epost: li_epost, passord: li_pw });
-    setLoading(false);
-    if (!r.ok) { setFeil(r.feil); return; }
-    setSuksess("✅ Innlogget!");
-    setTimeout(() => onLoginSuccess(r.bruker), 400);
+    localStorage.setItem("bh_husk_meg", huskMeg ? "true" : "false");
+    try {
+      const r = await loggInnBruker({ epost: li_epost, passord: li_pw });
+      if (!r.ok) { setFeil(r.feil); return; }
+      sessionStorage.setItem("bh_sesjon", "1");
+      setSuksess("✅ Innlogget!");
+      setTimeout(() => onLoginSuccess(r.bruker), 400);
+    } catch (err) {
+      setFeil("Noe gikk galt. Prøv igjen.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRegister = async (e) => {
     e?.preventDefault?.();
     setFeil(""); setSuksess("");
+    if (!vilkaarAkseptert) { setFeil("Du må godta personvernerklæringen og bruksvilkårene for å opprette konto"); return; }
     if (r_passord !== r_passord2) { setFeil("Passordene er ikke like"); return; }
     setLoading(true);
-    const r = await registrerBruker({
-      brukernavn: r_brukernavn, epost: r_epost,
-      passord: r_passord, telefon: r_telefon,
-    });
-    setLoading(false);
-    if (!r.ok) { setFeil(r.feil); return; }
-    setSuksess(r.bruker.admin ? "✅ Konto opprettet! Du er admin (første bruker)." : "✅ Konto opprettet!");
-    setTimeout(() => onLoginSuccess(r.bruker), 700);
+    try {
+      const r = await registrerBruker({
+        brukernavn: r_brukernavn, epost: r_epost,
+        passord: r_passord, telefon: r_telefon,
+      });
+      if (!r.ok) { setFeil(r.feil); return; }
+      if (r.bekreftEpost) { setBekreftEpostAdresse(r.epost); return; }
+      setSuksess(r.bruker.admin ? "✅ Konto opprettet! Du er admin (første bruker)." : "✅ Konto opprettet!");
+      setTimeout(() => onLoginSuccess(r.bruker), 700);
+    } catch (err) {
+      setFeil("Noe gikk galt. Prøv igjen.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGlemtPassord = async (e) => {
@@ -3379,6 +5354,7 @@ function AuthScreen({ onLoginSuccess }) {
   return (
     <>
       <style>{CSS}</style>
+      {visModal && <VilkaarModal type={visModal} onLukk={() => setVisModal(null)} />}
       <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1f4068 0%,#3a72b0 50%,#6ba0d9 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 14px",fontFamily:"'Nunito',sans-serif"}}>
         <div style={{width:"100%",maxWidth:420}}>
           <div style={{textAlign:"center",marginBottom:22,color:"#fff"}}>
@@ -3388,7 +5364,7 @@ function AuthScreen({ onLoginSuccess }) {
           </div>
 
           <div style={{background:"#fff",borderRadius:18,padding:22,boxShadow:"0 8px 30px rgba(0,0,0,0.2)"}}>
-            {modus !== "glemt" && (
+            {!bekreftEpostAdresse && modus !== "glemt" && (
               <div style={{display:"flex",background:"#e8eff8",borderRadius:11,padding:4,marginBottom:18}}>
                 <button onClick={()=>skiftModus("login")} type="button"
                   style={{flex:1,padding:"9px",background:modus==="login"?"#fff":"transparent",border:"none",borderRadius:8,fontSize:13,fontWeight:800,color:modus==="login"?"#2c5b8e":"#5d7390",cursor:"pointer",boxShadow:modus==="login"?"0 1px 4px rgba(0,0,0,0.08)":"none",fontFamily:"'Nunito',sans-serif"}}>
@@ -3401,7 +5377,7 @@ function AuthScreen({ onLoginSuccess }) {
               </div>
             )}
 
-            {modus === "glemt" && (
+            {!bekreftEpostAdresse && modus === "glemt" && (
               <div style={{marginBottom:14}}>
                 <button onClick={()=>skiftModus("login")} type="button"
                   style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:12,cursor:"pointer",fontWeight:700,padding:0}}>
@@ -3411,19 +5387,74 @@ function AuthScreen({ onLoginSuccess }) {
               </div>
             )}
 
-            {feil && (
+            {!bekreftEpostAdresse && feil && (
               <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 12px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>
                 ⚠️ {feil}
               </div>
             )}
-            {suksess && (
+            {!bekreftEpostAdresse && suksess && (
               <div className="fade" style={{background:"#d8f3dc",color:"#1b5e47",padding:"10px 12px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #2d6a4f"}}>
                 {suksess}
               </div>
             )}
 
+            {/* E-POSTBEKREFTELSE */}
+            {bekreftEpostAdresse && (
+              <div style={{textAlign:"center",padding:"8px 4px 4px"}}>
+                <div style={{
+                  width:70,height:70,borderRadius:"50%",
+                  background:"linear-gradient(135deg,#c8f5d0,#a3e6b2)",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  margin:"0 auto 16px",fontSize:34,
+                  boxShadow:"0 4px 18px rgba(45,106,79,0.22)",
+                }}>✅</div>
+                <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#1b5e47",marginBottom:6}}>
+                  Verifisering sendt!
+                </div>
+                <p style={{fontSize:13.5,color:"#2a3a4c",lineHeight:1.7,marginBottom:6}}>
+                  Vi har sendt en bekreftelseslenke til e-postadressen din:
+                </p>
+                <div style={{
+                  background:"#f0f7ff",border:"1.5px solid #c3d9f5",
+                  borderRadius:9,padding:"8px 14px",fontSize:13,
+                  fontWeight:800,color:"#2c5b8e",marginBottom:14,wordBreak:"break-all",
+                }}>
+                  {bekreftEpostAdresse}
+                </div>
+                <div style={{
+                  background:"#f0faf2",border:"1.5px solid #b7e4c7",
+                  borderRadius:11,padding:"13px 15px",marginBottom:20,textAlign:"left",
+                }}>
+                  <p style={{fontSize:13,color:"#1b5e47",lineHeight:1.8,margin:0,fontWeight:700}}>
+                    Slik aktiverer du kontoen:
+                  </p>
+                  <p style={{fontSize:13,color:"#3a4a5c",lineHeight:1.8,margin:"6px 0 0"}}>
+                    1. Sjekk innboksen din<br/>
+                    2. Åpne e-posten fra Barnehagehjelpen<br/>
+                    3. Trykk på bekreftelseslenken for å aktivere kontoen
+                  </p>
+                  <p style={{fontSize:12,color:"#5d7390",marginTop:8,marginBottom:0}}>
+                    Finner du ikke e-posten? Sjekk spam/søppelpost-mappen.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => skiftModus("login")}
+                  style={{
+                    width:"100%",padding:"12px",fontSize:14,fontWeight:800,
+                    background:"linear-gradient(135deg,#2c5b8e,#4178bd)",
+                    color:"#fff",border:"none",borderRadius:11,cursor:"pointer",
+                    fontFamily:"'Nunito',sans-serif",
+                    boxShadow:"0 3px 9px rgba(44,91,142,0.25)",
+                  }}
+                >
+                  🔑 Gå til innlogging
+                </button>
+              </div>
+            )}
+
             {/* LOGIN */}
-            {modus === "login" && (
+            {!bekreftEpostAdresse && modus === "login" && (
               <form onSubmit={handleLogin}>
                 <label style={labelStil}>E-postadresse</label>
                 <input type="email" value={li_epost} onChange={e=>setLiEpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" />
@@ -3434,6 +5465,11 @@ function AuthScreen({ onLoginSuccess }) {
                     {visPassord?"Skjul":"Vis"}
                   </button>
                 </div>
+                <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"#3a4a5c",fontWeight:600,marginBottom:14,cursor:"pointer",userSelect:"none"}}>
+                  <input type="checkbox" checked={huskMeg} onChange={e=>setHuskMeg(e.target.checked)}
+                    style={{width:16,height:16,accentColor:"#2c5b8e",cursor:"pointer"}} />
+                  Husk meg på denne enheten
+                </label>
                 <button type="submit" disabled={loading} style={knappStil(loading)}>
                   {loading?"🔐 Logger inn ...":"🔑 Logg inn"}
                 </button>
@@ -3442,11 +5478,16 @@ function AuthScreen({ onLoginSuccess }) {
                     Glemt passord?
                   </button>
                 </div>
+                <div style={{textAlign:"center",marginTop:10}}>
+                  <a href={supportMailto()} style={{color:"#8898ad",fontSize:11,fontWeight:600,textDecoration:"none"}}>
+                    📧 Kontakt support
+                  </a>
+                </div>
               </form>
             )}
 
             {/* REGISTRER */}
-            {modus === "register" && (
+            {!bekreftEpostAdresse && modus === "register" && (
               <form onSubmit={handleRegister}>
                 <label style={labelStil}>Brukernavn (min. 3 tegn)</label>
                 <input type="text" value={r_brukernavn} onChange={e=>setRBrukernavn(e.target.value)} style={inputStil} autoComplete="username" placeholder="kari_barnehagelaerer" />
@@ -3463,7 +5504,57 @@ function AuthScreen({ onLoginSuccess }) {
                 </div>
                 <label style={labelStil}>Bekreft passord</label>
                 <input type={visPassord?"text":"password"} value={r_passord2} onChange={e=>setRPassord2(e.target.value)} style={inputStil} autoComplete="new-password" placeholder="••••••••" />
-                <button type="submit" disabled={loading} style={knappStil(loading)}>
+
+                {/* Vilkår-samtykke */}
+                <div style={{
+                  background: vilkaarAkseptert ? "#f0f7ff" : "#f8f9fc",
+                  border: `1.5px solid ${vilkaarAkseptert ? "#4178bd" : "#d8e6f5"}`,
+                  borderRadius: 10, padding: "12px 14px", marginBottom: 14, marginTop: 4,
+                  transition: "border-color 0.2s, background 0.2s",
+                }}>
+                  <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
+                    <input
+                      type="checkbox"
+                      checked={vilkaarAkseptert}
+                      onChange={e => setVilkaarAkseptert(e.target.checked)}
+                      style={{width:17,height:17,accentColor:"#2c5b8e",cursor:"pointer",marginTop:1,flexShrink:0}}
+                    />
+                    <span style={{fontSize:12.5,color:"#2a3a4c",fontWeight:600,lineHeight:1.6}}>
+                      Jeg har lest og godtar{" "}
+                      <button
+                        type="button"
+                        onClick={e => { e.preventDefault(); setVisModal("personvern"); }}
+                        style={{
+                          background:"none",border:"none",padding:0,
+                          color:"#2c5b8e",fontWeight:800,fontSize:12.5,
+                          cursor:"pointer",textDecoration:"underline",
+                          fontFamily:"'Nunito',sans-serif",
+                        }}
+                      >
+                        personvernerklæringen
+                      </button>
+                      {" "}og{" "}
+                      <button
+                        type="button"
+                        onClick={e => { e.preventDefault(); setVisModal("bruksvilkaar"); }}
+                        style={{
+                          background:"none",border:"none",padding:0,
+                          color:"#2c5b8e",fontWeight:800,fontSize:12.5,
+                          cursor:"pointer",textDecoration:"underline",
+                          fontFamily:"'Nunito',sans-serif",
+                        }}
+                      >
+                        bruksvilkårene
+                      </button>
+                      .
+                    </span>
+                  </label>
+                </div>
+
+                <button type="submit" disabled={loading || !vilkaarAkseptert} style={{
+                  ...knappStil(loading),
+                  opacity: (!loading && !vilkaarAkseptert) ? 0.5 : undefined,
+                }}>
                   {loading?"✨ Oppretter konto ...":"✨ Opprett konto"}
                 </button>
                 <div style={{fontSize:11,color:"#5d7390",textAlign:"center",marginTop:12,lineHeight:1.5}}>
@@ -3473,7 +5564,7 @@ function AuthScreen({ onLoginSuccess }) {
             )}
 
             {/* GLEMT PASSORD */}
-            {modus === "glemt" && (
+            {!bekreftEpostAdresse && modus === "glemt" && (
               <form onSubmit={handleGlemtPassord}>
                 <p style={{fontSize:12,color:"#5d7390",marginBottom:12,lineHeight:1.6}}>
                   Skriv e-postadressen din, så sender vi en lenke for å tilbakestille passordet.
@@ -3524,14 +5615,16 @@ function AdminPanel({ aktivBruker }) {
 
   const utforSletting = async () => {
     if (!bekreftSlett) return;
-    await supabase.from("user_profiles").delete().eq("id", bekreftSlett);
+    const { error } = await supabase.from("user_profiles").delete().eq("id", bekreftSlett);
     setBekreftSlett(null);
-    visM("🗑 Bruker slettet fra profiler (auth-konto består)");
+    if (error) { visM("⚠️ Sletting feilet: " + error.message); return; }
+    visM("✅ Brukerprofil slettet – husk å slette auth-kontoen i Supabase Dashboard");
     last();
   };
 
   const settAdmin = async (id, verdi) => {
-    await supabase.from("user_profiles").update({ is_admin: verdi }).eq("id", id);
+    const { error } = await supabase.from("user_profiles").update({ is_admin: verdi }).eq("id", id);
+    if (error) { visM("⚠️ Oppdatering feilet: " + error.message); return; }
     visM(verdi?"✅ Gjort til admin":"✅ Fjernet admin-rettigheter");
     last();
   };
@@ -3549,7 +5642,7 @@ function AdminPanel({ aktivBruker }) {
             <div>
               <div style={{fontWeight:800,color:"#1a2c45",fontSize:14}}>{u.brukernavn} {u.is_admin&&<span style={{background:"#fff9c4",color:"#795548",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>👑 ADMIN</span>}{u.id===aktivBruker.id&&<span style={{background:"#d8f3dc",color:"#1b5e47",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>DU</span>}</div>
               <div style={{fontSize:11,color:"#5d7390",marginTop:2}}>📧 {u.epost}</div>
-              <div style={{fontSize:10,color:"#5d7390",marginTop:2}}>📅 Opprettet: {new Date(u.opprettet).toLocaleDateString("no-NO")}</div>
+              <div style={{fontSize:10,color:"#5d7390",marginTop:2}}>📅 Opprettet: {u.created_at ? new Date(u.created_at).toLocaleDateString("no-NO") : "–"}</div>
             </div>
           </div>
           <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
@@ -3566,8 +5659,11 @@ function AdminPanel({ aktivBruker }) {
           </div>
         </div>
       ))}
-      <div style={{background:"#fff8e1",borderRadius:10,padding:"10px 12px",fontSize:11,color:"#795548",borderLeft:"4px solid #6ba0d9",marginTop:14,lineHeight:1.6}}>
-        <strong>ℹ️ Om data:</strong> Alle brukerkontoer lagres lokalt på denne enheten. Passordene er hashed med SHA-256 + unik salt. Kontoer kan ikke ses fra andre enheter.
+      <div style={{background:"#fff8e1",borderRadius:10,padding:"10px 12px",fontSize:11,color:"#795548",borderLeft:"4px solid #f4a261",marginTop:14,lineHeight:1.6}}>
+        <strong>⚠️ Viktig om sletting:</strong> «Slett»-knappen fjerner brukerprofilen og all data, men selve innloggingskontoen (e-post + passord) lever videre i Supabase Auth. For å hindre brukeren i å logge inn igjen må du også slette auth-kontoen i <strong>Supabase Dashboard → Authentication → Users</strong>.
+      </div>
+      <div style={{background:"#e8f5e9",borderRadius:10,padding:"10px 12px",fontSize:11,color:"#2e7d32",borderLeft:"4px solid #52b788",marginTop:8,lineHeight:1.6}}>
+        <strong>ℹ️ Om data:</strong> Alle brukerdata lagres sikkert i skyen via Supabase og er tilgjengelig på alle enheter. Passord håndteres av Supabase Auth og lagres aldri i klartekst.
       </div>
 
       {/* Bekreftelses-modal for sletting (fungerer der confirm() er blokkert) */}
@@ -3577,8 +5673,11 @@ function AdminPanel({ aktivBruker }) {
           <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBekreftSlett(null)}>
             <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:22,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
               <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#c62828",marginBottom:10}}>🗑 Slette bruker?</div>
-              <p style={{fontSize:13,color:"#1a2c45",lineHeight:1.6,marginBottom:16}}>
-                Vil du slette <strong>{brukerSomSlettes?.brukernavn || "denne brukeren"}</strong> permanent? Dette kan ikke angres.
+              <p style={{fontSize:13,color:"#1a2c45",lineHeight:1.6,marginBottom:8}}>
+                Vil du slette <strong>{brukerSomSlettes?.brukernavn || "denne brukeren"}</strong>? All profildata og innhold slettes permanent.
+              </p>
+              <p style={{fontSize:11,color:"#795548",lineHeight:1.6,marginBottom:16,background:"#fff8e1",borderRadius:7,padding:"8px 10px"}}>
+                ⚠️ Innloggingskontoen slettes <strong>ikke</strong> automatisk. Gå til Supabase Dashboard → Authentication → Users for å blokkere tilgang helt.
               </p>
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>setBekreftSlett(null)} style={{flex:1,padding:"11px",background:"#e8eff8",color:"#1a2c45",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
@@ -3593,6 +5692,564 @@ function AdminPanel({ aktivBruker }) {
 }
 
 
+// ═══════════════════════════════════════════
+//  AKTIVITETSKORT – Lag eget kort (modal)
+// ═══════════════════════════════════════════
+function KortModal({ kort, onLagre, onLukk }) {
+  const iS = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"9px 13px", fontSize:13, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", marginBottom:10 };
+  const lS = { fontSize:11, fontWeight:800, color:C.gr, display:"block", marginBottom:3, marginTop:8 };
+  const [form, setForm] = useState({
+    title: kort?.title || "",
+    description: kort?.description || "",
+    category: kort?.category || "Lek",
+    age_group: kort?.age_group || "3-5 år",
+    materials: kort?.materials || "",
+    steps: kort?.steps || "",
+    curriculum_area: kort?.curriculum_area || [],
+    learning_goal: kort?.learning_goal || "",
+    duration: kort?.duration || "",
+    difficulty: kort?.difficulty || "middels",
+    indoor_outdoor: kort?.indoor_outdoor || "begge",
+    icon: kort?.icon || "🎯",
+    is_public: kort?.is_public || false,
+    id: kort?.id || undefined,
+  });
+  const opd = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const toggleFag = (fId) => setForm(p => ({ ...p, curriculum_area: p.curriculum_area.includes(fId) ? p.curriculum_area.filter(x=>x!==fId) : [...p.curriculum_area, fId] }));
+  const kat = KORT_KATEGORIER.find(k => k.id === form.category) || KORT_KATEGORIER[0];
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:350, overflowY:"auto", padding:"16px 12px", display:"flex", alignItems:"flex-start", justifyContent:"center" }} onClick={e => { if(e.target===e.currentTarget) onLukk(); }}>
+      <div className="pop" style={{ background:C.w, borderRadius:18, width:"100%", maxWidth:580, boxShadow:"0 12px 40px rgba(0,0,0,0.22)", overflow:"hidden", marginTop:8 }}>
+        {/* Header */}
+        <div style={{ background:`linear-gradient(135deg,${kat.txt},#2c5b8e)`, padding:"16px 20px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:"#fff" }}>
+            {form.id ? "✏️ Rediger aktivitetskort" : "➕ Nytt aktivitetskort"}
+          </div>
+          <button onClick={onLukk} style={{ background:"rgba(255,255,255,0.18)", border:"none", color:"#fff", width:30, height:30, borderRadius:7, cursor:"pointer", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
+        </div>
+
+        <div style={{ padding:"16px 20px 20px", overflowY:"auto", maxHeight:"76vh" }}>
+          {/* Ikon-velger */}
+          <label style={lS}>Ikon</label>
+          <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:8 }}>
+            {KORT_IKONER.map(i => (
+              <button key={i} onClick={() => opd("icon", i)} style={{ width:34, height:34, borderRadius:8, border:form.icon===i?"2px solid #2c5b8e":"1.5px solid #c4d6ec", background:form.icon===i?"#e8eff8":"#fff", fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>{i}</button>
+            ))}
+          </div>
+
+          <label style={lS}>Tittel *</label>
+          <input value={form.title} onChange={e=>opd("title",e.target.value)} placeholder="Tittel på aktivitetskortet" style={iS}/>
+
+          <label style={lS}>Beskrivelse</label>
+          <textarea value={form.description} onChange={e=>opd("description",e.target.value)} placeholder="Kort beskrivelse av aktiviteten..." style={{ ...iS, minHeight:65, resize:"vertical" }}/>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            <div>
+              <label style={lS}>Kategori</label>
+              <select value={form.category} onChange={e=>opd("category",e.target.value)} style={{ ...iS, marginBottom:0 }}>
+                {KORT_KATEGORIER.map(k => <option key={k.id} value={k.id}>{k.ikon} {k.id}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={lS}>Aldersgruppe</label>
+              <select value={form.age_group} onChange={e=>opd("age_group",e.target.value)} style={{ ...iS, marginBottom:0 }}>
+                {["0-2 år","1-3 år","2-4 år","3-5 år","3-6 år","4-6 år","5-6 år","Alle aldre"].map(a => <option key={a}>{a}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginTop:10 }}>
+            <div>
+              <label style={lS}>Tidsbruk</label>
+              <select value={form.duration} onChange={e=>opd("duration",e.target.value)} style={{ ...iS, marginBottom:0 }}>
+                {["","5-10 min","10-15 min","15-20 min","20-30 min","30-45 min","45-60 min","Hele dagen"].map(d => <option key={d} value={d}>{d||"Ikke oppgitt"}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={lS}>Vanskelighet</label>
+              <select value={form.difficulty} onChange={e=>opd("difficulty",e.target.value)} style={{ ...iS, marginBottom:0 }}>
+                {["enkel","middels","avansert"].map(d => <option key={d}>{d}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={lS}>Inne / ute</label>
+              <select value={form.indoor_outdoor} onChange={e=>opd("indoor_outdoor",e.target.value)} style={{ ...iS, marginBottom:0 }}>
+                {[["inne","🏠 Inne"],["ute","🌳 Ute"],["begge","🏠🌳 Begge"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <label style={lS}>Utstyr / Materialer</label>
+          <textarea value={form.materials} onChange={e=>opd("materials",e.target.value)} placeholder="Hva trenger dere?" style={{ ...iS, minHeight:55, resize:"vertical" }}/>
+
+          <label style={lS}>Gjennomføring (steg-for-steg)</label>
+          <textarea value={form.steps} onChange={e=>opd("steps",e.target.value)} placeholder={"Steg 1: ...\nSteg 2: ...\nSteg 3: ..."} style={{ ...iS, minHeight:90, resize:"vertical" }}/>
+
+          <label style={lS}>Hensikt / Læringsmål</label>
+          <textarea value={form.learning_goal} onChange={e=>opd("learning_goal",e.target.value)} placeholder="Hva skal barna lære eller oppleve?" style={{ ...iS, minHeight:55, resize:"vertical" }}/>
+
+          <label style={lS}>Fagområder (rammeplan)</label>
+          <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:12, marginTop:4 }}>
+            {FAGOMRADER.map(f => (
+              <button key={f.id} onClick={()=>toggleFag(f.id)} style={{ padding:"4px 10px", borderRadius:20, border:form.curriculum_area.includes(f.id)?`2px solid ${f.farge}`:"1.5px solid #c4d6ec", background:form.curriculum_area.includes(f.id)?f.lys:"#fff", color:form.curriculum_area.includes(f.id)?f.farge:C.gr, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'Nunito',sans-serif" }}>
+                {f.ikon} {f.id}
+              </button>
+            ))}
+          </div>
+
+          <label style={{ fontSize:12, fontWeight:700, color:C.t, display:"flex", alignItems:"center", gap:8, cursor:"pointer", marginBottom:16 }}>
+            <input type="checkbox" checked={form.is_public} onChange={e=>opd("is_public",e.target.checked)} style={{ width:16, height:16, accentColor:"#2c5b8e" }}/>
+            🌍 Del med alle i barnehagen (offentlig)
+          </label>
+
+          {/* Forhåndsvisning av kortet */}
+          <div style={{ background:"#f8fbff", borderRadius:12, padding:12, marginBottom:14, border:"1.5px solid #d8e6f5" }}>
+            <div style={{ fontSize:10, fontWeight:800, color:C.gr, marginBottom:8 }}>FORHÅNDSVISNING</div>
+            <div style={{ background:C.w, borderRadius:12, overflow:"hidden", boxShadow:"0 2px 8px rgba(44,91,142,0.09)", maxWidth:240 }}>
+              <div style={{ height:5, background:kat.txt }}/>
+              <div style={{ padding:"10px 12px" }}>
+                <div style={{ width:34, height:34, borderRadius:9, background:kat.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, marginBottom:6 }}>{form.icon}</div>
+                <div style={{ fontWeight:800, fontSize:12, color:C.t, marginBottom:3, lineHeight:1.3 }}>{form.title||"Tittel…"}</div>
+                <div style={{ fontSize:10, color:C.gr, lineHeight:1.4, marginBottom:6 }}>{(form.description||"Beskrivelse…").substring(0,60)}</div>
+                <span style={{ display:"inline-block", padding:"2px 8px", borderRadius:20, fontSize:9, fontWeight:700, background:kat.bg, color:kat.txt }}>{kat.ikon} {form.category}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display:"flex", gap:8 }}>
+            <button className="btn" onClick={()=>onLagre(form,true)} style={{ flex:1, padding:"10px", fontSize:12, background:C.lg2, color:C.t }}>💾 Lagre som utkast</button>
+            <button className="btn" onClick={()=>onLagre(form,false)} disabled={!form.title.trim()} style={{ flex:2, padding:"10px", fontSize:13, background:`linear-gradient(135deg,#3a72b0,#2c5b8e)`, color:"#fff", opacity:form.title.trim()?1:0.5 }}>✅ Lagre aktivitetskort</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  AKTIVITETSKORT – Hoveddpanel
+// ═══════════════════════════════════════════
+function AktivitetskortPanel({ aktivBruker, onOppdater }) {
+  const [kort, setKort] = useState([]);
+  const [laster, setLaster] = useState(true);
+  const [visning, setVisning] = useState("grid");
+  const [sok, setSok] = useState("");
+  const [filterKat, setFilterKat] = useState("alle");
+  const [filterType, setFilterType] = useState("alle");
+  const [valgtKort, setValgtKort] = useState(null);
+  const [modalAapen, setModalAapen] = useState(false);
+  const [redigererKort, setRedigererKort] = useState(null);
+  const [favSet, setFavSet] = useState(new Set());
+  const [feedback, setFeedback] = useState("");
+  const [bekreftSlett, setBekreftSlett] = useState(null);
+  const [aiPanelAapen, setAiPanelAapen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLaster, setAiLaster] = useState(false);
+  const [importerAktivVis, setImporterAktivVis] = useState(false);
+  const [sokAkt, setSokAkt] = useState("");
+  const [printModus, setPrintModus] = useState(false);
+  const [valgtForPrint, setValgtForPrint] = useState(new Set());
+
+  const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),2800); };
+  const iS = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"9px 13px", fontSize:13, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box" };
+
+  useEffect(() => {
+    if (!aktivBruker?.id) return;
+    (async () => {
+      setLaster(true);
+      const [data, favs] = await Promise.all([hentAktivitetskort(aktivBruker.id), hentKortFavoritter(aktivBruker.id)]);
+      setKort(data);
+      setFavSet(favs);
+      setLaster(false);
+    })();
+  }, [aktivBruker?.id]);
+
+  const toggleFavKort = async (kortId) => {
+    const har = favSet.has(kortId);
+    const ny = new Set(favSet);
+    if (har) {
+      ny.delete(kortId);
+      await supabase.from("activity_card_favorites").delete().eq("user_id", aktivBruker.id).eq("card_id", kortId);
+    } else {
+      ny.add(kortId);
+      await supabase.from("activity_card_favorites").insert({ user_id: aktivBruker.id, card_id: kortId });
+    }
+    setFavSet(ny);
+    vis(har ? "Fjernet fra favoritter" : "⭐ Lagt til i favoritter");
+  };
+
+  const filtrert = kort.filter(k => {
+    if (filterType === "mine" && k.created_by !== aktivBruker.id) return false;
+    if (filterType === "offentlige" && !k.is_public) return false;
+    if (filterType === "utkast" && !k.is_draft) return false;
+    if (filterType === "favoritter" && !favSet.has(k.id)) return false;
+    if (filterKat !== "alle" && k.category !== filterKat) return false;
+    if (sok) { const q = sok.toLowerCase(); return (k.title||"").toLowerCase().includes(q) || (k.description||"").toLowerCase().includes(q); }
+    return true;
+  });
+
+  const trekkTilfeldig = () => {
+    if (filtrert.length === 0) { vis("Ingen kort å trekke"); return; }
+    setValgtKort(filtrert[Math.floor(Math.random() * filtrert.length)]);
+  };
+
+  const katInfo = (katId) => KORT_KATEGORIER.find(k => k.id === katId) || { ikon:"🎯", bg:"#e8eff8", txt:C.g };
+
+  const togglePrintValg = (id) => setValgtForPrint(p => { const ny = new Set(p); ny.has(id) ? ny.delete(id) : ny.add(id); return ny; });
+
+  const skrivUtEttKort = (k) => {
+    const kat = katInfo(k.category);
+    const besk = k.description ? '<div style="background:#fff9c4;border-radius:8px;padding:12px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:#795548;margin-bottom:4px;">🎯 Beskrivelse</div><p style="font-size:13px;line-height:1.7;">' + k.description + '</p></div>' : '';
+    const steg = k.steps ? '<div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:#2e7d32;margin-bottom:4px;">⚙️ Gjennomføring</div><div style="font-size:13px;line-height:1.8;white-space:pre-line;">' + k.steps + '</div></div>' : '';
+    const maal = k.learning_goal ? '<div style="background:#e3f2fd;border-radius:8px;padding:12px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:#1565c0;margin-bottom:4px;">❓ Læringsmål</div><div style="font-size:13px;line-height:1.7;">' + k.learning_goal + '</div></div>' : '';
+    const mat = k.materials ? '<div style="background:#fce4ec;border-radius:8px;padding:12px;"><div style="font-weight:bold;font-size:12px;color:#c62828;margin-bottom:4px;">🧰 Materialer</div><div style="font-size:13px;">' + k.materials + '</div></div>' : '';
+    skrivUtVindu('<div style="max-width:600px;margin:0 auto;"><div style="background:#fff;border-radius:10px;border:1.5px solid #d0dff0;overflow:hidden;"><div style="height:6px;background:' + kat.txt + ';"></div><div style="padding:18px;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;"><div style="width:46px;height:46px;border-radius:10px;background:' + kat.bg + ';display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">' + (k.icon||kat.ikon) + '</div><div><div style="font-weight:bold;font-size:18px;color:#1a2a3a;">' + k.title + '</div><div style="font-size:11px;color:#888;">' + k.category + (k.age_group?' · '+k.age_group:'') + (k.duration?' · ⏱ '+k.duration:'') + (k.difficulty?' · '+k.difficulty:'') + '</div></div></div>' + besk + steg + maal + mat + '</div></div><div style="margin-top:14px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', k.title);
+  };
+
+  const skrivUtFlereKort = () => {
+    const liste = kort.filter(k => valgtForPrint.has(k.id));
+    if (liste.length === 0) { vis("Velg minst ett kort å skrive ut"); return; }
+    const kortHtml = liste.map(k => {
+      const kat = katInfo(k.category);
+      const steg = k.steps ? '<div style="background:#e8f5e9;border-radius:6px;padding:9px 10px;margin-bottom:6px;"><div style="font-weight:bold;font-size:10px;color:#2e7d32;margin-bottom:3px;">⚙️ GJENNOMFØRING</div><div style="font-size:11px;line-height:1.6;white-space:pre-line;">' + k.steps + '</div></div>' : '';
+      const maal = k.learning_goal ? '<div style="background:#e3f2fd;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:10px;color:#1565c0;"><strong>❓ Læringsmål:</strong> ' + k.learning_goal + '</div>' : '';
+      const mat = k.materials ? '<div style="font-size:10px;color:#666;"><strong>🧰</strong> ' + k.materials + '</div>' : '';
+      return '<div style="background:#fff;border-radius:10px;border:1.5px solid #d0dff0;overflow:hidden;break-inside:avoid;page-break-inside:avoid;"><div style="height:5px;background:' + kat.txt + ';"></div><div style="padding:12px;"><div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><div style="width:36px;height:36px;border-radius:8px;background:' + kat.bg + ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + (k.icon||kat.ikon) + '</div><div><div style="font-weight:bold;font-size:14px;color:#1a2a3a;">' + k.title + '</div><div style="font-size:10px;color:#888;">' + k.category + (k.age_group?' · '+k.age_group:'') + (k.duration?' · '+k.duration:'') + '</div></div></div>' + (k.description?'<p style="font-size:11px;color:#444;margin-bottom:7px;line-height:1.5;">' + k.description + '</p>':'') + steg + maal + mat + '</div></div>';
+    }).join('');
+    skrivUtVindu('<div style="max-width:720px;margin:0 auto;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' + kortHtml + '</div><div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev · ' + liste.length + ' aktivitetskort</div></div>', 'Aktivitetskort (' + liste.length + ')');
+  };
+
+  const lagreKort = async (data, erUtkast = false) => {
+    try {
+      const payload = { ...data, created_by: aktivBruker.id, is_custom: true, is_draft: erUtkast };
+      let resultat;
+      if (data.id) {
+        resultat = await oppdaterAktivitetskort(data.id, payload);
+        setKort(p => p.map(k => k.id === data.id ? resultat : k));
+        if (valgtKort?.id === data.id) setValgtKort(resultat);
+        vis(erUtkast ? "💾 Utkast oppdatert" : "✅ Kort oppdatert");
+      } else {
+        resultat = await lagreNyttAktivitetskort(payload);
+        setKort(p => [resultat, ...p]);
+        vis(erUtkast ? "💾 Utkast lagret" : "✅ Aktivitetskort lagret!");
+      }
+      setModalAapen(false);
+      setRedigererKort(null);
+      onOppdater?.();
+    } catch (e) {
+      console.error(e);
+      vis("❌ Kunne ikke lagre kortet");
+    }
+  };
+
+  const slettKort = async (id) => {
+    try {
+      await slettAktivitetskort(id);
+      setKort(p => p.filter(k => k.id !== id));
+      setValgtKort(null);
+      setBekreftSlett(null);
+      vis("🗑 Kort slettet");
+      onOppdater?.();
+    } catch { vis("❌ Kunne ikke slette"); }
+  };
+
+  const kopierKort = async (k) => {
+    try {
+      const kopi = { title:k.title+" (kopi)", description:k.description, category:k.category, age_group:k.age_group, materials:k.materials, steps:k.steps, curriculum_area:k.curriculum_area, learning_goal:k.learning_goal, duration:k.duration, difficulty:k.difficulty, indoor_outdoor:k.indoor_outdoor, icon:k.icon, is_public:false, created_by:aktivBruker.id, is_custom:true, is_draft:true };
+      const lagret = await lagreNyttAktivitetskort(kopi);
+      setKort(p => [lagret, ...p]);
+      vis("📋 Kort kopiert (utkast)");
+      onOppdater?.();
+    } catch { vis("❌ Kopiering feilet"); }
+  };
+
+  const importerFraAktivitet = async (aktivitet) => {
+    try {
+      const payload = { title:aktivitet.tittel, description:aktivitet.hva, category:aktivitet.kategori||"Lek", age_group:aktivitet.alder||"3-6 år", materials:aktivitet.materialer||"", steps:aktivitet.hvordan||"", curriculum_area:aktivitet.rammeplan||[], learning_goal:aktivitet.hvorfor||"", duration:aktivitet.tid||"", difficulty:"middels", indoor_outdoor:"begge", icon:aktivitet.ikon||"🎯", source_activity_id:aktivitet.id, created_by:aktivBruker.id, is_custom:false, is_public:false, is_draft:false };
+      const lagret = await lagreNyttAktivitetskort(payload);
+      setKort(p => [lagret, ...p]);
+      setImporterAktivVis(false);
+      vis("✅ Aktivitet konvertert til kort!");
+      onOppdater?.();
+    } catch { vis("❌ Konvertering feilet"); }
+  };
+
+  const genererMedAI = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiLaster(true);
+    try {
+      const system = `Du er en pedagogisk assistent for norske barnehager. Lag et detaljert aktivitetskort. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:
+{"title":"...","description":"...","category":"Lek|Natur|Vann|Bevegelse|Kreativt|Språk|Antall|Musikk|Ute|Rolig|Eksperiment|Sosialt","age_group":"...","materials":"...","steps":"Steg 1: ...\\nSteg 2: ...\\nSteg 3: ...","curriculum_area":["kommunikasjon"],"learning_goal":"...","duration":"...","difficulty":"enkel|middels|avansert","indoor_outdoor":"inne|ute|begge","icon":"🎯","weather_tags":["sol","regn"]}`;
+      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt }) });
+      const d = await r.json();
+      const tekst = d.text || "";
+      const jsonMatch = tekst.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        setRedigererKort(parsed);
+        setModalAapen(true);
+        setAiPanelAapen(false);
+        setAiPrompt("");
+      } else {
+        vis("⚠️ AI-svaret hadde ikke riktig format");
+      }
+    } catch (e) {
+      console.error(e);
+      vis("❌ AI-generering feilet");
+    } finally { setAiLaster(false); }
+  };
+
+  // ── Detaljvisning ──
+  if (valgtKort) {
+    const kat = katInfo(valgtKort.category);
+    const erEier = valgtKort.created_by === aktivBruker.id;
+    return (
+      <div className="fade">
+        <Tilbake onClick={() => setValgtKort(null)} />
+        <div style={{ background:C.w, borderRadius:16, overflow:"hidden", boxShadow:"0 2px 16px rgba(44,91,142,0.12)" }}>
+          <div style={{ height:8, background:kat.txt }}/>
+          <div style={{ padding:22 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:14 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:54, height:54, borderRadius:14, background:kat.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0 }}>{valgtKort.icon||kat.ikon}</div>
+                <div>
+                  <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:21, color:C.t, lineHeight:1.2 }}>{valgtKort.title}</div>
+                  {valgtKort.is_draft && <span className="tag" style={{ background:"#fff3cd", color:"#856404", marginTop:4 }}>📝 Utkast</span>}
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap", justifyContent:"flex-end" }}>
+                <button className={`fav-btn ${favSet.has(valgtKort.id)?"aktiv":""}`} onClick={()=>toggleFavKort(valgtKort.id)}>{favSet.has(valgtKort.id)?"⭐":"☆"}</button>
+                <button className="btn" onClick={()=>skrivUtEttKort(valgtKort)} style={{ padding:"5px 10px", fontSize:11, background:"#e8f5e9", color:"#2e7d32" }}>🖨️ Skriv ut</button>
+                {erEier && <>
+                  <button className="btn" onClick={()=>{setRedigererKort(valgtKort);setModalAapen(true);}} style={{ padding:"5px 10px", fontSize:11, background:C.lg2, color:C.t }}>✏️ Rediger</button>
+                  <button className="btn" onClick={()=>kopierKort(valgtKort)} style={{ padding:"5px 10px", fontSize:11, background:C.lg2, color:C.t }}>📋 Kopier</button>
+                  <button className="btn" onClick={()=>setBekreftSlett(valgtKort.id)} style={{ padding:"5px 10px", fontSize:11, background:"#fce4ec", color:"#c62828" }}>🗑</button>
+                </>}
+              </div>
+            </div>
+            <div style={{ display:"flex", gap:7, flexWrap:"wrap", marginBottom:14 }}>
+              <span className="tag" style={{ background:kat.bg, color:kat.txt }}>{kat.ikon} {valgtKort.category}</span>
+              {valgtKort.age_group && <span className="tag" style={{ background:"#e8eff8", color:C.g }}>👶 {valgtKort.age_group}</span>}
+              {valgtKort.duration && <span className="tag" style={{ background:"#e3f2fd", color:"#1565c0" }}>⏱ {valgtKort.duration}</span>}
+              {valgtKort.difficulty && <span className="tag" style={{ background:"#f3e5f5", color:"#6a1b9a" }}>📊 {valgtKort.difficulty}</span>}
+              {valgtKort.indoor_outdoor && <span className="tag" style={{ background:"#f1f8e9", color:"#33691e" }}>{valgtKort.indoor_outdoor==="inne"?"🏠 Inne":valgtKort.indoor_outdoor==="ute"?"🌳 Ute":"🏠🌳 Begge"}</span>}
+              {valgtKort.is_public && <span className="tag" style={{ background:"#e8f5e9", color:"#2e7d32" }}>🌍 Offentlig</span>}
+            </div>
+            {valgtKort.description && <div style={{ background:"#fff9c4", borderRadius:11, padding:"13px 15px", marginBottom:10 }}><div style={{ fontWeight:800, color:"#795548", marginBottom:4, fontSize:13 }}>🎯 Beskrivelse</div><div style={{ color:C.t, fontSize:13, lineHeight:1.7 }}>{valgtKort.description}</div></div>}
+            {valgtKort.steps && <div style={{ background:"#e8f5e9", borderRadius:11, padding:"13px 15px", marginBottom:10 }}><div style={{ fontWeight:800, color:"#2e7d32", marginBottom:4, fontSize:13 }}>⚙️ Gjennomføring</div><div style={{ color:C.t, fontSize:13, lineHeight:1.7, whiteSpace:"pre-line" }}>{valgtKort.steps}</div></div>}
+            {valgtKort.learning_goal && <div style={{ background:"#e3f2fd", borderRadius:11, padding:"13px 15px", marginBottom:10 }}><div style={{ fontWeight:800, color:"#1565c0", marginBottom:4, fontSize:13 }}>❓ Læringsmål</div><div style={{ color:C.t, fontSize:13, lineHeight:1.7 }}>{valgtKort.learning_goal}</div></div>}
+            {valgtKort.materials && <div style={{ background:"#fce4ec", borderRadius:11, padding:"13px 15px", marginBottom:10 }}><div style={{ fontWeight:800, color:"#c62828", marginBottom:4, fontSize:13 }}>🧰 Materialer</div><div style={{ color:C.t, fontSize:13 }}>{valgtKort.materials}</div></div>}
+            {valgtKort.curriculum_area?.length > 0 && <div style={{ marginBottom:10 }}><div style={{ fontSize:12, fontWeight:700, color:C.gr, marginBottom:7 }}>Rammeplan:</div><div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>{valgtKort.curriculum_area.map(r=><FagTag key={r} rid={r}/>)}</div></div>}
+            {valgtKort.weather_tags?.length > 0 && <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>{valgtKort.weather_tags.map(t=><span key={t} className="tag" style={{ background:"#e1f5fe", color:"#0277bd" }}>🌤 {t}</span>)}</div>}
+          </div>
+        </div>
+        {bekreftSlett && (
+          <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:400, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            <div className="pop" style={{ background:C.w, borderRadius:16, padding:24, maxWidth:320, width:"100%", boxShadow:"0 8px 32px rgba(0,0,0,0.2)" }}>
+              <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:18, color:C.t, marginBottom:10 }}>Slette kortet?</div>
+              <p style={{ fontSize:13, color:C.t, lineHeight:1.6, marginBottom:16 }}>Dette kan ikke angres.</p>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={()=>setBekreftSlett(null)} style={{ flex:1, padding:11, background:C.lg2, color:C.t, border:"none", borderRadius:10, fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"'Nunito',sans-serif" }}>Avbryt</button>
+                <button onClick={()=>slettKort(bekreftSlett)} style={{ flex:1, padding:11, background:"#c62828", color:"#fff", border:"none", borderRadius:10, fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Nunito',sans-serif" }}>🗑 Slett</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {feedback && <div className="fade" style={{ position:"fixed", top:70, right:20, zIndex:500, background:C.g, color:"#fff", borderRadius:9, padding:"10px 16px", fontWeight:700, fontSize:13, boxShadow:"0 4px 14px rgba(0,0,0,0.18)" }}>{feedback}</div>}
+        {modalAapen && <KortModal kort={redigererKort} onLagre={lagreKort} onLukk={()=>{setModalAapen(false);setRedigererKort(null);}}/>}
+      </div>
+    );
+  }
+
+  // ── Import fra eksisterende aktiviteter (modal) ──
+  if (importerAktivVis) {
+    const allAkt = AKTIVITETER.filter(a => {
+      if (!sokAkt) return true;
+      return (a.tittel||"").toLowerCase().includes(sokAkt.toLowerCase());
+    });
+    const alleredeImportert = new Set(kort.filter(k=>k.source_activity_id).map(k=>k.source_activity_id));
+    return (
+      <div className="fade">
+        <Tilbake onClick={()=>setImporterAktivVis(false)}/>
+        <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:20, color:C.t, marginBottom:4 }}>🔄 Importer fra aktiviteter</div>
+        <p style={{ color:C.gr, fontSize:12, marginBottom:12 }}>Velg en aktivitet og konverter den til et aktivitetskort.</p>
+        <input value={sokAkt} onChange={e=>setSokAkt(e.target.value)} placeholder="🔍 Søk i aktiviteter..." style={{ ...iS, marginBottom:12 }}/>
+        <div style={{ display:"grid", gap:8 }}>
+          {allAkt.map(a => (
+            <div key={a.id} className="hover" style={{ background:C.w, borderRadius:12, padding:"12px 14px", boxShadow:"0 2px 7px rgba(44,91,142,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:800, color:C.t, fontSize:13 }}>{a.tittel}</div>
+                <div style={{ fontSize:11, color:C.gr, marginTop:2 }}>{a.kategori} · {a.alder}</div>
+              </div>
+              {alleredeImportert.has(a.id)
+                ? <span className="tag" style={{ background:"#e8f5e9", color:"#2e7d32", fontSize:10 }}>✅ Importert</span>
+                : <button className="btn" onClick={()=>importerFraAktivitet(a)} style={{ padding:"6px 12px", fontSize:11, background:`linear-gradient(135deg,#3a72b0,#2c5b8e)`, color:"#fff" }}>Importer →</button>
+              }
+            </div>
+          ))}
+        </div>
+        {feedback && <div className="fade" style={{ position:"fixed", top:70, right:20, zIndex:500, background:C.g, color:"#fff", borderRadius:9, padding:"10px 16px", fontWeight:700, fontSize:13, boxShadow:"0 4px 14px rgba(0,0,0,0.18)" }}>{feedback}</div>}
+      </div>
+    );
+  }
+
+  // ── Hovedliste / grid ──
+  return (
+    <div className="fade">
+      {/* Topp-header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6, gap:8, flexWrap:"wrap" }}>
+        <div>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:C.t }}>🃏 Aktivitetskort</div>
+          <p style={{ color:C.gr, fontSize:12, marginTop:2 }}>{kort.length} kort · {filtrert.length} vises</p>
+        </div>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+          <button className="btn" onClick={()=>setAiPanelAapen(!aiPanelAapen)} style={{ padding:"7px 11px", fontSize:11, background:aiPanelAapen?"#4178bd":"#e3f2fd", color:aiPanelAapen?"#fff":"#1565c0" }}>🤖 AI</button>
+          <button className="btn" onClick={()=>setImporterAktivVis(true)} style={{ padding:"7px 11px", fontSize:11, background:"#f3e5f5", color:"#6a1b9a" }}>🔄 Importer</button>
+          <button className="btn" onClick={trekkTilfeldig} style={{ padding:"7px 11px", fontSize:11, background:"#fff8e1", color:"#ff6f00" }}>🎲 Trekk</button>
+          <button className="btn" onClick={()=>{setPrintModus(!printModus);setValgtForPrint(new Set());}} style={{ padding:"7px 11px", fontSize:11, background:printModus?"#2e7d32":"#e8f5e9", color:printModus?"#fff":"#2e7d32" }}>{printModus?"✕ Avbryt":"🖨️ Velg"}</button>
+          {printModus && valgtForPrint.size > 0 && <button className="btn" onClick={skrivUtFlereKort} style={{ padding:"7px 13px", fontSize:12, background:"#2e7d32", color:"#fff", fontWeight:800 }}>🖨️ Skriv ut {valgtForPrint.size}</button>}
+          <button className="btn" onClick={()=>{setRedigererKort(null);setModalAapen(true);}} style={{ padding:"7px 13px", fontSize:12, background:`linear-gradient(135deg,#3a72b0,#2c5b8e)`, color:"#fff" }}>➕ Nytt kort</button>
+        </div>
+      </div>
+
+      {/* AI-panel */}
+      {aiPanelAapen && (
+        <div className="fade" style={{ background:"linear-gradient(135deg,#1f4068,#3a72b0)", borderRadius:14, padding:16, marginBottom:14, color:"#fff" }}>
+          <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:16, marginBottom:6 }}>🤖 AI-generator for aktivitetskort</div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,0.8)", marginBottom:8 }}>Beskriv hva du vil ha – AI lager et komplett aktivitetskort.</div>
+          <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:8 }}>
+            {["Naturtema 4-åringer, samarbeid","Vannlek sommeren, eksperimentering","Rolig inneaktivitet, språk 3-5 år","Bevegelseslek ute for hele gruppa"].map(t => (
+              <button key={t} className="btn" onClick={()=>setAiPrompt(t)} style={{ padding:"4px 9px", fontSize:10, background:"rgba(255,255,255,0.15)", color:"#fff" }}>{t}</button>
+            ))}
+          </div>
+          <textarea value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)} placeholder="Eks: Lag et aktivitetskort for 4-åringer med naturtema og fokus på samarbeid..." style={{ ...iS, minHeight:70, resize:"vertical", marginBottom:8 }}/>
+          <button className="btn" onClick={genererMedAI} disabled={aiLaster||!aiPrompt.trim()} style={{ padding:"9px 18px", fontSize:13, background:aiLaster?"rgba(255,255,255,0.5)":"#fff", color:C.g, fontWeight:800, opacity:aiPrompt.trim()?1:0.6 }}>
+            {aiLaster ? "⏳ Genererer..." : "✨ Generer aktivitetskort"}
+          </button>
+        </div>
+      )}
+
+      {/* Søk */}
+      <input value={sok} onChange={e=>setSok(e.target.value)} placeholder="🔍 Søk etter aktivitetskort..." style={{ ...iS, marginBottom:8 }}/>
+
+      {/* Type-filter */}
+      <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", marginBottom:7, paddingBottom:2 }}>
+        <div style={{ display:"flex", gap:5, width:"max-content" }}>
+          {[["alle","Alle"],["mine","Mine"],["offentlige","Offentlige"],["favoritter","⭐ Favoritter"],["utkast","📝 Utkast"]].map(([v,l]) => (
+            <button key={v} className="btn" onClick={()=>setFilterType(v)} style={{ padding:"5px 11px", fontSize:11, background:filterType===v?C.g:C.lg2, color:filterType===v?"#fff":C.t, whiteSpace:"nowrap" }}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Kategori-filter */}
+      <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", marginBottom:8, paddingBottom:2 }}>
+        <div style={{ display:"flex", gap:5, width:"max-content" }}>
+          <button className="btn" onClick={()=>setFilterKat("alle")} style={{ padding:"4px 10px", fontSize:10, background:filterKat==="alle"?C.g:C.lg2, color:filterKat==="alle"?"#fff":C.t }}>Alle</button>
+          {KORT_KATEGORIER.map(k => (
+            <button key={k.id} className="btn" onClick={()=>setFilterKat(k.id)} style={{ padding:"4px 10px", fontSize:10, background:filterKat===k.id?k.txt:k.bg, color:filterKat===k.id?"#fff":k.txt, whiteSpace:"nowrap" }}>
+              {k.ikon} {k.id}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Visnings-toggle + tell */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <div style={{ fontSize:11, color:C.gr }}>Viser {filtrert.length} aktivitetskort</div>
+        <div style={{ display:"flex", gap:4 }}>
+          <button className="btn" onClick={()=>setVisning("grid")} style={{ padding:"4px 10px", fontSize:13, background:visning==="grid"?C.g:C.lg2, color:visning==="grid"?"#fff":C.t }}>⊞</button>
+          <button className="btn" onClick={()=>setVisning("liste")} style={{ padding:"4px 10px", fontSize:13, background:visning==="liste"?C.g:C.lg2, color:visning==="liste"?"#fff":C.t }}>≡</button>
+        </div>
+      </div>
+
+      {/* Tom-tilstand: ingen kort enda */}
+      {!laster && kort.length === 0 && (
+        <div className="fade" style={{ background:"#e8f5e9", borderRadius:12, padding:20, marginBottom:14, border:"1.5px dashed #66bb6a", textAlign:"center" }}>
+          <div style={{ fontSize:32, marginBottom:8 }}>🃏</div>
+          <div style={{ fontWeight:800, color:"#2e7d32", marginBottom:6, fontSize:14 }}>Ingen aktivitetskort enda</div>
+          <p style={{ fontSize:12, color:"#2e7d32", lineHeight:1.6, marginBottom:12 }}>Lag ditt første kort fra bunnen, importer fra eksisterende aktiviteter, eller la AI hjelpe deg!</p>
+          <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap" }}>
+            <button className="btn" onClick={()=>{setRedigererKort(null);setModalAapen(true);}} style={{ padding:"8px 14px", fontSize:12, background:"#2e7d32", color:"#fff" }}>➕ Lag nytt kort</button>
+            <button className="btn" onClick={()=>setAiPanelAapen(true)} style={{ padding:"8px 14px", fontSize:12, background:"#1565c0", color:"#fff" }}>🤖 Lag med AI</button>
+            <button className="btn" onClick={()=>setImporterAktivVis(true)} style={{ padding:"8px 14px", fontSize:12, background:"#6a1b9a", color:"#fff" }}>🔄 Importer aktivitet</button>
+          </div>
+        </div>
+      )}
+
+      {laster && <div style={{ display:"flex", justifyContent:"center", padding:32 }}><div className="spin"/></div>}
+      {!laster && filtrert.length === 0 && kort.length > 0 && (
+        <div style={{ textAlign:"center", padding:28, color:C.gr }}>{sok?`Ingen treff for «${sok}»`:"Ingen kort i denne kategorien"}</div>
+      )}
+
+      {/* Grid-visning */}
+      {!laster && visning === "grid" && (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))", gap:10 }}>
+          {filtrert.map(k => {
+            const kat = katInfo(k.category);
+            return (
+              <div key={k.id} className="hover fade" onClick={()=> printModus ? togglePrintValg(k.id) : setValgtKort(k)} style={{ background:C.w, borderRadius:14, overflow:"hidden", cursor:"pointer", boxShadow:"0 2px 10px rgba(44,91,142,0.09)", position:"relative", outline: printModus && valgtForPrint.has(k.id) ? "2.5px solid #2e7d32" : "none" }}>
+                {printModus && <div style={{ position:"absolute", top:8, left:8, zIndex:2, width:20, height:20, borderRadius:5, background: valgtForPrint.has(k.id) ? "#2e7d32" : "#fff", border:"1.5px solid #2e7d32", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:13, fontWeight:800 }}>{valgtForPrint.has(k.id) ? "✓" : ""}</div>}
+                <div style={{ height:5, background:kat.txt }}/>
+                <div style={{ padding:"14px 14px 12px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:6, marginBottom:8 }}>
+                    <div style={{ width:40, height:40, borderRadius:10, background:kat.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{k.icon||kat.ikon}</div>
+                    {!printModus && <button className={`fav-btn ${favSet.has(k.id)?"aktiv":""}`} onClick={e=>{e.stopPropagation();toggleFavKort(k.id);}} style={{ fontSize:15 }}>{favSet.has(k.id)?"⭐":"☆"}</button>}
+                  </div>
+                  <div style={{ fontWeight:800, color:C.t, fontSize:14, marginBottom:4, lineHeight:1.3 }}>{k.title}</div>
+                  <div style={{ fontSize:11, color:C.gr, lineHeight:1.5, marginBottom:8 }}>{(k.description||"").substring(0,80)}{(k.description||"").length>80?"...":""}</div>
+                  <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+                    <span className="tag" style={{ background:kat.bg, color:kat.txt, fontSize:10 }}>{kat.ikon} {k.category}</span>
+                    {k.age_group && <span className="tag" style={{ background:"#e8eff8", color:C.g, fontSize:10 }}>👶 {k.age_group}</span>}
+                    {k.duration && <span className="tag" style={{ background:"#e3f2fd", color:"#1565c0", fontSize:10 }}>⏱ {k.duration}</span>}
+                    {k.is_draft && <span className="tag" style={{ background:"#fff3cd", color:"#856404", fontSize:10 }}>Utkast</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Liste-visning */}
+      {!laster && visning === "liste" && (
+        <div style={{ display:"grid", gap:7 }}>
+          {filtrert.map(k => {
+            const kat = katInfo(k.category);
+            return (
+              <div key={k.id} className="hover fade" onClick={()=> printModus ? togglePrintValg(k.id) : setValgtKort(k)} style={{ background:C.w, borderRadius:12, padding:"13px 15px", cursor:"pointer", boxShadow:"0 2px 7px rgba(44,91,142,0.07)", borderLeft:`4px solid ${kat.txt}`, outline: printModus && valgtForPrint.has(k.id) ? "2.5px solid #2e7d32" : "none" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:6 }}>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:3 }}>
+                      <span style={{ fontSize:18 }}>{k.icon||kat.ikon}</span>
+                      <div style={{ fontWeight:800, color:C.t, fontSize:14 }}>{k.title}</div>
+                    </div>
+                    <div style={{ color:C.gr, fontSize:11, marginBottom:5 }}>{(k.description||"").substring(0,90)}{(k.description||"").length>90?"...":""}</div>
+                    <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+                      <span className="tag" style={{ background:kat.bg, color:kat.txt, fontSize:10 }}>{k.category}</span>
+                      {k.age_group && <span className="tag" style={{ background:"#e8eff8", color:C.g, fontSize:10 }}>{k.age_group}</span>}
+                      {k.duration && <span className="tag" style={{ background:"#e3f2fd", color:"#1565c0", fontSize:10 }}>{k.duration}</span>}
+                      {k.is_draft && <span className="tag" style={{ background:"#fff3cd", color:"#856404", fontSize:10 }}>Utkast</span>}
+                      {k.is_public && <span className="tag" style={{ background:"#e8f5e9", color:"#2e7d32", fontSize:10 }}>🌍</span>}
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", gap:4, alignItems:"center" }}>
+                    {printModus ? <div style={{ width:20, height:20, borderRadius:5, background: valgtForPrint.has(k.id) ? "#2e7d32" : "#fff", border:"1.5px solid #2e7d32", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:13, fontWeight:800 }}>{valgtForPrint.has(k.id) ? "✓" : ""}</div> : <button className={`fav-btn ${favSet.has(k.id)?"aktiv":""}`} onClick={e=>{e.stopPropagation();toggleFavKort(k.id);}} style={{ fontSize:15 }}>{favSet.has(k.id)?"⭐":"☆"}</button>}
+                    <span style={{ color:C.gr, fontSize:17 }}>›</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {modalAapen && <KortModal kort={redigererKort} onLagre={lagreKort} onLukk={()=>{setModalAapen(false);setRedigererKort(null);}}/>}
+      {feedback && <div className="fade" style={{ position:"fixed", top:70, right:20, zIndex:500, background:C.g, color:"#fff", borderRadius:9, padding:"10px 16px", fontWeight:700, fontSize:13, boxShadow:"0 4px 14px rgba(0,0,0,0.18)" }}>{feedback}</div>}
+    </div>
+  );
+}
+
 function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [side, setSide] = useState("hjem");
   const [skjemaer, setSkjemaer] = useState([]);
@@ -3601,19 +6258,33 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [valgtFag, setValgtFag] = useState(null);
   const [rammeSeksjon, setRammeSeksjon] = useState("oversikt");
   const [valgtSkjema, setValgtSkjema] = useState(null);
+  const [redigerSkjemaTittel, setRedigerSkjemaTittel] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [favoritter, setFavoritter] = useState({ sanger: [], aktiviteter: [], tegneark: [] });
   const [globalUkeplaner, setGlobalUkeplaner] = useState([]);
+  const [globalMaanedsplaner, setGlobalMaanedsplaner] = useState([]);
+  const [globalMaanedsbrev, setGlobalMaanedsbrev] = useState([]);
+  const [globalArsplaner, setGlobalArsplaner] = useState([]);
+  const [globalBoker, setGlobalBoker] = useState([]);
+  const [globalUserSanger, setGlobalUserSanger] = useState([]);
+  const [globalUserTegneark, setGlobalUserTegneark] = useState([]);
+  const [globalAktivitetskort, setGlobalAktivitetskort] = useState([]);
+  const [globalDokumentasjon, setGlobalDokumentasjon] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [globalSok, setGlobalSok] = useState("");
+  const [planTema, setPlanTema] = useState(() => localStorage.getItem("bh_plan_tema") || "");
+  useEffect(() => {
+    if (planTema) localStorage.setItem("bh_plan_tema", planTema);
+    else localStorage.removeItem("bh_plan_tema");
+  }, [planTema]);
 
   const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),3000); };
 
-  // Global søk – leter på tvers av sanger, aktiviteter, tegneark, fagområder, rammeplan og dine ukeplaner
+  // Global søk – leter på tvers av sanger, aktiviteter, tegneark, fagområder, rammeplan og brukerens planer
   const sokeResultat = (() => {
     const q = globalSok.trim().toLowerCase();
     if (q.length < 2) return null;
-    const treff = { sanger:[], aktiviteter:[], tegneark:[], fagomrader:[], rammeplan:[], ukeplaner:[] };
+    const treff = { sanger:[], aktiviteter:[], tegneark:[], fagomrader:[], rammeplan:[], skjemaer:[], ukeplaner:[], maanedsplaner:[], maanedsbrev:[], arsplaner:[], boker:[], aktivitetskort:[], dokumentasjon:[] };
     const matcher = (txt) => (txt||"").toLowerCase().includes(q);
 
     SANGER.forEach(s => {
@@ -3624,6 +6295,12 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     });
     TEGNEARK.forEach(t => {
       if (matcher(t.tittel) || matcher(t.oppgave) || matcher(t.samtale) || matcher(t.mal)) treff.tegneark.push(t);
+    });
+    globalUserTegneark.forEach(t => {
+      if (matcher(t.tittel) || matcher(t.oppgave) || matcher(t.samtale) || matcher(t.mal)) treff.tegneark.push({ ...t, id:"user_"+t.id, svg:<SvgPlaceholder/>, _erMin:true, _dbId:t.id });
+    });
+    globalUserSanger.forEach(s => {
+      if (matcher(s.tittel) || matcher(s.tekst) || matcher(s.melodi)) treff.sanger.push({ ...s, id:"user_"+s.id, _erMin:true, _dbId:s.id });
     });
     FAGOMRADER.forEach(f => {
       if (matcher(f.navn) || matcher(f.kortbeskrivelse) || matcher(f.innhold)) treff.fagomrader.push(f);
@@ -3636,8 +6313,32 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.uke||"") + " " + JSON.stringify(p.dager||{});
       if (samlet.toLowerCase().includes(q)) treff.ukeplaner.push(p);
     });
+    globalMaanedsplaner.forEach(p => {
+      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.fagomrader||[]).join(" ");
+      if (samlet.toLowerCase().includes(q)) treff.maanedsplaner.push(p);
+    });
+    globalMaanedsbrev.forEach(b => {
+      const samlet = (b.tittel||"") + " " + (b.gjort||"") + " " + (b.kommende||"");
+      if (samlet.toLowerCase().includes(q)) treff.maanedsbrev.push(b);
+    });
+    skjemaer.forEach(s => {
+      if (matcher(s.tittel) || matcher(s.hva) || matcher(s.hvordan) || matcher(s.hvorfor) || matcher(s.type)) treff.skjemaer.push(s);
+    });
+    globalArsplaner.forEach(p => {
+      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.aar||"");
+      if (samlet.toLowerCase().includes(q)) treff.arsplaner.push(p);
+    });
+    globalBoker.forEach(b => {
+      if (matcher(b.tittel) || matcher(b.forfatter) || matcher(b.beskrivelse) || matcher(b.kategori)) treff.boker.push(b);
+    });
+    globalAktivitetskort.forEach(k => {
+      if (matcher(k.title) || matcher(k.description) || matcher(k.steps) || matcher(k.learning_goal) || matcher(k.materials) || matcher(k.category) || matcher(k.age_group)) treff.aktivitetskort.push(k);
+    });
+    globalDokumentasjon.forEach(d => {
+      if (matcher(d.tittel) || matcher(d.fortelling) || matcher(d.refleksjon)) treff.dokumentasjon.push(d);
+    });
 
-    const total = treff.sanger.length + treff.aktiviteter.length + treff.tegneark.length + treff.fagomrader.length + treff.rammeplan.length + treff.ukeplaner.length;
+    const total = treff.sanger.length + treff.aktiviteter.length + treff.tegneark.length + treff.fagomrader.length + treff.rammeplan.length + treff.skjemaer.length + treff.ukeplaner.length + treff.maanedsplaner.length + treff.maanedsbrev.length + treff.arsplaner.length + treff.boker.length + treff.aktivitetskort.length + treff.dokumentasjon.length;
     return { total, ...treff, q };
   })();
 
@@ -3646,12 +6347,22 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const aapneAktivitet = (a) => { setPreselectAktiv(a.id); navigerTil("aktiviteter"); setGlobalSok(""); };
   const aapneFagomrade = (f) => { setValgtFag(f); setRammeSeksjon("fagomrader"); navigerTil("rammeplan"); setGlobalSok(""); };
   const aapneRammeplan = (key) => { setRammeSeksjon(key); setValgtFag(null); navigerTil("rammeplan"); setGlobalSok(""); };
+  const aapneAktivitetskort = () => { navigerTil("aktivitetskort"); setGlobalSok(""); };
+  const aapneDokumentasjon = () => { navigerTil("dokumentasjon"); setGlobalSok(""); };
 
 
   // Last favoritter når bruker logger inn
   useEffect(() => {
-    if (aktivBruker?.id) hentFavoritter(aktivBruker.id).then(setFavoritter);
-    if (aktivBruker?.id) hentUkeplaner(aktivBruker.id).then(setGlobalUkeplaner);
+    if (aktivBruker?.id) hentFavoritter(aktivBruker.id).then(setFavoritter).catch(console.error);
+    if (aktivBruker?.id) hentUkeplaner(aktivBruker.id).then(setGlobalUkeplaner).catch(console.error);
+    if (aktivBruker?.id) hentMaanedsplaner(aktivBruker.id).then(setGlobalMaanedsplaner).catch(console.error);
+    if (aktivBruker?.id) hentMaanedsbrev(aktivBruker.id).then(setGlobalMaanedsbrev).catch(console.error);
+    if (aktivBruker?.id) hentArsplaner(aktivBruker.id).then(setGlobalArsplaner).catch(console.error);
+    if (aktivBruker?.id) supabase.from("boker").select("id,tittel,forfatter,beskrivelse,kategori").then(({data})=>setGlobalBoker(data||[])).catch(console.error);
+    if (aktivBruker?.id) hentUserTegneark(aktivBruker.id).then(setGlobalUserTegneark).catch(console.error);
+    if (aktivBruker?.id) hentUserSanger(aktivBruker.id).then(setGlobalUserSanger).catch(console.error);
+    if (aktivBruker?.id) hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error);
+    if (aktivBruker?.id) hentDokumentasjon(aktivBruker.id).then(setGlobalDokumentasjon).catch(console.error);
   }, [aktivBruker?.id]);
 
   // Last skjemaer fra storage når bruker logger inn
@@ -3660,9 +6371,9 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     (async () => {
       if (!aktivBruker?.id) { setSkjemaer([]); setSkjemaerLastet(true); return; }
       try {
-        const raw = await authStorage.get("bh_skjemaer_" + aktivBruker.id);
+        const { data } = await supabase.from("skjemaer").select("skjema_id,payload").eq("user_id", aktivBruker.id).order("created_at", { ascending: false });
         if (avbrutt) return;
-        setSkjemaer(raw ? JSON.parse(raw) : []);
+        setSkjemaer((data||[]).map(r => r.payload).filter(Boolean));
       } catch (e) {
         console.error("[Skjemaer] Kunne ikke laste:", e);
         if (!avbrutt) setSkjemaer([]);
@@ -3675,8 +6386,12 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   // Lagre skjemaer til storage hver gang de endres (kun etter første lasting for å unngå å overskrive med tom liste)
   useEffect(() => {
     if (!aktivBruker?.id || !skjemaerLastet) return;
-    authStorage.set("bh_skjemaer_" + aktivBruker.id, JSON.stringify(skjemaer))
-      .catch(e => console.error("[Skjemaer] Kunne ikke lagre:", e));
+    (async () => {
+      try {
+        await supabase.from("skjemaer").delete().eq("user_id", aktivBruker.id);
+        if (skjemaer.length > 0) await supabase.from("skjemaer").insert(skjemaer.map(s => ({ user_id: aktivBruker.id, skjema_id: s.id||"", payload: s })));
+      } catch(e) { console.error("[Skjemaer] Kunne ikke lagre:", e); }
+    })();
   }, [skjemaer, aktivBruker?.id, skjemaerLastet]);
 
   // Toggle favoritt og lagre umiddelbart med ordentlig feilhåndtering
@@ -3715,10 +6430,10 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     {id:"rammeplan",i:"📖",n:"Rammeplan"},
     {id:"boker",i:"📚",n:"Bøker"},
     {id:"ai",i:"🤖",n:"AI-assistent"},
-    {id:"ukeplan",i:"📅",n:"Ukeplan"},
-    {id:"arsplan",i:"📆",n:"Årsplan"},
+    {id:"planlegging",i:"🗓️",n:"Planlegging"},
+    {id:"samarbeid",i:"👥",n:"Samarbeid"},
+    {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
     {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
-    {id:"profil",i:"👤",n:"Min profil"},
     {id:"support",i:"❓",n:"Hjelp & FAQ"},
     ...(aktivBruker?.admin?[{id:"admin",i:"👑",n:"Admin-panel"}]:[])
   ];
@@ -3762,13 +6477,52 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const tipsFag = FAGOMRADER.find(f=>f.id===tips.f);
   const nesteTips = () => setTipsOffset(o => o + 1);
 
+  const [vær, setVær] = useState(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
+        const d = await r.json();
+        const c = d.current;
+        setVær({ temp: Math.round(c.temperature_2m), kode: c.weather_code, vind: Math.round(c.wind_speed_10m) });
+      } catch {}
+    }, () => {});
+  }, []);
+
+  const værInfo = (kode) => {
+    if (kode === 0) return ["☀️","Klarvær"];
+    if (kode <= 2) return ["🌤️","Lettskyet"];
+    if (kode === 3) return ["☁️","Overskyet"];
+    if (kode <= 48) return ["🌫️","Tåke"];
+    if (kode <= 55) return ["🌦️","Yr"];
+    if (kode <= 65) return ["🌧️","Regn"];
+    if (kode <= 67) return ["🌨️","Sludd"];
+    if (kode <= 77) return ["❄️","Snø"];
+    if (kode <= 82) return ["🌧️","Regnbyger"];
+    if (kode <= 86) return ["❄️","Snøbyger"];
+    return ["⛈️","Torden"];
+  };
+
+  const [værIkon, værTekst] = vær ? værInfo(vær.kode) : [null, null];
+
   const Hjem = ()=>(
     <div className="fade">
       {/* HERO */}
       <div style={{background:`linear-gradient(135deg, #2c5b8e 0%, #4178bd 50%, #6ba0d9 100%)`, borderRadius:22, padding:"28px 22px 24px", color:"#fff", marginBottom:20, position:"relative", overflow:"hidden"}}>
         <div style={{position:"absolute", top:-20, right:-20, fontSize:90, opacity:.15, transform:"rotate(15deg)", pointerEvents:"none"}}>🌟</div>
         <div style={{position:"absolute", bottom:-15, left:10, fontSize:70, opacity:.12, transform:"rotate(-10deg)", pointerEvents:"none"}}>🎨</div>
-        <div style={{fontSize:28}}>{hikon}</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{fontSize:28}}>{hikon}</div>
+          {vær && (
+            <div style={{background:"rgba(255,255,255,0.18)",borderRadius:12,padding:"8px 13px",textAlign:"center",backdropFilter:"blur(4px)",minWidth:90}}>
+              <div style={{fontSize:22,lineHeight:1}}>{værIkon}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,lineHeight:1.1,marginTop:2}}>{vær.temp}°</div>
+              <div style={{fontSize:10,opacity:.9,marginTop:1}}>{værTekst}</div>
+              <div style={{fontSize:10,opacity:.75,marginTop:1}}>💨 {vær.vind} m/s</div>
+            </div>
+          )}
+        </div>
         <div style={{fontFamily:"'Fredoka One',cursive", fontSize:26, marginTop:4}}>{hils}!</div>
         <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
         <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
@@ -3792,6 +6546,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         aapneTegneark={aapneTegneark}
         aapneFagomrade={aapneFagomrade}
         aapneRammeplan={aapneRammeplan}
+        aapneAktivitetskort={aapneAktivitetskort}
+        aapneDokumentasjon={aapneDokumentasjon}
         C={C}
       />
 
@@ -3817,6 +6573,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         {[
           ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","#e8eff8","sanger"],
           ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","#e3f2fd","aktiviteter"],
+          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","#e0f2f1","boker"],
+          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","#fff8e1","aktivitetskort"],
           ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","#f3e5f5","skjema-ny"],
           ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","#ffebee","tegneark"],
           ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","#d8f3dc","rammeplan"],
@@ -3830,19 +6588,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         ))}
       </div>
 
-      {/* ÅRSPLAN SNARVEI */}
-      <div className="hover" onClick={()=>navigerTil("arsplan")} style={{background:"linear-gradient(135deg,#d8f3dc,#b7e4c7)",borderRadius:14,padding:"14px 16px",cursor:"pointer",boxShadow:"0 2px 10px rgba(45,106,79,0.13)",borderLeft:"4px solid #2d6a4f",marginBottom:14,display:"flex",alignItems:"center",gap:14}}>
-        <span style={{fontSize:30}}>📆</span>
-        <div>
-          <div style={{fontWeight:800,color:"#2d6a4f",fontSize:14,fontFamily:"'Fredoka One',cursive"}}>Årsplan</div>
-          <div style={{fontSize:11,color:"#40916c",lineHeight:1.4,marginTop:2}}>Bygg årsplan med 8 seksjoner, årshjul og AI-hjelp</div>
-        </div>
-        <span style={{marginLeft:"auto",fontSize:18,color:"#2d6a4f",opacity:0.7}}>→</span>
+      {/* PLANLEGGING */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>🗓️ Planlegging</div>
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
       </div>
-
-      {/* LAG PLAN MED AI */}
-      <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:3}}>🤖 AI-forslag til planer</div>
-      <p style={{fontSize:11, color:C.gr, marginBottom:11}}>La AI lage tekstforslag du kan lime inn i dine egne planer</p>
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
         {[
           ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0","#e3f2fd"],
@@ -3900,21 +6650,61 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         </div>
       ):valgtSkjema?(
         <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
-          <Tilbake onClick={()=>setValgtSkjema(null)} />
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,marginBottom:7}}>{valgtSkjema.tittel}</div>
-          <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}>
+          <Tilbake onClick={()=>{setValgtSkjema(null);setRedigerSkjemaTittel(null);}} />
+          {redigerSkjemaTittel !== null ? (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:800,color:C.g,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:5}}>Endre navn</div>
+              <div style={{display:"flex",gap:8}}>
+                <input autoFocus type="text" value={redigerSkjemaTittel} onChange={e=>setRedigerSkjemaTittel(e.target.value)}
+                  onKeyDown={e=>{
+                    if(e.key==="Enter"&&redigerSkjemaTittel.trim()){
+                      const nyTittel=redigerSkjemaTittel.trim();
+                      setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
+                      setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
+                      setRedigerSkjemaTittel(null);
+                      vis("✅ Navn oppdatert");
+                    }
+                    if(e.key==="Escape") setRedigerSkjemaTittel(null);
+                  }}
+                  style={{flex:1,padding:"9px 12px",border:`2px solid ${C.g}`,borderRadius:9,fontSize:14,fontFamily:"'Nunito',sans-serif",fontWeight:700,color:C.t}} />
+                <button className="btn" onClick={()=>{
+                  const nyTittel=redigerSkjemaTittel.trim();
+                  if(!nyTittel) return;
+                  setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
+                  setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
+                  setRedigerSkjemaTittel(null);
+                  vis("✅ Navn oppdatert");
+                }} style={{background:C.g,color:"#fff",padding:"9px 16px",fontSize:13}}>Lagre</button>
+                <button className="btn" onClick={()=>setRedigerSkjemaTittel(null)} style={{background:C.lg2,color:C.g,padding:"9px 12px",fontSize:13}}>Avbryt</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:C.t,flex:1}}>{valgtSkjema.tittel}</div>
+              <button className="btn" onClick={()=>setRedigerSkjemaTittel(valgtSkjema.tittel)}
+                style={{background:C.lg2,color:C.g,padding:"5px 10px",fontSize:12,flexShrink:0}}>✏️ Endre navn</button>
+            </div>
+          )}
+          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
             {valgtSkjema.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtSkjema.alder}</span>}
             {valgtSkjema.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{valgtSkjema.kategori}</span>}
+            {valgtSkjema.rammeplan?.map(r=><FagTag key={r} rid={r}/>)}
           </div>
-          {[["🎯 HVA",valgtSkjema.hva,"#fff9c4"],["⚙️ HVORDAN",valgtSkjema.hvordan,"#e8f5e9"],["❓ HVORFOR",valgtSkjema.hvorfor,"#e3f2fd"]].map(([t,v,bg])=>v?(
-            <div key={t} style={{background:bg,borderRadius:10,padding:"11px 13px",marginBottom:9}}>
-              <div style={{fontWeight:800,color:C.t,marginBottom:3,fontSize:12}}>{t}</div>
-              <div style={{color:C.t,fontSize:13,lineHeight:1.7}}>{v}</div>
+          {[
+            {felt:valgtSkjema.hva, label:"🎯 HVA", bg:"#fff9c4", col:"#795548"},
+            {felt:valgtSkjema.materialer, label:"📦 MATERIALER", bg:"#fce4ec", col:"#c62828"},
+            {felt:valgtSkjema.hvordan, label:"⚙️ HVORDAN", bg:"#e8f5e9", col:"#2e7d32"},
+            {felt:valgtSkjema.hvorfor, label:"❓ HVORFOR", bg:"#e3f2fd", col:"#1565c0"},
+          ].filter(s=>s.felt).map(({felt,label,bg,col})=>(
+            <div key={label} style={{background:bg,borderRadius:10,padding:"11px 13px",marginBottom:10}}>
+              <div style={{fontWeight:800,color:col,fontSize:12,marginBottom:7}}>{label}</div>
+              <RenderTekst tekst={felt} />
             </div>
-          ):null)}
-          {valgtSkjema.materialer&&<div style={{background:"#fce4ec",borderRadius:10,padding:"11px 13px",marginBottom:9}}><div style={{fontWeight:800,color:"#c62828",marginBottom:3,fontSize:12}}>🧰 Materialer</div><div style={{color:C.t,fontSize:13}}>{valgtSkjema.materialer}</div></div>}
-          {valgtSkjema.rammeplan.length>0&&<><div style={{fontSize:11,fontWeight:700,color:C.gr,marginBottom:6}}>Kobling til rammeplan:</div><div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:12}}>{valgtSkjema.rammeplan.map(r=><FagTag key={r} rid={r}/>)}</div></>}
-          <button className="btn" onClick={()=>{setSkjemaer(p=>p.filter(s=>s.id!==valgtSkjema.id));setValgtSkjema(null);vis("🗑 Slettet");}} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
+          ))}
+          <div style={{display:"flex",gap:8,marginTop:4}}>
+            <button onClick={()=>skrivUtGenerell({tittel:valgtSkjema.tittel,meta:[valgtSkjema.alder,valgtSkjema.kategori].filter(Boolean).join(" • "),seksjoner:[{label:"🎯 Hva",tekst:valgtSkjema.hva,farge:"#795548",bg:"#fff9c4"},{label:"📦 Materialer",tekst:valgtSkjema.materialer,farge:"#c62828",bg:"#fce4ec"},{label:"⚙️ Hvordan",tekst:valgtSkjema.hvordan,farge:"#2e7d32",bg:"#e8f5e9"},{label:"❓ Hvorfor",tekst:valgtSkjema.hvorfor,farge:"#1565c0",bg:"#e3f2fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"8px 16px",fontSize:12,border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
+            <button className="btn" onClick={()=>{if(!window.confirm(`Slette «${valgtSkjema.tittel}»? Dette kan ikke angres.`))return;setSkjemaer(p=>p.filter(s=>s.id!==valgtSkjema.id));setValgtSkjema(null);setRedigerSkjemaTittel(null);vis("🗑 Slettet");}} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
+          </div>
         </div>
       ):(
         <div style={{display:"grid",gap:9}}>
@@ -3926,7 +6716,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
                   {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
                   <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                     {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
-                    {s.rammeplan.map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>
                 <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
@@ -3939,7 +6729,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   );
 
   const RammeplanSide = ()=>{
-    const seks=[["oversikt","📋","Oversikt"],["formal","🏛️","Formål"],["verdigrunnlag","💎","Verdigrunnlag"],["lek","🎭","Lek og læring"],["danning","💝","Omsorg og vennskap"],["medvirkning","🗣️","Medvirkning"],["fagomrader","📚","Fagområder"],["livsmestring","🌱","Livsmestring"],["pedagogisk","📋","Pedagogisk arbeid"],["samarbeid","👨‍👩‍👧","Samarbeid"],["overgang","🎒","Overgang"]];
+    const seks=[["oversikt","📋","Oversikt"],["formal","🏛️","Formål"],["verdigrunnlag","💎","Verdigrunnlag"],["lek","🎭","Lek og læring"],["danning","💝","Omsorg og vennskap"],["medvirkning","🗣️","Medvirkning"],["fagomrader","📚","Fagområder"],["livsmestring","🌱","Livsmestring"],["pedagogisk","📋","Pedagogisk arbeid"],["samarbeid","👨‍👩‍👧","Samarbeid"],["overgang","🎒","Overgang"],["barnehageloven","⚖️","Barnehageloven"],["roller","👤","Roller"],["inkludering","♿","Inkludering"]];
     return (
       <div className="fade">
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📖 Rammeplan 2017</div>
@@ -3957,7 +6747,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
               <div style={{fontSize:13,color:"#5d4037",lineHeight:1.7}}>Rammeplan for barnehagen (2017) er en forskrift til barnehageloven som fastsetter verdier, innhold og oppgaver for alle norske barnehager. Den er det viktigste arbeidsverktøyet for alle som jobber i barnehage.</div>
             </div>
             <div style={{display:"grid",gap:9}}>
-              {[["🏛️","Formål","Barnehageloven §1 – overordnet formål","formal"],["💎","Verdigrunnlag","Demokrati, mangfold, menneskeverd","verdigrunnlag"],["🎭","Lek og læring","Lekens plass og personalets rolle","lek"],["💝","Omsorg og vennskap","Omsorg, danning og vennskap","danning"],["🗣️","Barnets medvirkning","Rett til innflytelse og deltakelse","medvirkning"],["📚","De 7 fagområdene","Alle faglig innhold og mål","fagomrader"],["🌱","Livsmestring og helse","Trivsel, sosial kompetanse, mobbing","livsmestring"],["📋","Pedagogisk arbeid","Planlegging, vurdering, dokumentasjon","pedagogisk"],["👨‍👩‍👧","Samarbeid med foreldre","Former for godt foreldresamarbeid","samarbeid"],["🎒","Overgang til skole","Forberedelse og ansvarsfordeling","overgang"]].map(([ic,t,u,v])=>(
+              {[["🏛️","Formål","Barnehageloven §1 – overordnet formål","formal"],["💎","Verdigrunnlag","Demokrati, mangfold, menneskeverd","verdigrunnlag"],["🎭","Lek og læring","Lekens plass og personalets rolle","lek"],["💝","Omsorg og vennskap","Omsorg, danning og vennskap","danning"],["🗣️","Barnets medvirkning","Rett til innflytelse og deltakelse","medvirkning"],["📚","De 7 fagområdene","Alle faglig innhold og mål","fagomrader"],["🌱","Livsmestring og helse","Trivsel, sosial kompetanse, mobbing","livsmestring"],["📋","Pedagogisk arbeid","Planlegging, vurdering, dokumentasjon","pedagogisk"],["👨‍👩‍👧","Samarbeid med foreldre","Former for godt foreldresamarbeid","samarbeid"],["🎒","Overgang til skole","Forberedelse og ansvarsfordeling","overgang"],["⚖️","Barnehageloven","§1, §2, §3, §4, §16, §19a, §41","barnehageloven"],["👤","Ansvar og roller","Eier, styrer, ped.leder, BUA, assistent","roller"],["♿","Inkludering","Tilrettelegging, PPT, flerspråklige, minoriteter","inkludering"]].map(([ic,t,u,v])=>(
                 <div key={v} className="hover" onClick={()=>setRammeSeksjon(v)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)",display:"flex",alignItems:"center",gap:11}}>
                   <span style={{fontSize:22,flexShrink:0}}>{ic}</span>
                   <div style={{flex:1}}><div style={{fontWeight:800,color:C.t,fontSize:14}}>{t}</div><div style={{color:C.gr,fontSize:11}}>{u}</div></div>
@@ -4237,6 +7027,91 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
           </div>
         )}
 
+        {rammeSeksjon==="barnehageloven"&&(
+          <div className="fade">
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:10}}>⚖️ {RE.barnehageloven.tittel}</div>
+            <div style={{background:"#fff8e1",borderRadius:12,padding:13,marginBottom:14,fontSize:12,color:"#5d4037",lineHeight:1.7,borderLeft:"4px solid #e67e22"}}>Lovtekstene er fra Lov om barnehager (barnehageloven). Loven gir rammene – Rammeplan for barnehagen (2017) utdyper innholdet.</div>
+            <div style={{display:"grid",gap:10}}>
+              {RE.barnehageloven.paragrafer.map((p,i)=>(
+                <div key={i} style={{background:C.w,borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
+                  <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8}}>
+                    <span style={{background:C.g,color:"#fff",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800,flexShrink:0,whiteSpace:"nowrap"}}>{p.nr}</span>
+                    <div style={{fontWeight:800,color:C.t,fontSize:14}}>{p.tittel}</div>
+                  </div>
+                  <div style={{fontSize:12,color:C.t,lineHeight:1.75,fontStyle:"italic",borderLeft:"3px solid #d8e6f5",paddingLeft:12}}>{p.tekst}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {rammeSeksjon==="roller"&&(
+          <div className="fade">
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:10}}>👤 {RE.roller.tittel}</div>
+            <div style={{background:"#e8eff8",borderRadius:12,padding:13,marginBottom:14,fontSize:13,color:C.t,lineHeight:1.7}}>{RE.roller.innhold}</div>
+            <div style={{display:"grid",gap:10}}>
+              {RE.roller.personer.map((p,i)=>(
+                <div key={i} style={{background:C.w,borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 7px rgba(44,91,142,0.07)",borderLeft:"4px solid "+p.farge}}>
+                  <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}>
+                    <span style={{fontSize:22}}>{p.ikon}</span>
+                    <div style={{fontWeight:800,color:p.farge,fontSize:15}}>{p.rolle}</div>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontWeight:800,color:C.t,fontSize:11,marginBottom:6}}>ANSVAR</div>
+                    {p.ansvar.map((a,j)=>(
+                      <div key={j} style={{display:"flex",gap:7,marginBottom:4,alignItems:"flex-start"}}>
+                        <span style={{color:p.farge,fontWeight:800,flexShrink:0}}>✓</span>
+                        <span style={{fontSize:12,color:C.t,lineHeight:1.6}}>{a}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{background:"#f5f9fd",borderRadius:8,padding:"8px 10px",fontSize:11,color:C.gr,lineHeight:1.6}}>
+                    <strong>Krav:</strong> {p.krav}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {rammeSeksjon==="inkludering"&&(
+          <div className="fade">
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:10}}>♿ {RE.inkludering.tittel}</div>
+            <div style={{background:"#e8f5e9",borderRadius:12,padding:13,marginBottom:14,fontSize:13,color:C.t,lineHeight:1.7,borderLeft:"4px solid #2d6a4f"}}>{RE.inkludering.innhold}</div>
+            <div style={{display:"grid",gap:10,marginBottom:14}}>
+              {RE.inkludering.omrader.map((o,i)=>(
+                <div key={i} style={{background:C.w,borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 7px rgba(44,91,142,0.07)",borderLeft:"4px solid "+o.farge}}>
+                  <div style={{fontWeight:800,color:o.farge,fontSize:14,marginBottom:4}}>{o.ikon} {o.navn}</div>
+                  <div style={{fontSize:12,color:C.t,lineHeight:1.7,marginBottom:8}}>{o.innhold}</div>
+                  <div style={{background:"#f5f9fd",borderRadius:8,padding:10}}>
+                    <div style={{fontWeight:800,color:C.t,fontSize:10,marginBottom:6}}>TILTAK OG RETTIGHETER</div>
+                    {o.tiltak.map((t,j)=>(
+                      <div key={j} style={{display:"flex",gap:7,marginBottom:4,alignItems:"flex-start"}}>
+                        <span style={{color:o.farge,fontWeight:800,flexShrink:0}}>•</span>
+                        <span style={{fontSize:12,color:C.t,lineHeight:1.5}}>{t}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.w,borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 7px rgba(44,91,142,0.07)",borderLeft:"4px solid #1565c0"}}>
+              <div style={{fontWeight:800,color:"#1565c0",fontSize:14,marginBottom:6}}>🏫 {RE.inkludering.ppt.tittel}</div>
+              <div style={{fontSize:12,color:C.t,lineHeight:1.7,marginBottom:10}}>{RE.inkludering.ppt.innhold}</div>
+              <div style={{marginBottom:10}}>
+                <div style={{fontWeight:800,color:C.t,fontSize:11,marginBottom:6}}>OPPGAVER</div>
+                {RE.inkludering.ppt.oppgaver.map((t,i)=>(
+                  <div key={i} style={{display:"flex",gap:7,marginBottom:4,alignItems:"flex-start"}}>
+                    <span style={{color:"#1565c0",fontWeight:800,flexShrink:0}}>✓</span>
+                    <span style={{fontSize:12,color:C.t,lineHeight:1.5}}>{t}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{background:"#e3f2fd",borderRadius:8,padding:"8px 10px",fontSize:11,color:"#1565c0",lineHeight:1.6}}><strong>Hvem kan henvende seg?</strong> {RE.inkludering.ppt.hvemKanHenvise}</div>
+            </div>
+          </div>
+        )}
+
         {rammeSeksjon==="pedagogisk"&&(
           <div className="fade">
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:10}}>📋 {RE.pedagogisk.tittel}</div>
@@ -4282,10 +7157,24 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const TegnearkSide = ()=>{
     const [tkat, setTkat] = useState("alle");
     const [valgtT, setValgtT] = useState(null);
+    const [lokalToast, setLokalToast] = useState("");
+    const [visAiPanel, setVisAiPanel] = useState(false);
+    const [userTegneark, setUserTegneark] = useState([]);
+    const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
     const favSet = new Set(favoritter?.tegneark || []);
+
+    useEffect(() => {
+      if (!aktivBruker?.id) return;
+      hentUserTegneark(aktivBruker.id).then(setUserTegneark);
+    }, [aktivBruker?.id]);
+
+    const userMapped = userTegneark.map(t => ({ id:"user_"+t.id, tittel:t.tittel, ikon:t.ikon||"🖍️", kategori:t.kategori||"natur", alder:t.alder, rammeplan:t.rammeplan||[], svg:<SvgPlaceholder/>, oppgave:t.oppgave, samtale:t.samtale, mal:t.mal, _erMin:true, _dbId:t.id }));
+    const alleData = [...userMapped, ...TEGNEARK];
     const data = tkat==="favoritter"
-      ? TEGNEARK.filter(t=>favSet.has(t.id))
-      : (tkat==="alle" ? TEGNEARK : TEGNEARK.filter(t=>t.kategori===tkat));
+      ? alleData.filter(t=>favSet.has(t.id))
+      : tkat==="mine"
+      ? userMapped
+      : (tkat==="alle" ? alleData : alleData.filter(t=>t.kategori===tkat));
 
     // ─── Bygg fullstendig selvstendig HTML for et tegneark ───
     // Brukes både for utskrift og nedlasting. All CSS er inline, SVG er innebygd,
@@ -4370,11 +7259,11 @@ ${innhold}
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 1500);
-        vis("✅ Filen er lastet ned");
+        visLokal("✅ Filen er lastet ned");
         return true;
       } catch (e) {
         console.error("[Last ned] feilet:", e);
-        vis("❌ Kunne ikke laste ned");
+        visLokal("❌ Kunne ikke laste ned");
         return false;
       }
     };
@@ -4447,7 +7336,7 @@ ${innhold}
             if (!beforePrintFiret) {
               console.warn("[Skriv ut] beforeprint-event fyrte ikke – antar blokkert kontekst, starter nedlasting");
               afterHandler(); // rydd opp lyttere
-              vis("ℹ️ Utskrift er ikke tilgjengelig her – laster ned i stedet");
+              visLokal("ℹ️ Utskrift er ikke tilgjengelig her – laster ned i stedet");
               setTimeout(() => lastNed(ark), 700);
             }
             // (ingen logging når print-dialog faktisk åpnes – det er normalfallet)
@@ -4456,7 +7345,7 @@ ${innhold}
       } catch (e) {
         console.error("[Skriv ut] uventet feil:", e);
         afterHandler();
-        vis("⚠️ Utskrift feilet – laster ned i stedet");
+        visLokal("⚠️ Utskrift feilet – laster ned i stedet");
         setTimeout(() => lastNed(ark), 500);
       }
     };
@@ -4471,11 +7360,11 @@ ${innhold}
       try {
         const tekst = `${ark.tittel}\n\n🖍️ Tegneoppgave:\n${ark.oppgave}\n\n💬 Samtale med barna:\n${ark.samtale}\n\n📖 Mål: ${ark.mal}\n\n👶 Alder: ${ark.alder}\n\nFra Barnehagehjelpen – Rammeplan 2017`;
         await navigator.share({ title: ark.tittel, text: tekst });
-        vis("✅ Delt!");
+        visLokal("✅ Delt!");
       } catch (e) {
         if (e.name === "AbortError") return; // bruker avbrøt – ingen melding
         console.warn("[Del] feilet:", e);
-        vis("❌ Kunne ikke dele");
+        visLokal("❌ Kunne ikke dele");
       }
     };
     
@@ -4485,7 +7374,7 @@ ${innhold}
       try {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(text);
-          vis("✅ Kopiert til utklippstavlen!");
+          visLokal("✅ Kopiert til utklippstavlen!");
           return;
         }
       } catch (e) { /* fall through to fallback */ }
@@ -4504,23 +7393,32 @@ ${innhold}
         ta.setSelectionRange(0, text.length);
         const ok = document.execCommand("copy");
         document.body.removeChild(ta);
-        vis(ok ? "✅ Kopiert til utklippstavlen!" : "❌ Kunne ikke kopiere");
+        visLokal(ok ? "✅ Kopiert til utklippstavlen!" : "❌ Kunne ikke kopiere");
       } catch (e) {
-        vis("❌ Kunne ikke kopiere");
+        visLokal("❌ Kunne ikke kopiere");
       }
     };
     
+    if (visAiPanel) return <AiTegnearkView aktivBruker={aktivBruker} onLagre={(ny) => { setUserTegneark(p => [ny, ...p]); setGlobalUserTegneark(p => [ny, ...p]); setVisAiPanel(false); }} onAvbryt={() => setVisAiPanel(false)} />;
+    const slettMin = async (dbId) => {
+      await slettUserTegneark(dbId);
+      setUserTegneark(p => p.filter(t => t.id !== dbId));
+      setValgtT(null);
+    };
     return (
       <div className="fade">
-        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>🖍️ Tegneark</div>
-        <p style={{color:C.gr,fontSize:12,marginBottom:14}}>{TEGNEARK.length} barnevennlige tegneark fordelt på {TEGNEKAT.length-1} kategorier – klikk for å se og skrive ut</p>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t}}>🖍️ Tegneark</div>
+          {aktivBruker&&<button className="btn" onClick={()=>setVisAiPanel(true)} style={{padding:"7px 13px",fontSize:12,background:"linear-gradient(135deg,#7c3aed,#5b21b6)",color:"#fff",whiteSpace:"nowrap"}}>🤖 AI-tegneark</button>}
+        </div>
+        <p style={{color:C.gr,fontSize:12,marginBottom:14}}>{alleData.length} barnevennlige tegneark fordelt på {TEGNEKAT.length-1} kategorier – klikk for å se og skrive ut</p>
         <div style={{background:"#fff8e1",borderRadius:12,padding:"11px 14px",marginBottom:14,borderLeft:"4px solid #6ba0d9",fontSize:12,color:"#795548"}}>
-          <strong>💡 Slik bruker du tegnearkene:</strong> Bla i kategoriene under, åpne et ark, trykk "Skriv ut" for å printe, eller "Kopier" for å lagre teksten. Alle ark er koblet til rammeplanen med samtaleforslag.
+          <strong>💡 Slik bruker du tegnearkene:</strong> Bla i kategoriene under, åpne et ark, trykk "Skriv ut" for å skrive ut, eller "Kopier" for å lagre teksten. Alle ark er koblet til rammeplanen med samtaleforslag.
         </div>
         <div style={{marginBottom:16,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4,marginLeft:-4,marginRight:-4,paddingLeft:4,paddingRight:4}}>
           <div style={{display:"flex",gap:7,flexWrap:"nowrap",width:"max-content"}}>
-            {[["favoritter",`⭐ Favoritter`],...TEGNEKAT].map(([v,l])=>{
-              const cnt = v==="favoritter" ? favSet.size : (v==="alle" ? TEGNEARK.length : TEGNEARK.filter(t=>t.kategori===v).length);
+            {[["favoritter","⭐ Favoritter"],["mine","🤖 Mine"],...TEGNEKAT].map(([v,l])=>{
+              const cnt = v==="favoritter" ? favSet.size : v==="mine" ? userMapped.length : (v==="alle" ? alleData.length : alleData.filter(t=>t.kategori===v).length);
               return (
                 <button key={v} className="btn" onClick={()=>setTkat(v)} style={{padding:"7px 13px",fontSize:11,background:tkat===v?C.g:"#e8f5e9",color:tkat===v?"#fff":C.t,whiteSpace:"nowrap",flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
                   <span>{l}</span>
@@ -4533,44 +7431,55 @@ ${innhold}
         {valgtT ? (
           <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
             <Tilbake onClick={()=>setValgtT(null)} />
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,gap:8}}>
-              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,flex:1}}>{valgtT.ikon} {valgtT.tittel}</div>
-              <button className={`fav-btn ${favSet.has(valgtT.id)?"aktiv":""}`} onClick={()=>toggleFav("tegneark",valgtT.id)} title={favSet.has(valgtT.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
+            {/* Header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,gap:8}}>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:21,color:C.t,flex:1,lineHeight:1.2}}>{valgtT.ikon} {valgtT.tittel}</div>
+              <button className={`fav-btn ${favSet.has(valgtT.id)?"aktiv":""}`} onClick={()=>toggleFav("tegneark",valgtT.id)} title={favSet.has(valgtT.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt" style={{fontSize:20,flexShrink:0}}>
                 {favSet.has(valgtT.id)?"⭐":"☆"}
               </button>
             </div>
-            <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
               <span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtT.alder}</span>
-              {valgtT.rammeplan.map(r=><FagTag key={r} rid={r}/>)}
+              {(valgtT.rammeplan||[]).map(r=><FagTag key={r} rid={r}/>)}
             </div>
-            <div id={"svg-ark-"+valgtT.id} className="svg-wrap-hover" style={{background:"#fafffe",border:"2px dashed #d8f3dc",borderRadius:14,padding:12,textAlign:"center",marginBottom:14}}>
-              <div style={{maxWidth:320,margin:"0 auto"}}>{valgtT.svg}</div>
+            {/* SVG */}
+            <div id={"svg-ark-"+valgtT.id} className="svg-wrap-hover" style={{background:"linear-gradient(135deg,#fafffe,#f0f9f4)",border:"2px solid #d8f3dc",borderRadius:16,padding:16,textAlign:"center",marginBottom:16}}>
+              <div style={{maxWidth:300,margin:"0 auto"}}>{valgtT.svg}</div>
             </div>
-            <div style={{background:"#fff9c4",borderRadius:11,padding:"12px 14px",marginBottom:10}}>
-              <div style={{fontWeight:800,color:"#795548",fontSize:13,marginBottom:4}}>🖍️ Tegneoppgave</div>
-              <div style={{fontSize:13,color:C.t,lineHeight:1.7}}>{valgtT.oppgave}</div>
+            {/* Info-kort */}
+            <div style={{display:"grid",gap:10,marginBottom:14}}>
+              <div style={{background:"#fff9c4",borderRadius:11,padding:"11px 14px"}}>
+                <div style={{fontWeight:800,color:"#795548",fontSize:11,marginBottom:6,textTransform:"uppercase",letterSpacing:0.5}}>🖍️ Tegneoppgave</div>
+                <div style={{fontSize:13,color:C.t,lineHeight:1.65}}>{valgtT.oppgave}</div>
+              </div>
+              <div style={{background:"#e8f5e9",borderRadius:11,padding:"11px 14px"}}>
+                <div style={{fontWeight:800,color:"#2e7d32",fontSize:11,marginBottom:6,textTransform:"uppercase",letterSpacing:0.5}}>💬 Samtale med barna</div>
+                <div style={{display:"grid",gap:4}}>
+                  {(valgtT.samtale||"").split("?").map(s=>s.trim()).filter(s=>s.length>3).map((s,i)=>(
+                    <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start",fontSize:13,color:C.t,lineHeight:1.5}}>
+                      <span style={{color:"#2e7d32",fontWeight:800,flexShrink:0,marginTop:1}}>•</span>
+                      <span>{s}?</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{background:"#e3f2fd",borderRadius:11,padding:"11px 14px"}}>
+                <div style={{fontWeight:800,color:"#1565c0",fontSize:11,marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}}>📖 Rammeplanen</div>
+                <div style={{fontSize:13,color:C.t}}>{valgtT.mal}</div>
+              </div>
             </div>
-            <div style={{background:"#e8f5e9",borderRadius:11,padding:"12px 14px",marginBottom:10}}>
-              <div style={{fontWeight:800,color:"#2e7d32",fontSize:13,marginBottom:4}}>💬 Samtale med barna</div>
-              <div style={{fontSize:13,color:C.t,lineHeight:1.7}}>{valgtT.samtale}</div>
+            {lokalToast && <div style={{background:"#e8f5e9",color:"#2e7d32",borderRadius:9,padding:"9px 14px",fontSize:13,fontWeight:700,marginBottom:8,textAlign:"center"}}>{lokalToast}</div>}
+            {/* Knapper */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <button className="btn" onClick={()=>skrivUt(valgtT)} style={{background:C.g,color:"#fff",padding:"12px",fontSize:13,fontWeight:800}}>🖨️ Skriv ut</button>
+              <button className="btn" onClick={()=>lastNed(valgtT)} style={{background:"#2c5b8e",color:"#fff",padding:"12px",fontSize:13,fontWeight:800}}>💾 Last ned</button>
+              <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"#e8f5e9",color:C.t,padding:"12px",fontSize:13,fontWeight:700}}>📋 Kopier tekst</button>
+              {kanDele
+                ? <button className="btn" onClick={()=>del(valgtT)} style={{background:"#fff3e0",color:"#e65100",padding:"12px",fontSize:13,fontWeight:700}}>📤 Del</button>
+                : <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"#e8eff8",color:C.t,padding:"12px",fontSize:13,fontWeight:700}}>📋 Kopier (igjen)</button>
+              }
             </div>
-            <div style={{background:"#e3f2fd",borderRadius:11,padding:"12px 14px",marginBottom:14}}>
-              <div style={{fontWeight:800,color:"#1565c0",fontSize:13,marginBottom:4}}>📖 Rammeplanen mål</div>
-              <div style={{fontSize:13,color:C.t}}>{valgtT.mal}</div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:kanDele?"repeat(2,1fr)":"repeat(2,1fr)",gap:8}}>
-              <button className="btn" onClick={()=>skrivUt(valgtT)} style={{background:C.g,color:"#fff",padding:"12px 12px",fontSize:13,fontWeight:800}}>🖨️ Skriv ut</button>
-              <button className="btn" onClick={()=>lastNed(valgtT)} style={{background:"#2c5b8e",color:"#fff",padding:"12px 12px",fontSize:13,fontWeight:800}}>💾 Last ned</button>
-              <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"#e8f5e9",color:C.t,padding:"12px 12px",fontSize:13,fontWeight:700}}>📋 Kopier tekst</button>
-              {kanDele ? (
-                <button className="btn" onClick={()=>del(valgtT)} style={{background:"#fff3e0",color:"#e65100",padding:"12px 12px",fontSize:13,fontWeight:700}}>📤 Del</button>
-              ) : (
-                <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"#e8eff8",color:C.t,padding:"12px 12px",fontSize:13,fontWeight:700}} title="Web Share API er ikke tilgjengelig">📋 Kopier (igjen)</button>
-              )}
-            </div>
-            <div style={{fontSize:10,color:C.gr,textAlign:"center",marginTop:9,lineHeight:1.5}}>
-              💡 Hvis utskrift ikke fungerer, lastes filen ned automatisk. Du kan også laste ned direkte.
-            </div>
+            {valgtT._erMin && <button className="btn" onClick={()=>slettMin(valgtT._dbId)} style={{width:"100%",marginTop:8,padding:"10px",fontSize:13,background:"#ffebee",color:"#c62828",fontWeight:700}}>🗑️ Slett mitt tegneark</button>}
           </div>
         ) : (
           <>
@@ -4579,19 +7488,21 @@ ${innhold}
                 {tkat==="favoritter" ? "Du har ingen favoritt-tegneark ennå – trykk på ⭐ for å lagre" : "Ingen tegneark i denne kategorien"}
               </div>
             )}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               {data.map(t=>(
-                <div key={t.id} className="hover fade" onClick={()=>setValgtT(t)} style={{background:C.w,borderRadius:13,padding:"14px 12px",cursor:"pointer",boxShadow:"0 2px 8px rgba(44,91,142,0.08)",textAlign:"center",position:"relative"}}>
-                  <button className={`fav-btn ${favSet.has(t.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:6,right:6,fontSize:16}} title={favSet.has(t.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
+                <div key={t.id} className="hover fade" onClick={()=>setValgtT(t)} style={{background:C.w,borderRadius:14,overflow:"hidden",cursor:"pointer",boxShadow:"0 2px 8px rgba(44,91,142,0.08)",position:"relative"}}>
+                  <button className={`fav-btn ${favSet.has(t.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:7,right:7,fontSize:15,zIndex:2}} aria-label="Favoritt">
                     {favSet.has(t.id)?"⭐":"☆"}
                   </button>
-                  <div style={{background:"#f8fffe",borderRadius:10,padding:8,marginBottom:8,border:"1px solid #e8f5e9"}}>
-                    <div style={{maxWidth:140,margin:"0 auto",pointerEvents:"none"}}>{t.svg}</div>
+                  <div style={{background:"linear-gradient(135deg,#f0f9f4,#e8f5e9)",padding:"14px 10px 10px",textAlign:"center"}}>
+                    <div style={{maxWidth:120,margin:"0 auto",pointerEvents:"none"}}>{t.svg}</div>
                   </div>
-                  <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t.ikon} {t.tittel}</div>
-                  <div style={{fontSize:10,color:C.gr,marginTop:3}}>👶 {t.alder}</div>
-                  <div style={{display:"flex",gap:4,marginTop:5,justifyContent:"center",flexWrap:"wrap"}}>
-                    {t.rammeplan.map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9}}>{f.ikon}</span>:null;})}
+                  <div style={{padding:"9px 11px 11px"}}>
+                    <div style={{fontWeight:800,color:C.t,fontSize:13,lineHeight:1.3,marginBottom:3}}>{t._erMin&&<span style={{fontSize:9,background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"1px 5px",marginRight:4,fontWeight:700}}>🤖 AI</span>}{t.tittel}</div>
+                    <div style={{fontSize:10,color:C.gr,marginBottom:5}}>👶 {t.alder}</div>
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                      {t.rammeplan.map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -4640,6 +7551,323 @@ ${innhold}
   };
 
 
+  // ─── MaanedsplanSide ───
+  const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
+  const MaanedsplanSide = () => {
+    const [planer, setPlaner] = useState([]);
+    const [lastet, setLastet] = useState(false);
+    const [visning, setVisning] = useState("liste");
+    const [valgt, setValgt] = useState(null);
+    const [m_tittel, setMTittel] = useState("");
+    const [m_aar, setMAar] = useState(new Date().getFullYear());
+    const [m_maaned, setMMaaned] = useState(new Date().getMonth()+1);
+    const [m_tema, setMTema] = useState("");
+    const [lokalToast, setLokalToast] = useState("");
+    const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
+    const [m_fag, setMFag] = useState([]);
+    const [m_uker, setMUker] = useState(["","","",""]);
+    const [m_notat, setMNotat] = useState("");
+    const [m_loading, setMLoading] = useState(false);
+    const [m_feil, setMFeil] = useState("");
+    const [m_aiLoading, setMAiLoading] = useState(false);
+    const [bekreftSletting, setBekreftSletting] = useState(false);
+    useEffect(()=>{
+      let avbrutt=false;
+      (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsplaner(aktivBruker.id); if(!avbrutt){setPlaner(liste);setLastet(true);} })();
+      return()=>{avbrutt=true;};
+    },[aktivBruker?.id]);
+    const lagre=async(liste)=>{const ok=await lagreMaanedsplaner(aktivBruker.id,liste);if(!ok){setMFeil("Kunne ikke lagre");return false;}setPlaner(liste);setGlobalMaanedsplaner(liste);return true;};
+    const nullstill=()=>{const n=new Date();setMTittel("");setMAar(n.getFullYear());setMMaaned(n.getMonth()+1);setMTema("");setMFag([]);setMUker(["","","",""]);setMNotat("");setMFeil("");};
+    const nyPlan=()=>{nullstill();setMTema(planTema);setValgt(null);setVisning("ny");};
+    const redigerPlan=(p)=>{setValgt(p);setMTittel(p.tittel||"");setMAar(p.aar||new Date().getFullYear());setMMaaned(p.maaned||1);setMTema(p.tema||"");setMFag(p.fagomrader||[]);setMUker([p.uke1||"",p.uke2||"",p.uke3||"",p.uke4||""]);setMNotat(p.notat||"");setMFeil("");setVisning("rediger");};
+    const slettPlan=async(id)=>{const ok=await lagre(planer.filter(p=>p.id!==id));if(ok){visLokal("🗑 Slettet");setVisning("liste");setValgt(null);}};
+    const autoTittel=()=>m_tittel.trim()||`${MAANEDER[m_maaned-1]} ${m_aar}`;
+    const lagreNy=async()=>{setMFeil("");if(!m_tema.trim()){setMFeil("Skriv et tema");return;}setMLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat,opprettet:new Date().toISOString()},...planer]);setMLoading(false);if(ok){visLokal("✅ Månedsplan lagret");setVisning("liste");}};
+    const lagreEndring=async()=>{setMFeil("");if(!valgt)return;setMLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat}:p));setMLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
+    const genererAI=async()=>{if(!m_tema.trim()){setMFeil("Skriv et tema først");return;}setMAiLoading(true);const fagNavn=m_fag.map(f=>FAGOMRADER.find(x=>x.id===f)?.navn||f).join(", ")||"alle fagområder";const prompt=`Lag en månedsplan for norsk barnehage for ${MAANEDER[m_maaned-1]} ${m_aar} med tema "${m_tema}" (fagområder: ${fagNavn}).\nBruk NØYAKTIG denne strukturen:\n\n## Uke 1\n### Tema\n[undertema]\n### Aktiviteter\n• [aktivitet]\n• [aktivitet]\n### Mål\n• [mål]\n\n## Uke 2\n[samme]\n\n## Uke 3\n[samme]\n\n## Uke 4\n[samme]\n\nVær konkret og praktisk. Knyttet til Rammeplan 2017.`;
+    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),90000);
+    try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:2500}),signal:ctrl.signal});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
+      const norm=(tekst.startsWith("##")?"\n":"")+tekst;
+      const deler=norm.split(/\n##\s+/).slice(1);
+      const nyeUker=["","","",""].map((_,i)=>{if(!deler[i])return"";const nl=deler[i].indexOf("\n");return nl>=0?deler[i].slice(nl+1).trim():deler[i].trim();});
+      setMUker(nyeUker);visLokal("✅ AI-innhold generert");
+    }}catch(e){visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setMAiLoading(false);};};
+    const toggleFag=(f)=>setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);
+    const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
+    const taStyle={...inputStyle,resize:"vertical",minHeight:90};
+    if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}>Laster...</div>;
+    if(visning==="les"&&valgt)return(
+      <div className="fade">
+        <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+        <div style={{background:C.w,borderRadius:16,padding:"18px 16px",boxShadow:"0 2px 14px rgba(44,91,142,0.10)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+            <div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>{valgt.tittel}</div>
+              <div style={{fontSize:12,color:C.gr,marginTop:2}}>{MAANEDER[valgt.maaned-1]} {valgt.aar} {valgt.tema&&`• Tema: ${valgt.tema}`}</div>
+              {valgt.fagomrader?.length>0&&<div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:6}}>{valgt.fagomrader.map(f=>{const fg=FAGOMRADER.find(x=>x.id===f);return fg?<span key={f} style={{background:fg.lys,color:fg.farge,borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:700}}>{fg.ikon} {fg.navn.split(",")[0]}</span>:null;})}</div>}
+            </div>
+            <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+              <button onClick={()=>skrivUtGenerell({tittel:valgt.tittel||`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}${valgt.tema?" • Tema: "+valgt.tema:""}`,seksjoner:[...["uke1","uke2","uke3","uke4"].map((u,i)=>({label:`Uke ${i+1}`,tekst:valgt[u],farge:"#2c5b8e",bg:"#f5f9fd"})),{label:"Notat",tekst:valgt.notat,farge:"#795548",bg:"#fff9c4"}]})} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🖨️ Skriv ut</button>
+              <button onClick={()=>redigerPlan(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontWeight:700}}>✏️ Rediger</button>
+              {bekreftSletting
+                ? <><button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{background:"#c62828",color:"#fff",border:"none",borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:12,fontWeight:700}}>Slett</button>
+                    <button onClick={()=>setBekreftSletting(false)} style={{background:"#e8eff8",color:C.t,border:"none",borderRadius:8,padding:"7px 10px",cursor:"pointer",fontSize:12,fontWeight:700}}>Avbryt</button></>
+                : <button onClick={()=>setBekreftSletting(true)} style={{background:"#ffebee",color:"#c62828",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🗑</button>}
+            </div>
+          </div>
+          {["uke1","uke2","uke3","uke4"].map((u,i)=>valgt[u]&&(
+            <div key={u} style={{background:"#f5f9fd",borderRadius:10,padding:"12px 14px",marginBottom:10,borderLeft:"3px solid #2c5b8e"}}>
+              <div style={{fontWeight:800,color:"#2c5b8e",fontSize:12,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>📅 Uke {i+1}</div>
+              <RenderTekst tekst={valgt[u]}/>
+            </div>
+          ))}
+          {valgt.notat&&<div style={{background:"#fff9c4",borderRadius:10,padding:"11px 13px",marginTop:6}}><div style={{fontWeight:800,color:"#795548",fontSize:11,marginBottom:4}}>📝 NOTAT</div><div style={{fontSize:13,color:C.t,lineHeight:1.6}}>{valgt.notat}</div></div>}
+        </div>
+      </div>
+    );
+    if(visning==="ny"||visning==="rediger")return(
+      <div className="fade">
+        <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:14}}>{visning==="ny"?"📅 Ny månedsplan":"✏️ Rediger månedsplan"}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <div><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>ÅR</label><input type="number" value={m_aar} onChange={e=>setMAar(parseInt(e.target.value)||new Date().getFullYear())} style={inputStyle}/></div>
+          <div><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>MÅNED</label>
+            <select value={m_maaned} onChange={e=>setMMaaned(parseInt(e.target.value))} style={inputStyle}>{MAANEDER.map((n,i)=><option key={i+1} value={i+1}>{n}</option>)}</select>
+          </div>
+        </div>
+        <div style={{marginBottom:10}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>TITTEL (valgfri)</label><input value={m_tittel} onChange={e=>setMTittel(e.target.value)} placeholder={`${MAANEDER[m_maaned-1]} ${m_aar}`} style={inputStyle}/></div>
+        <div style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <label style={{fontSize:11,fontWeight:800,color:C.gr}}>TEMA *</label>
+            {m_tema.trim() && m_tema.trim() !== planTema && (
+              <button type="button" onClick={()=>setPlanTema(m_tema.trim())} style={{background:"none",border:"none",color:"#1565c0",fontSize:10,cursor:"pointer",fontWeight:700,padding:0,fontFamily:"'Nunito',sans-serif"}}>🔗 Sett som felles tema</button>
+            )}
+          </div>
+          <input value={m_tema} onChange={e=>setMTema(e.target.value)} placeholder={planTema||"Eks: Vennskap, Natur og årstider..."} style={inputStyle}/>
+          {planTema && !m_tema.trim() && (
+            <div onClick={()=>setMTema(planTema)} style={{fontSize:10,color:"#1565c0",marginTop:3,cursor:"pointer",fontWeight:600}}>← Bruk felles tema: «{planTema}»</div>
+          )}
+        </div>
+        <div style={{marginBottom:10}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:6}}>FAGOMRÅDER</label>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{FAGOMRADER.map(f=>(
+            <button key={f.id} onClick={()=>toggleFag(f.id)} style={{background:m_fag.includes(f.id)?f.lys:"#f5f7fa",color:m_fag.includes(f.id)?f.farge:C.gr,border:`2px solid ${m_fag.includes(f.id)?f.farge:"#e0e7ef"}`,borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:11,fontWeight:700}}>{f.ikon} {f.navn.split(",")[0]}</button>
+          ))}</div>
+        </div>
+        <div style={{marginBottom:12,background:"#f0f6ff",borderRadius:10,padding:"10px 12px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Generer innhold med AI</div>
+            <button onClick={genererAI} disabled={m_aiLoading||!m_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:m_tema.trim()?1:0.5}}>{m_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
+          </div>
+          <div style={{fontSize:11,color:C.gr}}>Fyll ut tema og trykk Generer for å lage ukesinnhold automatisk</div>
+        </div>
+        {[0,1,2,3].map(i=>(
+          <div key={i} style={{marginBottom:10}}>
+            <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>UKE {i+1}</label>
+            <textarea value={m_uker[i]} onChange={e=>setMUker(p=>{const ny=[...p];ny[i]=e.target.value;return ny;})} placeholder={`Aktiviteter og mål for uke ${i+1}...`} style={taStyle}/>
+          </div>
+        ))}
+        <div style={{marginBottom:14}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>NOTAT</label><textarea value={m_notat} onChange={e=>setMNotat(e.target.value)} placeholder="Praktisk info, merknader..." style={{...taStyle,minHeight:60}}/></div>
+        {m_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:13}}>{m_feil}</div>}
+        <button onClick={visning==="ny"?lagreNy:lagreEndring} disabled={m_loading} style={{background:C.g,color:"#fff",border:"none",borderRadius:9,padding:"11px",width:"100%",cursor:"pointer",fontWeight:800,fontSize:14,fontFamily:"'Nunito',sans-serif"}}>{m_loading?"⏳ Lagrer...":"💾 Lagre månedsplan"}</button>
+      </div>
+    );
+    return(
+      <div className="fade">
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 10px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>📅 Månedsplaner</div>
+          <button onClick={nyPlan} style={{background:C.g,color:"#fff",border:"none",borderRadius:9,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:12}}>+ Ny plan</button>
+        </div>
+        {lokalToast&&<div className="fade" style={{position:"sticky",top:8,zIndex:99,background:"#1a2c45",color:"#fff",padding:"9px 15px",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{lokalToast}</div>}
+        {planer.length===0?<div style={{textAlign:"center",padding:"40px 20px",color:C.gr,fontSize:13}}><div style={{fontSize:36,marginBottom:10}}>📅</div>Ingen månedsplaner ennå.<br/>Lag din første plan!</div>
+        :<div>{planer.map(p=>(
+          <div key={p.id} className="hover" onClick={()=>{setValgt(p);setVisning("les");}} style={{background:C.w,borderRadius:12,padding:"13px 14px",marginBottom:8,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",cursor:"pointer",borderLeft:"3px solid #2c5b8e",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontWeight:800,color:C.t,fontSize:14}}>{p.tittel}</div>
+              <div style={{fontSize:12,color:C.gr,marginTop:2}}>{MAANEDER[p.maaned-1]} {p.aar}{p.tema&&` • ${p.tema}`}</div>
+              {p.fagomrader?.length>0&&<div style={{display:"flex",gap:4,marginTop:5,flexWrap:"wrap"}}>{p.fagomrader.slice(0,3).map(f=>{const fg=FAGOMRADER.find(x=>x.id===f);return fg?<span key={f} style={{background:fg.lys,color:fg.farge,borderRadius:6,padding:"1px 6px",fontSize:10,fontWeight:700}}>{fg.ikon}</span>:null;})}</div>}
+            </div>
+            <span style={{color:C.gr,fontSize:18}}>›</span>
+          </div>
+        ))}</div>}
+      </div>
+    );
+  };
+
+  // ─── MaanedsbrevSide ───
+  const MaanedsbrevSide = () => {
+    const [brev, setBrev] = useState([]);
+    const [lastet, setLastet] = useState(false);
+    const [visning, setVisning] = useState("liste");
+    const [valgt, setValgt] = useState(null);
+    const [b_tittel, setBTittel] = useState("");
+    const [b_aar, setBAar] = useState(new Date().getFullYear());
+    const [b_maaned, setBMaaned] = useState(new Date().getMonth()+1);
+    const [b_gjort, setBGjort] = useState("");
+    const [b_kommende, setBKommende] = useState("");
+    const [b_praktisk, setBPraktisk] = useState("");
+    const [b_hilsen, setBHilsen] = useState("");
+    const [b_loading, setBLoading] = useState(false);
+    const [b_feil, setBFeil] = useState("");
+    const [lokalToast, setLokalToast] = useState("");
+    const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
+    const [b_aiLoading, setBAiLoading] = useState(false);
+    const [bekreftSletting, setBekreftSletting] = useState(false);
+    useEffect(()=>{
+      let avbrutt=false;
+      (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsbrev(aktivBruker.id); if(!avbrutt){setBrev(liste);setLastet(true);} })();
+      return()=>{avbrutt=true;};
+    },[aktivBruker?.id]);
+    const lagre=async(liste)=>{const ok=await lagreMaanedsbrev(aktivBruker.id,liste);if(!ok){setBFeil("Kunne ikke lagre");return false;}setBrev(liste);setGlobalMaanedsbrev(liste);return true;};
+    const nullstill=()=>{const n=new Date();setBTittel("");setBAar(n.getFullYear());setBMaaned(n.getMonth()+1);setBGjort("");setBKommende("");setBPraktisk("");setBHilsen("");setBFeil("");};
+    const nyBrev=()=>{nullstill();setValgt(null);setVisning("ny");};
+    const redigerBrev=(b)=>{setValgt(b);setBTittel(b.tittel||"");setBAar(b.aar||new Date().getFullYear());setBMaaned(b.maaned||1);setBGjort(b.gjort||"");setBKommende(b.kommende||"");setBPraktisk(b.praktisk||"");setBHilsen(b.hilsen||"");setBFeil("");setVisning("rediger");};
+    const slettBrev=async(id)=>{const ok=await lagre(brev.filter(b=>b.id!==id));if(ok){visLokal("🗑 Slettet");setVisning("liste");setValgt(null);}};
+    const autoTittel=()=>b_tittel.trim()||`Månedsbrev ${MAANEDER[b_maaned-1]} ${b_aar}`;
+    const lagreNy=async()=>{setBFeil("");if(!b_gjort.trim()&&!b_kommende.trim()){setBFeil("Fyll inn minst ett felt");return;}setBLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen,opprettet:new Date().toISOString()},...brev]);setBLoading(false);if(ok){visLokal("✅ Månedsbrev lagret");setVisning("liste");}};
+    const lagreEndring=async()=>{setBFeil("");if(!valgt)return;setBLoading(true);const ok=await lagre(brev.map(b=>b.id===valgt.id?{...b,tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen}:b));setBLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
+    const genererAI=async()=>{setBAiLoading(true);const temaStr=planTema?` Månedstema: «${planTema}».`:"";const prompt=`Skriv et månedsbrev til foreldre fra norsk barnehage for ${MAANEDER[b_maaned-1]} ${b_aar}.${temaStr}\nBruk NØYAKTIG denne strukturen:\n\n## Hva vi har jobbet med\n• [punkt]\n• [punkt]\n• [punkt]\n\n## Kommende aktiviteter\n• [aktivitet/dato]\n• [aktivitet/dato]\n\n## Praktisk informasjon\n• [praktisk info]\n• [praktisk info]\n\nSkriv vennlig og engasjerende. Referer til Rammeplan 2017 og barnehagens pedagogiske arbeid.`;
+    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),90000);
+    try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1500}),signal:ctrl.signal});if(!r.ok)throw new Error();const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
+      const norm=(tekst.startsWith("##")?"\n":"")+tekst;
+      const deler=norm.split(/\n##\s+/).slice(1);
+      let sattNoe=false;
+      deler.forEach(del=>{const lnr=del.indexOf("\n");const overskrift=lnr>=0?del.slice(0,lnr).toLowerCase().trim():del.toLowerCase().trim();const innhold=lnr>=0?del.slice(lnr+1).trim():"";if(!innhold)return;if(overskrift.includes("jobbet")||overskrift.includes("gjort")){setBGjort(innhold);sattNoe=true;}else if(overskrift.includes("kommende")||overskrift.includes("aktivitet")){setBKommende(innhold);sattNoe=true;}else if(overskrift.includes("praktisk")){setBPraktisk(innhold);sattNoe=true;}});
+      if(!sattNoe)setBGjort(tekst);
+      visLokal("✅ AI-innhold generert");
+    }}catch(e){visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setBAiLoading(false);};};
+    const kopierBrev=(b)=>{const tekst=`${b.tittel}\n\n${b.gjort?"Vi har jobbet med:\n"+b.gjort+"\n\n":""}${b.kommende?"Kommende:\n"+b.kommende+"\n\n":""}${b.praktisk?"Praktisk info:\n"+b.praktisk+"\n\n":""}${b.hilsen?"Hilsen,\n"+b.hilsen:""}`.trim();navigator.clipboard?.writeText(tekst).then(()=>visLokal("✅ Kopiert")).catch(()=>visLokal("ℹ️ Kopiering ikke støttet"));};
+    const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
+    const taStyle={...inputStyle,resize:"vertical",minHeight:90};
+    if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}>Laster...</div>;
+    if(visning==="les"&&valgt)return(
+      <div className="fade">
+        <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+        <div style={{background:C.w,borderRadius:16,padding:"20px 18px",boxShadow:"0 2px 14px rgba(44,91,142,0.10)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+            <div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>{valgt.tittel}</div>
+              <div style={{fontSize:12,color:C.gr,marginTop:2}}>{MAANEDER[valgt.maaned-1]} {valgt.aar}</div>
+            </div>
+            <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+              <button onClick={()=>skrivUtGenerell({tittel:valgt.tittel||`Månedsbrev ${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,seksjoner:[{label:"📚 Hva vi har jobbet med",tekst:valgt.gjort,farge:"#1565c0",bg:"#e3f2fd"},{label:"📅 Kommende aktiviteter",tekst:valgt.kommende,farge:"#2e7d32",bg:"#e8f5e9"},{label:"ℹ️ Praktisk informasjon",tekst:valgt.praktisk,farge:"#795548",bg:"#fff9c4"},{label:"Hilsen",tekst:valgt.hilsen,farge:"#5d7390",bg:"#f5f9fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🖨️ Skriv ut</button>
+              <button onClick={()=>kopierBrev(valgt)} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>📋 Kopier</button>
+              <button onClick={()=>redigerBrev(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontWeight:700}}>✏️ Rediger</button>
+              {bekreftSletting
+                ? <><button onClick={()=>{setBekreftSletting(false);slettBrev(valgt.id);}} style={{background:"#c62828",color:"#fff",border:"none",borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:12,fontWeight:700}}>Slett</button>
+                    <button onClick={()=>setBekreftSletting(false)} style={{background:"#e8eff8",color:C.t,border:"none",borderRadius:8,padding:"7px 10px",cursor:"pointer",fontSize:12,fontWeight:700}}>Avbryt</button></>
+                : <button onClick={()=>setBekreftSletting(true)} style={{background:"#ffebee",color:"#c62828",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🗑</button>}
+            </div>
+          </div>
+          {[{felt:valgt.gjort,label:"📚 Hva vi har jobbet med",bg:"#e3f2fd",col:"#1565c0"},{felt:valgt.kommende,label:"📅 Kommende aktiviteter",bg:"#e8f5e9",col:"#2e7d32"},{felt:valgt.praktisk,label:"ℹ️ Praktisk informasjon",bg:"#fff9c4",col:"#795548"}].filter(s=>s.felt).map(({felt,label,bg,col})=>(
+            <div key={label} style={{background:bg,borderRadius:10,padding:"12px 14px",marginBottom:10}}>
+              <div style={{fontWeight:800,color:col,fontSize:12,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>{label}</div>
+              <RenderTekst tekst={felt}/>
+            </div>
+          ))}
+          {valgt.hilsen&&<div style={{textAlign:"right",marginTop:16,fontStyle:"italic",color:C.gr,fontSize:13}}>Hilsen,<br/><strong style={{color:C.t}}>{valgt.hilsen}</strong></div>}
+        </div>
+      </div>
+    );
+    if(visning==="ny"||visning==="rediger")return(
+      <div className="fade">
+        <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:14}}>{visning==="ny"?"📨 Nytt månedsbrev":"✏️ Rediger månedsbrev"}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <div><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>ÅR</label><input type="number" value={b_aar} onChange={e=>setBAar(parseInt(e.target.value)||new Date().getFullYear())} style={inputStyle}/></div>
+          <div><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>MÅNED</label>
+            <select value={b_maaned} onChange={e=>setBMaaned(parseInt(e.target.value))} style={inputStyle}>{MAANEDER.map((n,i)=><option key={i+1} value={i+1}>{n}</option>)}</select>
+          </div>
+        </div>
+        <div style={{marginBottom:10}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>TITTEL (valgfri)</label><input value={b_tittel} onChange={e=>setBTittel(e.target.value)} placeholder={`Månedsbrev ${MAANEDER[b_maaned-1]} ${b_aar}`} style={inputStyle}/></div>
+        {planTema && (
+          <div style={{background:"#e3f2fd",borderRadius:10,padding:"10px 13px",marginBottom:10,borderLeft:"4px solid #1565c0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+            <div>
+              <div style={{fontSize:11,fontWeight:800,color:"#1565c0",marginBottom:2}}>🎯 FELLES TEMA AKTIVT</div>
+              <div style={{fontSize:13,fontWeight:700,color:"#1a2c45"}}>«{planTema}»</div>
+              <div style={{fontSize:11,color:"#5d7390",marginTop:1}}>Brukes automatisk i AI-generering av brevet</div>
+            </div>
+            <button onClick={()=>setPlanTema("")} style={{background:"transparent",border:"1px solid #90caf9",color:"#1565c0",borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap"}}>✕ Fjern</button>
+          </div>
+        )}
+        <div style={{marginBottom:12,background:"#f0f6ff",borderRadius:10,padding:"10px 12px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Generer brev med AI</div>
+            <button onClick={genererAI} disabled={b_aiLoading} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700}}>{b_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
+          </div>
+          <div style={{fontSize:11,color:C.gr}}>Trykk Generer for å lage brevinnhold for {MAANEDER[b_maaned-1]}{planTema?` med tema «${planTema}»`:""}</div>
+        </div>
+        {[{label:"📚 HVA VI HAR JOBBET MED",val:b_gjort,setter:setBGjort,ph:"Beskriv hva dere har arbeidet med denne måneden..."},{label:"📅 KOMMENDE AKTIVITETER",val:b_kommende,setter:setBKommende,ph:"Turer, arrangementer, tema-dager..."},{label:"ℹ️ PRAKTISK INFORMASJON",val:b_praktisk,setter:setBPraktisk,ph:"Klær, frister, beskjeder..."}].map(({label,val,setter,ph})=>(
+          <div key={label} style={{marginBottom:10}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>{label}</label><textarea value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={taStyle}/></div>
+        ))}
+        <div style={{marginBottom:14}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>HILSEN</label><input value={b_hilsen} onChange={e=>setBHilsen(e.target.value)} placeholder="Eks: Personalet på Revegruppen" style={inputStyle}/></div>
+        {b_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:13}}>{b_feil}</div>}
+        <button onClick={visning==="ny"?lagreNy:lagreEndring} disabled={b_loading} style={{background:C.g,color:"#fff",border:"none",borderRadius:9,padding:"11px",width:"100%",cursor:"pointer",fontWeight:800,fontSize:14,fontFamily:"'Nunito',sans-serif"}}>{b_loading?"⏳ Lagrer...":"💾 Lagre månedsbrev"}</button>
+      </div>
+    );
+    return(
+      <div className="fade">
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 10px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>📨 Månedsbrev</div>
+          <button onClick={nyBrev} style={{background:C.g,color:"#fff",border:"none",borderRadius:9,padding:"8px 14px",cursor:"pointer",fontWeight:800,fontSize:12}}>+ Nytt brev</button>
+        </div>
+        {lokalToast&&<div className="fade" style={{position:"sticky",top:8,zIndex:99,background:"#1a2c45",color:"#fff",padding:"9px 15px",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{lokalToast}</div>}
+        {brev.length===0?<div style={{textAlign:"center",padding:"40px 20px",color:C.gr,fontSize:13}}><div style={{fontSize:36,marginBottom:10}}>📨</div>Ingen månedsbrev ennå.<br/>Lag ditt første brev!</div>
+        :<div>{brev.map(b=>(
+          <div key={b.id} className="hover" onClick={()=>{setValgt(b);setVisning("les");}} style={{background:C.w,borderRadius:12,padding:"13px 14px",marginBottom:8,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",cursor:"pointer",borderLeft:"3px solid #2d6a4f",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontWeight:800,color:C.t,fontSize:14}}>{b.tittel}</div>
+              <div style={{fontSize:12,color:C.gr,marginTop:2}}>{MAANEDER[b.maaned-1]} {b.aar}</div>
+              {b.gjort&&<div style={{fontSize:11,color:C.gr,marginTop:3,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",maxWidth:220}}>{b.gjort.split("\n")[0]}</div>}
+            </div>
+            <span style={{color:C.gr,fontSize:18}}>›</span>
+          </div>
+        ))}</div>}
+      </div>
+    );
+  };
+
+  // ─── PlanleggingSide – landingsside for planleggingsverktøy ───
+  const PlanleggingSide = () => (
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:10}}>📋 Planlegging</div>
+      <div style={{background:"linear-gradient(135deg,#e3f2fd,#f0f7ff)",borderRadius:13,padding:"13px 14px",marginBottom:18,border:"1.5px solid #90caf9"}}>
+        <div style={{fontWeight:800,fontSize:12,color:"#1565c0",marginBottom:7,display:"flex",alignItems:"center",gap:5}}>
+          🎯 Felles tema
+          {planTema && <span style={{background:"#1565c0",color:"#fff",borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>Aktivt</span>}
+        </div>
+        <input
+          key={planTema}
+          defaultValue={planTema}
+          onBlur={e=>setPlanTema(e.target.value.trim())}
+          placeholder="Skriv inn felles tema for alle planer..."
+          style={{width:"100%",padding:"8px 11px",borderRadius:8,border:"1.5px solid #90caf9",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none",background:"#fff"}}
+        />
+        <div style={{fontSize:11,color:"#5b8bbf",marginTop:6,lineHeight:1.5}}>
+          {planTema
+            ? `Temaet «${planTema}» fylles automatisk inn i nye ukeplaner og månedsplaner.`
+            : "Sett et felles tema som automatisk fylles inn i nye planer – du kan alltid endre det per plan."}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+        {[
+          {id:"ukeplan",ikon:"📅",tittel:"Ukeplan",farge:"#1565c0",bg:"linear-gradient(135deg,#e3f2fd,#bbdefb)",border:"#90caf9",desc:"Planlegg mandag–fredag med tema og aktiviteter"},
+          {id:"maanedsplan",ikon:"🗓️",tittel:"Månedsplan",farge:"#6a1b9a",bg:"linear-gradient(135deg,#f3e5f5,#e1bee7)",border:"#ce93d8",desc:"Oversikt over 4 uker med mål og fagområder"},
+          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",bg:"linear-gradient(135deg,#d8f3dc,#b7e4c7)",border:"#81c995",desc:"Skriv månedsbrev til foreldre med AI-hjelp"},
+          {id:"arsplan",ikon:"📆",tittel:"Årsplan",farge:"#c62828",bg:"linear-gradient(135deg,#ffebee,#ffcdd2)",border:"#ef9a9a",desc:"Årshjul med tema per måned og pedagogisk grunnsyn"},
+        ].map(({id,ikon,tittel,farge,bg,border,desc})=>(
+          <div key={id} className="hover" onClick={()=>navigerTil(id)}
+            style={{background:bg,borderRadius:18,padding:"22px 16px",cursor:"pointer",boxShadow:`0 3px 16px ${farge}22`,border:`2px solid ${border}`,textAlign:"center"}}>
+            <div style={{fontSize:38,marginBottom:9}}>{ikon}</div>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:farge,marginBottom:5}}>{tittel}</div>
+            <div style={{fontSize:11,color:farge,lineHeight:1.5,opacity:0.85}}>{desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   // ─── UkeplanSide – Mandag til fredag med formiddag/ettermiddag/notat ───
   const UkeplanSide = ()=>{
     const [planer, setPlaner] = useState([]);
@@ -4647,6 +7875,9 @@ ${innhold}
     const [visning, setVisning] = useState("liste"); // liste | ny | rediger | les
     const [valgt, setValgt] = useState(null);
     const [sok, setSok] = useState("");
+    const [lokalToast, setLokalToast] = useState("");
+    const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
+    const [bekreftSletting, setBekreftSletting] = useState(false);
 
     // Skjema-state
     const tomDag = { formiddag:"", ettermiddag:"", notat:"", bilde:"" };
@@ -4686,12 +7917,13 @@ ${innhold}
       const ok = await lagreUkeplaner(aktivBruker.id, oppdatertListe);
       if (!ok) { setUFeil("Kunne ikke lagre – muligens fordi lagring er blokkert i dette miljøet"); return false; }
       setPlaner(oppdatertListe);
+      setGlobalUkeplaner(oppdatertListe);
       return true;
     };
 
     const nyPlan = () => {
       setValgt(null);
-      setUTittel(""); setUUke(""); setUTema("");
+      setUTittel(""); setUUke(""); setUTema(planTema);
       setUDager({
         mandag: {...tomDag}, tirsdag: {...tomDag}, onsdag: {...tomDag},
         torsdag: {...tomDag}, fredag: {...tomDag}
@@ -4913,7 +8145,7 @@ ${innhold}
           setTimeout(() => {
             if (!beforePrintFiret) {
               afterHandler();
-              vis("ℹ️ Utskrift er ikke tilgjengelig her – laster ned i stedet");
+              visLokal("ℹ️ Utskrift er ikke tilgjengelig her – laster ned i stedet");
               setTimeout(() => lastNed(p), 700);
             }
           }, 1800);
@@ -4934,10 +8166,10 @@ ${innhold}
         a.href = url; a.download = `ukeplan-${p.tittel.replace(/[^a-zA-Z0-9æøåÆØÅ]/g,"-")}-${new Date().toISOString().slice(0,10)}.html`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(()=>URL.revokeObjectURL(url), 1500);
-        vis("✅ Lastet ned");
+        visLokal("✅ Lastet ned");
       } catch (e) {
         console.error("[Ukeplan nedlasting]", e);
-        vis("❌ Nedlasting feilet");
+        visLokal("❌ Nedlasting feilet");
       }
     };
 
@@ -4956,14 +8188,14 @@ ${innhold}
       const full = `${p.tittel}\n${p.uke ? "Uke " + p.uke : ""}${p.tema ? "\nTema: " + p.tema : ""}\n\n${tekst}`;
       try {
         await navigator.clipboard.writeText(full);
-        vis("✅ Kopiert");
+        visLokal("✅ Kopiert");
       } catch {
         try {
           const ta = document.createElement("textarea");
           ta.value = full; document.body.appendChild(ta); ta.select();
           document.execCommand("copy"); document.body.removeChild(ta);
-          vis("✅ Kopiert");
-        } catch { vis("❌ Kopiering feilet"); }
+          visLokal("✅ Kopiert");
+        } catch { visLokal("❌ Kopiering feilet"); }
       }
     };
 
@@ -4999,8 +8231,16 @@ ${innhold}
                 <input type="text" value={u_uke} onChange={e=>setUUke(e.target.value)} style={iS} placeholder="22" inputMode="numeric"/>
               </div>
               <div>
-                <label style={labelStil}>Tema</label>
-                <input type="text" value={u_tema} onChange={e=>setUTema(e.target.value)} style={iS} placeholder="F.eks. 17. mai og mangfold"/>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                  <label style={{...labelStil,marginBottom:0}}>Tema</label>
+                  {u_tema.trim() && u_tema.trim() !== planTema && (
+                    <button type="button" onClick={()=>setPlanTema(u_tema.trim())} style={{background:"none",border:"none",color:"#1565c0",fontSize:10,cursor:"pointer",fontWeight:700,padding:0,fontFamily:"'Nunito',sans-serif"}}>🔗 Sett som felles</button>
+                  )}
+                </div>
+                <input type="text" value={u_tema} onChange={e=>setUTema(e.target.value)} style={iS} placeholder={planTema||"F.eks. 17. mai og mangfold"}/>
+                {planTema && !u_tema.trim() && (
+                  <div onClick={()=>setUTema(planTema)} style={{fontSize:10,color:"#1565c0",marginTop:3,cursor:"pointer",fontWeight:600}}>← Bruk felles tema: «{planTema}»</div>
+                )}
               </div>
             </div>
           </div>
@@ -5094,6 +8334,7 @@ ${innhold}
             </div>
           </div>
 
+          {lokalToast && <div style={{background:"#e8f5e9",color:"#2e7d32",borderRadius:9,padding:"9px 14px",fontSize:13,fontWeight:700,marginBottom:10,textAlign:"center"}}>{lokalToast}</div>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:12}}>
             <button onClick={()=>skrivUt(valgt)} style={{background:"#2c5b8e",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
             <button onClick={()=>lastNed(valgt)} style={{background:"#1565c0",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>💾 Last ned</button>
@@ -5137,7 +8378,13 @@ ${innhold}
             );
           })}
 
-          <button onClick={()=>slettPlan(valgt.id)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif",width:"100%",marginTop:8}}>🗑 Slett ukeplan</button>
+          {bekreftSletting
+            ? <div style={{display:"flex",gap:8,marginTop:8}}>
+                <button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft sletting</button>
+                <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+              </div>
+            : <button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif",width:"100%",marginTop:8}}>🗑 Slett ukeplan</button>
+          }
           <div style={{fontSize:10,color:C.gr,textAlign:"center",marginTop:9}}>Opprettet: {new Date(valgt.opprettet).toLocaleDateString("no-NO")}{valgt.oppdatert!==valgt.opprettet && " • Sist endret: "+new Date(valgt.oppdatert).toLocaleDateString("no-NO")}</div>
         </div>
       );
@@ -5146,6 +8393,7 @@ ${innhold}
     // VISNING: Liste (default)
     return (
       <div className="fade">
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 8px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📅 Ukeplaner</div>
         <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Mandag–fredag med formiddag, ettermiddag og notat</p>
 
@@ -5179,7 +8427,7 @@ ${innhold}
         )}
 
         <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
-          <strong>⚠️ Backup:</strong> Ukeplaner lagres lokalt på denne enheten. Bruk "💾 Last ned"-knappen for backup.
+          <strong>☁️ Lagring:</strong> Ukeplaner lagres automatisk i skyen og er tilgjengelige på alle enheter når du er innlogget. Bruk "💾 Last ned"-knappen for lokal backup.
         </div>
       </div>
     );
@@ -5195,6 +8443,11 @@ ${innhold}
     const [lagrer, setLagrer] = useState(false);
     const [planFeil, setPlanFeil] = useState("");
     const [ap, setAp] = useState(null); // plan under redigering
+
+    // Lokal toast – unngår å trigge parent re-render som resetter state
+    const [lokalToast, setLokalToast] = useState("");
+    const visLokal = (m) => { setLokalToast(m); setTimeout(() => setLokalToast(""), 3000); };
+    const [bekreftSletting, setBekreftSletting] = useState(false);
 
     // AI-state
     const [aiAktiv, setAiAktiv] = useState(null); // { seksjonId, handling }
@@ -5225,6 +8478,16 @@ ${innhold}
       { id:"mai",       navn:"Mai",       ikon:"🇳🇴", farge:"#c0392b" },
       { id:"juni",      navn:"Juni",      ikon:"☀️", farge:"#f1c40f" },
     ];
+
+    const skrivUtArsplan = (p) => {
+      const sek = SEKSJONER.filter(s=>p.seksjoner?.[s.id]?.trim()).map(s=>({label:`${s.ikon} ${s.navn}`,tekst:p.seksjoner[s.id],farge:"#2c5b8e",bg:"#f5f9fd"}));
+      const hjulMnd = MANEDER.filter(m=>p.arshjul?.[m.id]?.tema||p.arshjul?.[m.id]?.aktiviteter);
+      if(hjulMnd.length>0){
+        const hjulTekst=hjulMnd.map(m=>{const d=p.arshjul[m.id];const l=[];if(d.tema)l.push("Tema: "+d.tema);if(d.aktiviteter)l.push(d.aktiviteter);if(d.notat)l.push("("+d.notat+")");return m.ikon+" "+m.navn+"\n"+l.join("\n");}).join("\n\n");
+        sek.push({label:"📅 Årshjul",tekst:hjulTekst,farge:"#52b788",bg:"#e8f5e9"});
+      }
+      skrivUtGenerell({tittel:p.tittel||"Årsplan",meta:[p.barnehage,p.avdeling,p.alder,p.aar].filter(Boolean).join(" • "),seksjoner:sek});
+    };
 
     const tomArsplan = () => ({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
@@ -5266,7 +8529,7 @@ ${innhold}
       const ny = { ...ap, opprettet: new Date().toISOString(), oppdatert: new Date().toISOString() };
       const ok = await lagreListe([ny, ...planer]);
       setLagrer(false);
-      if (ok) { vis("✅ Årsplan lagret"); setVisning("liste"); }
+      if (ok) { visLokal("✅ Årsplan lagret"); setVisning("liste"); }
     };
 
     const lagreEndring = async () => {
@@ -5275,26 +8538,26 @@ ${innhold}
       const oppdatert = planer.map(p => p.id === ap.id ? { ...ap, oppdatert: new Date().toISOString() } : p);
       const ok = await lagreListe(oppdatert);
       setLagrer(false);
-      if (ok) { vis("✅ Endringer lagret"); setVisning("liste"); }
+      if (ok) { visLokal("✅ Endringer lagret"); setVisning("liste"); }
     };
 
     const slettPlan = async (id) => {
       const ny = planer.filter(p => p.id !== id);
       const ok = await lagreListe(ny);
-      if (ok) { vis("🗑 Slettet"); setVisning("liste"); setValgt(null); }
+      if (ok) { visLokal("🗑 Slettet"); setVisning("liste"); setValgt(null); }
     };
 
     // ── AI-hjelper (gjenbruker samme mønster som AiSideComp) ──
-    const kallAI = async (prompt, onResultat) => {
-      const AI_ENDPOINT = (typeof window !== "undefined" && window.__BH_AI_ENDPOINT) || "https://api.anthropic.com/v1/messages";
+    const kallAI = async (prompt, onResultat, maxTokens = 1500) => {
+      const AI_ENDPOINT = (typeof window !== "undefined" && window.__BH_AI_ENDPOINT) || "/api/ai";
       const BRUK_BACKEND = AI_ENDPOINT !== "https://api.anthropic.com/v1/messages";
       const body = BRUK_BACKEND
-        ? { prompt }
-        : { model:"claude-sonnet-4-20250514", max_tokens:1200, messages:[{ role:"user", content:prompt }] };
-      const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 30000);
+        ? { prompt, max_tokens: maxTokens }
+        : { model:"claude-sonnet-4-6", max_tokens: maxTokens, messages:[{ role:"user", content:prompt }] };
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 90000);
       try {
-        const r = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:controller.signal });
+        const r = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:ctrl.signal });
         if (!r.ok) throw new Error("HTTP " + r.status);
         const data = await r.json();
         let tekst = "";
@@ -5312,7 +8575,7 @@ ${innhold}
     const byggSeksjonPrompt = (seksjonId, handling, plan) => {
       const s = SEKSJONER.find(x => x.id === seksjonId);
       const eks = plan?.seksjoner?.[seksjonId] || "";
-      const ctx = `Barnehage: "${plan?.barnehage||"ikke oppgitt"}". Avdeling: "${plan?.avdeling||"ikke oppgitt"}". Alder: "${plan?.alder||"ikke oppgitt"}". Barnehageår: ${plan?.aar||"2025/2026"}.`;
+      const ctx = `Barnehage: "${plan?.barnehage||"ikke oppgitt"}". Avdeling: "${plan?.avdeling||"ikke oppgitt"}". Alder: "${plan?.alder||"ikke oppgitt"}". Barnehageår: ${plan?.aar||"2025/2026"}.${planTema?` Overordnet satsningsområde/tema for barnehagen: «${planTema}». La dette temaet prege innholdet.`:""}`;
       const base = `Du er en erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Svar ALLTID på norsk bokmål. Svar kun med selve teksten – ingen innledning eller kommentarer rundt teksten.\n\nKontekst: ${ctx}\nSeksjon: ${s?.navn} – ${s?.beskrivelse}\n\n`;
       if (handling === "start") return base + `Lag et pedagogisk og gjennomarbeidet førsteutkast for seksjonen "${s?.navn}" i årsplanen. Teksten skal:\n- Være konkret og direkte anvendbar for barnehagepersonalet\n- Forankres i Rammeplan for barnehagen 2017 med korrekt fagspråk\n- Ha varmt, profesjonelt og inviterende språk\n- Være 150–300 ord\n\nLever kun selve teksten for seksjonen.`;
       if (handling === "profesjonell") return base + `Eksisterende tekst:\n${eks}\n\nForbedre teksten. Gjør språket mer presist, profesjonelt og pedagogisk forankret. Behold alt meningsinnhold. Svar med den forbedrede teksten.`;
@@ -5328,8 +8591,8 @@ ${innhold}
       setAiTekst("");
       await kallAI(byggSeksjonPrompt(seksjonId, handling, ap), (tekst) => {
         setAiLoading(false);
-        if (tekst) { setAiTekst(tekst); vis("✨ AI-forslag klart"); }
-        else { setAiAktiv(null); vis("ℹ️ AI utilgjengelig – skriv selv"); }
+        if (tekst) { setAiTekst(tekst); visLokal("✨ AI-forslag klart"); }
+        else { setAiAktiv(null); visLokal("ℹ️ AI utilgjengelig – skriv selv"); }
       });
     };
 
@@ -5337,7 +8600,7 @@ ${innhold}
       const sesId = "arshjul_" + maaned;
       setAiAktiv({ seksjonId: sesId, handling:"maaned" });
       setAiLoading(true);
-      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".`;
+      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${planTema}».`:""}`;
       const sesong = { august:"sommer/høst", september:"tidlig høst", oktober:"midthøst", november:"senhøst", desember:"vinter/jul", januar:"vinter", februar:"vinter/karneval", mars:"vinter/vår", april:"vår/påske", mai:"vår/17. mai", juni:"sommer" };
       const m = MANEDER.find(x => x.id === maaned);
       const prompt = `Du er en erfaren norsk barnehagelærer. Svar kun med JSON – ingen annen tekst, ingen markdown.\nLag et pedagogisk forslag for ${m?.navn} (årstid: ${sesong[maaned]||maaned}) for en norsk barnehage.\nKontekst: ${ctx}\nFormat: {"tema":"...","aktiviteter":"...","notat":"..."}\n- tema: ett inspirerende månedstema (maks 6 ord)\n- aktiviteter: 3–4 konkrete aktiviteter koblet til Rammeplanen (2–3 linjer)\n- notat: 1–2 pedagogiske merknader til personalet`;
@@ -5351,17 +8614,17 @@ ${innhold}
               oppdaterArshjul(maaned, "tema", d.tema||"");
               oppdaterArshjul(maaned, "aktiviteter", d.aktiviteter||"");
               oppdaterArshjul(maaned, "notat", d.notat||"");
-              vis("✨ Forslag lagt inn for " + m?.navn);
-            } else { vis("ℹ️ AI ga uventet format"); }
-          } catch { vis("ℹ️ AI utilgjengelig"); }
-        } else { vis("ℹ️ AI utilgjengelig"); }
+              visLokal("✨ Forslag lagt inn for " + m?.navn);
+            } else { visLokal("ℹ️ AI ga uventet format"); }
+          } catch { visLokal("ℹ️ AI utilgjengelig"); }
+        } else { visLokal("ℹ️ AI utilgjengelig"); }
       });
     };
 
     const utforKomplettArshjul = async () => {
       setAiAktiv({ seksjonId:"arshjul_alle", handling:"alle" });
       setAiLoading(true);
-      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".`;
+      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${planTema}». La dette gjennomsyre årshjulet.`:""}`;
       const prompt = `Du er en erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Svar kun med JSON – ingen annen tekst.\nLag et komplett årshjul for barnehageåret august–juni. Kontekst: ${ctx}\nFormat:\n{"august":{"tema":"...","aktiviteter":"...","notat":"..."},"september":{"tema":"...","aktiviteter":"...","notat":"..."},"oktober":{"tema":"...","aktiviteter":"...","notat":"..."},"november":{"tema":"...","aktiviteter":"...","notat":"..."},"desember":{"tema":"...","aktiviteter":"...","notat":"..."},"januar":{"tema":"...","aktiviteter":"...","notat":"..."},"februar":{"tema":"...","aktiviteter":"...","notat":"..."},"mars":{"tema":"...","aktiviteter":"...","notat":"..."},"april":{"tema":"...","aktiviteter":"...","notat":"..."},"mai":{"tema":"...","aktiviteter":"...","notat":"..."},"juni":{"tema":"...","aktiviteter":"...","notat":"..."}}\nTema skal reflektere årstid og pedagogiske prioriteter. Aktiviteter skal knyttes til rammeplanen.`;
       await kallAI(prompt, (tekst) => {
         setAiLoading(false);
@@ -5376,13 +8639,13 @@ ${innhold}
               });
               return { ...prev, arshjul: nyArshjul };
             });
-            vis("✨ Komplett årshjul generert!");
-          } catch { vis("ℹ️ AI utilgjengelig"); }
-        } else { vis("ℹ️ AI utilgjengelig"); }
-      });
+            visLokal("✨ Komplett årshjul generert!");
+          } catch { visLokal("ℹ️ AI utilgjengelig"); }
+        } else { visLokal("ℹ️ AI utilgjengelig"); }
+      }, 4096);
     };
 
-    const aksepterForslag = (seksjonId) => { oppdaterSeksjon(seksjonId, aiTekst); setAiTekst(""); setAiAktiv(null); vis("✅ Forslag lagt inn"); };
+    const aksepterForslag = (seksjonId) => { oppdaterSeksjon(seksjonId, aiTekst); setAiTekst(""); setAiAktiv(null); visLokal("✅ Forslag lagt inn"); };
     const avvisForslag = () => { setAiTekst(""); setAiAktiv(null); };
 
     // Definert utenfor if-blokken så React ikke remounter den ved hvert render
@@ -5409,7 +8672,7 @@ ${innhold}
             })}
           </div>
           {erAktivSeksjon && aiTekst && (
-            <div className="fade" style={{background:"#f0f7ff",border:"2px solid #2c5b8e",borderRadius:10,padding:12,marginTop:10}}>
+            <div ref={el => el && el.scrollIntoView({ behavior:"smooth", block:"nearest" })} className="fade" style={{background:"#f0f7ff",border:"2px solid #2c5b8e",borderRadius:10,padding:12,marginTop:10}}>
               <div style={{fontSize:11,fontWeight:800,color:C.g,marginBottom:6}}>✨ AI-forslag – klikk "Bruk" for å legge inn i seksjonen:</div>
               <div style={{fontSize:12,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.6,marginBottom:8,maxHeight:220,overflowY:"auto"}}>{aiTekst}</div>
               <div style={{display:"flex",gap:7}}>
@@ -5433,11 +8696,23 @@ ${innhold}
 
       return (
         <div className="fade">
+          {lokalToast && <div className="fade" style={{position:"sticky",top:8,zIndex:99,background:"#1a2c45",color:"#fff",padding:"9px 15px",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{lokalToast}</div>}
           <button onClick={() => setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>{erRediger ? "✏️ Rediger årsplan" : "📆 Ny årsplan"}</div>
           <p style={{color:C.gr,fontSize:12,marginBottom:14,lineHeight:1.5}}>Fyll ut seksjonene og bruk AI-knappene for hjelp. Du bestemmer alltid innholdet.</p>
 
           {planFeil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 13px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {planFeil}</div>}
+
+          {planTema && (
+            <div style={{background:"#e3f2fd",borderRadius:10,padding:"10px 13px",marginBottom:12,borderLeft:"4px solid #1565c0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:800,color:"#1565c0",marginBottom:2}}>🎯 FELLES TEMA AKTIVT</div>
+                <div style={{fontSize:13,fontWeight:700,color:"#1a2c45"}}>«{planTema}»</div>
+                <div style={{fontSize:11,color:"#5d7390",marginTop:1}}>Brukes i alle AI-forslag for seksjoner og årshjul</div>
+              </div>
+              <button onClick={()=>setPlanTema("")} style={{background:"transparent",border:"1px solid #90caf9",color:"#1565c0",borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap"}}>✕ Fjern</button>
+            </div>
+          )}
 
           {/* Grunninfo */}
           <div style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:14}}>
@@ -5544,9 +8819,16 @@ ${innhold}
             </div>
           </div>
 
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+            <button onClick={()=>skrivUtArsplan(valgt)} style={{background:"#e3f2fd",color:"#1565c0",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
             <button onClick={() => redigerPlan(valgt)} style={{background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
-            <button onClick={() => slettPlan(valgt.id)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+            {bekreftSletting
+              ? <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft</button>
+                  <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#eee",color:C.t,padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+                </div>
+              : <button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+            }
           </div>
 
           {SEKSJONER.map(s => {
@@ -5599,6 +8881,7 @@ ${innhold}
 
     return (
       <div className="fade">
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 8px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📆 Årsplaner</div>
         <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Fullstendige årsplaner med AI-assistanse og interaktivt årshjul</p>
 
@@ -5637,7 +8920,7 @@ ${innhold}
         )}
 
         <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
-          <strong>⚠️ Backup:</strong> Årsplaner lagres kun lokalt på denne enheten. Kopier viktig innhold til et eksternt dokument jevnlig.
+          <strong>☁️ Lagring:</strong> Årsplaner lagres automatisk i skyen og er tilgjengelige på alle enheter når du er innlogget. Bruk "💾 Last ned"-knappen for lokal backup.
         </div>
       </div>
     );
@@ -5651,6 +8934,9 @@ ${innhold}
     const [valgt, setValgt] = useState(null);
     const [sok, setSok] = useState("");
     const [filterFag, setFilterFag] = useState("alle");
+    const [lokalToast, setLokalToast] = useState("");
+    const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
+    const [bekreftSletting, setBekreftSletting] = useState(false);
 
     // Skjema-state
     const [d_tittel, setDTittel] = useState("");
@@ -5666,73 +8952,66 @@ ${innhold}
 
     // OCR-skanner state
     const [skannLoading, setSkannLoading] = useState(false);
-    const [skannFremgang, setSkannFremgang] = useState(0);
     const skannRef = useRef(null);
 
     const kjorOCR = async (fil) => {
       if (!fil) return;
-      setSkannLoading(true); setSkannFremgang(0);
+      setSkannLoading(true);
       try {
-        // Last bildet inn i canvas og forbedre for OCR
         const dataUrl = await new Promise((res, rej) => {
           const reader = new FileReader();
           reader.onload = e => res(e.target.result);
           reader.onerror = rej;
           reader.readAsDataURL(fil);
         });
-        const cv = await new Promise(res => {
+        // Skaler ned til maks 1400px og konverter til JPEG
+        const b64 = await new Promise(res => {
           const img = new Image();
           img.onload = () => {
-            const maxDim = 1800;
+            const maxDim = 1400;
             const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
             const c = document.createElement("canvas");
             c.width = Math.round(img.width * scale);
             c.height = Math.round(img.height * scale);
             c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-            res(c);
+            res(c.toDataURL("image/jpeg", 0.88).replace(/^data:image\/jpeg;base64,/, ""));
           };
           img.src = dataUrl;
         });
-        // Adaptiv terskling (Bradley-metode) for bedre OCR
-        const ctx = cv.getContext("2d");
-        const imgData = ctx.getImageData(0, 0, cv.width, cv.height);
-        const d = imgData.data, W = cv.width, H = cv.height;
-        const gray = new Uint8Array(W * H);
-        for (let i = 0; i < d.length; i += 4)
-          gray[i >> 2] = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
-        const bR = Math.max(15, Math.round(Math.min(W, H) / 40));
-        const stride = W + 1;
-        const integ = new Float64Array(stride * (H + 1));
-        for (let y = 0; y < H; y++)
-          for (let x = 0; x < W; x++)
-            integ[(y+1)*stride+(x+1)] = gray[y*W+x] + integ[y*stride+(x+1)] + integ[(y+1)*stride+x] - integ[y*stride+x];
-        for (let y = 0; y < H; y++) {
-          for (let x = 0; x < W; x++) {
-            const x1=Math.max(0,x-bR), y1=Math.max(0,y-bR), x2=Math.min(W-1,x+bR), y2=Math.min(H-1,y+bR);
-            const cnt=(x2-x1)*(y2-y1);
-            const sum=integ[(y2+1)*stride+(x2+1)]-integ[y1*stride+(x2+1)]-integ[(y2+1)*stride+x1]+integ[y1*stride+x1];
-            const px = gray[y*W+x] < (sum/cnt)*0.85 ? 0 : 255;
-            const i=(y*W+x)*4; d[i]=d[i+1]=d[i+2]=px; d[i+3]=255;
+        // Les tekst via Claude Vision
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 60000);
+        try {
+          const r = await fetch("/api/ai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: "Du er en OCR-assistent. Trekk ut ALL tekst fra dette bildet nøyaktig slik den fremstår. Bevar linjeskift og avsnitt. Svar kun med den ekstraherte teksten – ingen forklaring eller kommentar. Hvis det ikke finnes lesbar tekst, svar med tom streng.",
+              image: { data: b64, media_type: "image/jpeg" },
+              max_tokens: 2000,
+            }),
+            signal: ctrl.signal,
+          });
+          if (r.ok) {
+            const d = await r.json();
+            const lest = (d?.text || "").trim();
+            if (lest) {
+              setDFortelling(prev => prev ? prev + "\n\n" + lest : lest);
+              visLokal("✅ Tekst lest fra bilde – sjekk og rediger ved behov");
+            } else {
+              visLokal("ℹ️ Ingen lesbar tekst funnet – prøv med bedre belysning");
+            }
+          } else {
+            visLokal("❌ Skanning feilet – prøv igjen");
           }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        // Kjør Tesseract OCR
-        const { recognize } = await import("tesseract.js");
-        const { data: { text } } = await recognize(cv, "nor+eng", {
-          logger: m => { if (m.status === "recognizing text") setSkannFremgang(Math.round(m.progress * 100)); }
-        });
-        const lest = text.trim();
-        if (lest) {
-          setDFortelling(prev => prev ? prev + "\n\n" + lest : lest);
-          vis("✅ Tekst lest fra bilde – sjekk og rediger ved behov");
-        } else {
-          vis("ℹ️ Ingen lesbar tekst funnet – prøv med bedre belysning");
+        } finally {
+          clearTimeout(tid);
         }
       } catch (e) {
         console.warn("[OCR]", e);
-        vis("❌ Skanning feilet – prøv igjen");
+        visLokal("❌ Skanning feilet – prøv igjen");
       } finally {
-        setSkannLoading(false); setSkannFremgang(0);
+        setSkannLoading(false);
       }
     };
 
@@ -5751,6 +9030,7 @@ ${innhold}
       const ok = await lagreDokumentasjon(aktivBruker.id, oppdatertListe);
       if (!ok) { setDFeil("Kunne ikke lagre – muligens fordi lagring er blokkert i dette miljøet"); return false; }
       setDok(oppdatertListe);
+      setGlobalDokumentasjon(oppdatertListe);
       return true;
     };
 
@@ -5852,10 +9132,10 @@ ${innhold}
         a.href = url; a.download = `dokumentasjon-${new Date().toISOString().slice(0,10)}.html`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(()=>URL.revokeObjectURL(url), 1500);
-        vis("✅ Eksportert");
+        visLokal("✅ Eksportert");
       } catch (e) {
         console.error("[Dokumentasjon] eksport:", e);
-        vis("❌ Eksport feilet");
+        visLokal("❌ Eksport feilet");
       }
     };
 
@@ -5887,7 +9167,7 @@ ${innhold}
             await lagre([nyttDok, ...dok]);
           }
           setVisSkanner(false);
-          vis("✅ Dokument skannet og lagt til i dokumentasjon");
+          visLokal("✅ Dokument skannet og lagt til i dokumentasjon");
         }}/>
       </div>
     );
@@ -5901,6 +9181,7 @@ ${innhold}
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger dokumentasjon":"📝 Ny dokumentasjon"}</div>
 
           {d_feil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 13px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {d_feil}</div>}
+          {lokalToast && <div style={{background:"#e8f5e9",color:"#2e7d32",borderRadius:9,padding:"9px 14px",fontSize:13,fontWeight:700,marginBottom:12,textAlign:"center"}}>{lokalToast}</div>}
 
           <div style={{background:C.w,borderRadius:14,padding:18,boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
             <label style={labelStil}>Tittel</label>
@@ -5945,7 +9226,7 @@ ${innhold}
               <label style={{...labelStil,marginBottom:0}}>📖 Praksisfortelling (hva skjedde – min. 20 tegn)</label>
               <button type="button" disabled={skannLoading} onClick={()=>skannRef.current?.click()}
                 style={{background:"linear-gradient(135deg,#2d6a4f,#52b788)",color:"#fff",border:"none",borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:800,cursor:skannLoading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",opacity:skannLoading?0.7:1,whiteSpace:"nowrap"}}>
-                {skannLoading ? `⏳ ${skannFremgang}%` : "📷 Skann tekst"}
+                {skannLoading ? "⏳ Leser tekst…" : "📷 Skann tekst"}
               </button>
               <input ref={skannRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{ kjorOCR(e.target.files?.[0]); e.target.value=""; }}/>
             </div>
@@ -5990,9 +9271,16 @@ ${innhold}
               </>
             )}
 
-            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginTop:6}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:6}}>
+              <button onClick={()=>skrivUtGenerell({tittel:valgt.tittel,meta:new Date(valgt.dato).toLocaleDateString("no-NO",{day:"numeric",month:"long",year:"numeric"}),seksjoner:[{label:"📖 Praksisfortelling",tekst:valgt.fortelling,farge:"#2c5b8e",bg:"#f5f9fd"},{label:"💭 Refleksjon",tekst:valgt.refleksjon,farge:"#2d6a4f",bg:"#e8f5e9"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"11px",fontSize:13,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
               <button onClick={()=>redigerDokument(valgt)} style={{background:"#2c5b8e",color:"#fff",padding:"11px",fontSize:13,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
-              <button onClick={()=>slettDokument(valgt.id)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:13,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+              {bekreftSletting
+                ? <div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>{setBekreftSletting(false);slettDokument(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft</button>
+                    <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#eee",color:C.t,padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+                  </div>
+                : <button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:13,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+              }
             </div>
             <div style={{fontSize:10,color:C.gr,textAlign:"center",marginTop:9}}>Opprettet: {new Date(valgt.opprettet).toLocaleDateString("no-NO")}{valgt.oppdatert!==valgt.opprettet && " • Sist endret: "+new Date(valgt.oppdatert).toLocaleDateString("no-NO")}</div>
           </div>
@@ -6005,6 +9293,7 @@ ${innhold}
       <div className="fade">
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📔 Dokumentasjon</div>
         <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Praksisfortellinger og refleksjoner – knyttet til rammeplanen</p>
+        {lokalToast && <div className="fade" style={{position:"sticky",top:8,zIndex:99,background:"#1a2c45",color:"#fff",padding:"9px 15px",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{lokalToast}</div>}
 
         <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
           <button onClick={nyttDokument} style={{flex:"1 1 140px",padding:"11px",background:"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif",boxShadow:"0 3px 9px rgba(44,91,142,0.2)"}}>📝 Ny dokumentasjon</button>
@@ -6056,7 +9345,7 @@ ${innhold}
         )}
 
         <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
-          <strong>⚠️ Backup:</strong> Dokumentasjon lagres kun lokalt på denne enheten. Bruk "💾 Eksporter alle"-knappen jevnlig for å lage backup. Hvis du tømmer nettleserdata mister du alt.
+          <strong>☁️ Lagring:</strong> Dokumentasjon lagres automatisk i skyen og er tilgjengelig på alle enheter når du er innlogget. Bruk "💾 Eksporter alle"-knappen for lokal backup.
         </div>
       </div>
     );
@@ -6073,11 +9362,9 @@ ${innhold}
 
     // Brukernavn
     const [nb_nytt, setNbNytt] = useState("");
-    const [nb_pw, setNbPw] = useState("");
 
     // E-post
     const [ne_nytt, setNeNytt] = useState("");
-    const [ne_pw, setNePw] = useState("");
 
     // Telefon
     const [tlf_nytt, setTlfNytt] = useState(aktivBruker?.telefon || "");
@@ -6522,7 +9809,7 @@ ${innhold}
     navigerTil("ai");
   };
 
-  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,ukeplan:<UkeplanSide/>,arsplan:<ArsplanSide/>,boker:<BokerSide aktivBruker={aktivBruker}/>};
+  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,planlegging:<PlanleggingSide/>,maanedsplan:<MaanedsplanSide/>,maanedsbrev:<MaanedsbrevSide/>,ukeplan:<UkeplanSide/>,arsplan:<ArsplanSide/>,boker:<BokerSide aktivBruker={aktivBruker}/>,aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>};
 
   return (
     <>
@@ -6547,10 +9834,10 @@ ${innhold}
           </div>
           <nav style={{flex:1,padding:"10px 9px"}}>
             {nav.map(item=>(
-              <button key={item.id} className={`nb ${side===item.id?"on":""}`} onClick={()=>navigerTil(item.id)}
-                style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 10px",marginBottom:2,background:side===item.id?"rgba(255,255,255,0.2)":"transparent",borderRadius:8,color:"#fff",fontSize:13,cursor:"pointer",textAlign:"left"}}>
+              <button key={item.id} className={`nb ${(side===item.id||(item.id==="planlegging"&&["ukeplan","arsplan","maanedsplan","maanedsbrev"].includes(side)))?"on":""}`} onClick={()=>navigerTil(item.id)}
+                style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 10px",marginBottom:5,background:(side===item.id||(item.id==="planlegging"&&["ukeplan","arsplan","maanedsplan","maanedsbrev"].includes(side)))?"rgba(255,255,255,0.2)":"transparent",borderRadius:8,color:"#fff",fontSize:13,cursor:"pointer",textAlign:"left"}}>
                 <span style={{fontSize:16}}>{item.i}</span>
-                <span style={{fontWeight:side===item.id?800:600}}>{item.n}</span>
+                <span style={{fontWeight:(side===item.id||(item.id==="planlegging"&&["ukeplan","arsplan","maanedsplan","maanedsbrev"].includes(side)))?800:600}}>{item.n}</span>
                 {item.badge>0&&<span style={{marginLeft:"auto",background:"#6ba0d9",borderRadius:9,padding:"1px 7px",fontSize:10}}>{item.badge}</span>}
               </button>
             ))}
@@ -6582,7 +9869,7 @@ ${innhold}
         </div>
         <main className="bh-main">
           {feedback && <div className="fade" style={{position:"fixed",top:70,right:20,zIndex:200,background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
-          {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav}/>
+          {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])}/>
            : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
            : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
            : (sider[side]||Hjem())
@@ -6596,33 +9883,61 @@ ${innhold}
 // ═══════════════════════════════════════════
 //  APP WRAPPER – auth-gate som velger mellom innlogging og hovedappen
 // ═══════════════════════════════════════════
+export class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { feil: null }; }
+  static getDerivedStateFromError(e) { return { feil: e?.message || String(e) }; }
+  render() {
+    if (this.state.feil) return (
+      <div style={{padding:32,fontFamily:"monospace",background:"#1a1a2e",color:"#ff6b6b",minHeight:"100vh"}}>
+        <h2 style={{color:"#fff",marginBottom:12}}>Noe gikk galt</h2>
+        <pre style={{whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{this.state.feil}</pre>
+        <button onClick={()=>window.location.reload()} style={{marginTop:20,padding:"10px 24px",background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,cursor:"pointer"}}>Last inn på nytt</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [aktivBruker, setAktivBruker] = useState(null);
   const [laster, setLaster] = useState(true);
   const [visInnlogging, setVisInnlogging] = useState(false);
 
   useEffect(() => {
-    // Fallback: hvis onAuthStateChange henger, avslutt lasting etter 5s
-    const fallback = setTimeout(() => setLaster(false), 5000);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "INITIAL_SESSION") {
-        try {
-          if (session?.user) {
-            const profil = await hentProfil(session.user.id);
-            setAktivBruker(byggBruker(session.user, profil));
-          }
-        } catch (_) {}
-        clearTimeout(fallback);
-        setLaster(false);
-      } else if (session?.user) {
-        try {
-          const profil = await hentProfil(session.user.id);
-          setAktivBruker(byggBruker(session.user, profil));
-        } catch (_) {}
-      } else {
+    // onAuthStateChange setter bruker FØR getSession() (synkront fra cache)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+        if (session?.user) {
+          setAktivBruker(byggBruker(session.user, null));
+          hentProfil(session.user.id).then(p => {
+            setAktivBruker(byggBruker(session.user, p));
+          });
+        }
+      } else if (event === "SIGNED_OUT") {
         setAktivBruker(null);
       }
+    });
+
+    // Fallback: hvis getSession() henger, avslutter vi lasting etter 4s
+    const fallback = setTimeout(() => setLaster(false), 4000);
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(fallback);
+
+      if (session?.user) {
+        const skalLoggeUt =
+          localStorage.getItem("bh_husk_meg") === "false" &&
+          !sessionStorage.getItem("bh_sesjon");
+        if (skalLoggeUt) {
+          supabase.auth.signOut().finally(() => setLaster(false));
+          return;
+        }
+      }
+
+      setLaster(false);
+    }).catch(() => {
+      clearTimeout(fallback);
+      setLaster(false);
     });
 
     return () => {
@@ -6632,6 +9947,7 @@ export default function App() {
   }, []);
 
   const handleLogout = async () => {
+    sessionStorage.removeItem("bh_sesjon");
     await slettSesjon();
     setAktivBruker(null);
     setVisInnlogging(false);
