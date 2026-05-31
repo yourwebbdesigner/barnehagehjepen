@@ -380,7 +380,7 @@ function DeltPlanEditor({ planType, payload, kanRedigere, onChange }) {
         </div>
         {felt("Tema", inp(payload.tema, v => sett("tema", v), "Ukas tema"))}
         {dagNavn.map((dag, i) => (
-          <div key={dag} style={{ background:"#f9fbfd", borderRadius:10, padding:"12px 14px", marginBottom:10, border:`1px solid ${C.mint}` }}>
+          <div key={dag} style={{ background:"var(--c-w)", borderRadius:10, padding:"12px 14px", marginBottom:10, border:`1px solid ${C.mint}` }}>
             <div style={{ fontWeight:800, fontSize:13, color:C.g, marginBottom:8 }}>{dagLabel[i]}</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:6 }}>
               <div>
@@ -451,7 +451,7 @@ function DeltPlanEditor({ planType, payload, kanRedigere, onChange }) {
 
         <div style={{ fontWeight:800, fontSize:13, color:C.g, marginBottom:8, marginTop:12 }}>📅 Årshjul</div>
         {mnd.map(m => (
-          <div key={m} style={{ background:"#f9fbfd", borderRadius:10, padding:"10px 12px", marginBottom:8, border:`1px solid ${C.mint}` }}>
+          <div key={m} style={{ background:"var(--c-w)", borderRadius:10, padding:"10px 12px", marginBottom:8, border:`1px solid ${C.mint}` }}>
             <div style={{ fontWeight:800, fontSize:12, color:C.g, marginBottom:6, textTransform:"capitalize" }}>{m}</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:4 }}>
               {["tema","aktiviteter"].map(f => (
@@ -949,7 +949,7 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
             const erMeg = t.bruker_id === aktivBruker.id;
             const r     = ROLLER[t.rolle] || ROLLER.lese;
             return (
-              <div key={t.bruker_id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"#f9fbfd", borderRadius:9, marginBottom:6, border:`1px solid ${C.mint}` }}>
+              <div key={t.bruker_id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--c-w)", borderRadius:9, marginBottom:6, border:`1px solid ${C.mint}` }}>
                 <span style={{ fontSize:20 }}>{t.profil?.avatar || "👤"}</span>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, fontWeight:700, color:C.t }}>
@@ -1013,7 +1013,7 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
             </div>
           ) : (
             historikk.map((h, i) => (
-              <div key={h.id || i} style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"#f9fbfd", borderRadius:10, marginBottom:8, border:`1px solid ${C.mint}` }}>
+              <div key={h.id || i} style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:"var(--c-w)", borderRadius:10, marginBottom:8, border:`1px solid ${C.mint}` }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight:700, color:C.t }}>
                     Versjon {historikk.length - i}
@@ -1147,7 +1147,7 @@ function DelNyPlanModal({ aktivBruker, onOpprett, onLukk }) {
         {laster ? (
           <div style={{ display:"flex", justifyContent:"center", padding:16 }}><div className="spin"/></div>
         ) : aktivListe.length === 0 ? (
-          <div style={{ background:"#f9fbfd", borderRadius:9, padding:"12px 14px", fontSize:13, color:C.gr }}>
+          <div style={{ background:"var(--c-w)", borderRadius:9, padding:"12px 14px", fontSize:13, color:C.gr }}>
             Du har ingen {PLANTYPE[planType]?.label?.toLowerCase() || "innhold"} ennå.
           </div>
         ) : (
@@ -1376,7 +1376,7 @@ export default function SamarbeidSide({ aktivBruker }) {
         <>
           {tab === "mine" && (
             mineDelte.length === 0 ? (
-              <div style={{ background:"#f9fbfd", borderRadius:12, padding:"28px 20px", textAlign:"center", border:`1px solid ${C.mint}` }}>
+              <div style={{ background:"var(--c-w)", borderRadius:12, padding:"28px 20px", textAlign:"center", border:`1px solid ${C.mint}` }}>
                 <div style={{ fontSize:32, marginBottom:8 }}>👥</div>
                 <div style={{ fontWeight:700, fontSize:14, color:C.t, marginBottom:6 }}>Ingen delte planer ennå</div>
                 <div style={{ fontSize:12, color:C.gr, marginBottom:14 }}>Del en eksisterende plan og inviter kolleger til å samarbeide</div>
@@ -1395,7 +1395,7 @@ export default function SamarbeidSide({ aktivBruker }) {
 
           {tab === "felles" && (
             deltMedMeg.length === 0 ? (
-              <div style={{ background:"#f9fbfd", borderRadius:12, padding:"28px 20px", textAlign:"center", border:`1px solid ${C.mint}` }}>
+              <div style={{ background:"var(--c-w)", borderRadius:12, padding:"28px 20px", textAlign:"center", border:`1px solid ${C.mint}` }}>
                 <div style={{ fontSize:32, marginBottom:8 }}>📬</div>
                 <div style={{ fontWeight:700, fontSize:14, color:C.t, marginBottom:6 }}>Ingen planer delt med deg</div>
                 <div style={{ fontSize:12, color:C.gr }}>Når kolleger deler planer med deg, vises de her</div>

@@ -88,6 +88,86 @@ const CSS = `
     html { scroll-behavior: auto; }
   }
 
+  /* ── MØRK MODUS: Overrides for hardkodede farger ────────────── */
+  /* Hvite kort/paneler */
+  [data-theme="dark"] [style*="background:#fff"],
+  [data-theme="dark"] [style*="background: #fff"],
+  [data-theme="dark"] [style*="background:#ffffff"],
+  [data-theme="dark"] [style*="background: #ffffff"],
+  [data-theme="dark"] [style*="background:white"],
+  [data-theme="dark"] [style*="background: white"] {
+    background: var(--c-w) !important;
+    color: var(--c-t);
+  }
+  /* Lys grå bakgrunn */
+  [data-theme="dark"] [style*="background:#f5f9fd"],
+  [data-theme="dark"] [style*="background: #f5f9fd"],
+  [data-theme="dark"] [style*="background:#f3f7fc"],
+  [data-theme="dark"] [style*="background: #f3f7fc"],
+  [data-theme="dark"] [style*="background:#f8fafd"],
+  [data-theme="dark"] [style*="background: #f8fafd"] {
+    background: var(--c-lg2) !important;
+  }
+  /* Gule info-bokser – dempet i mørk modus */
+  [data-theme="dark"] [style*="background:#fffde7"],
+  [data-theme="dark"] [style*="background: #fffde7"],
+  [data-theme="dark"] [style*="background:#fff9c4"],
+  [data-theme="dark"] [style*="background: #fff9c4"],
+  [data-theme="dark"] [style*="background:#fff3e0"],
+  [data-theme="dark"] [style*="background: #fff3e0"] {
+    background: #2a2510 !important;
+    color: #e8d87a !important;
+  }
+  /* Grønne info-bokser */
+  [data-theme="dark"] [style*="background:#e8f5e9"],
+  [data-theme="dark"] [style*="background: #e8f5e9"],
+  [data-theme="dark"] [style*="background:#d8f3dc"],
+  [data-theme="dark"] [style*="background: #d8f3dc"],
+  [data-theme="dark"] [style*="background:#f0fdf4"],
+  [data-theme="dark"] [style*="background: #f0fdf4"] {
+    background: #0e2a18 !important;
+    color: #6fcf97 !important;
+  }
+  /* Blå info-bokser */
+  [data-theme="dark"] [style*="background:#e3f2fd"],
+  [data-theme="dark"] [style*="background: #e3f2fd"],
+  [data-theme="dark"] [style*="background:#d8e6f5"],
+  [data-theme="dark"] [style*="background: #d8e6f5"],
+  [data-theme="dark"] [style*="background:#e8eff8"],
+  [data-theme="dark"] [style*="background: #e8eff8"] {
+    background: var(--c-lg2) !important;
+  }
+  /* Mørk tekst på lyse bakgrunner */
+  [data-theme="dark"] [style*="color:#1a2c45"],
+  [data-theme="dark"] [style*="color: #1a2c45"],
+  [data-theme="dark"] [style*="color:#1a2a3a"],
+  [data-theme="dark"] [style*="color: #1a2a3a"] {
+    color: var(--c-t) !important;
+  }
+  [data-theme="dark"] [style*="color:#5d7390"],
+  [data-theme="dark"] [style*="color: #5d7390"],
+  [data-theme="dark"] [style*="color:#888"],
+  [data-theme="dark"] [style*="color: #888"],
+  [data-theme="dark"] [style*="color:#666"],
+  [data-theme="dark"] [style*="color: #666"],
+  [data-theme="dark"] [style*="color:#999"],
+  [data-theme="dark"] [style*="color: #999"] {
+    color: var(--c-gr) !important;
+  }
+  /* Border-farger */
+  [data-theme="dark"] [style*="border:1px solid #e8eff8"],
+  [data-theme="dark"] [style*="border: 1px solid #e8eff8"],
+  [data-theme="dark"] [style*="border:1px solid #d8e6f5"],
+  [data-theme="dark"] [style*="border: 1px solid #d8e6f5"],
+  [data-theme="dark"] [style*="border:1.5px solid #e8eff8"],
+  [data-theme="dark"] [style*="border: 1.5px solid #e8eff8"],
+  [data-theme="dark"] [style*="border:1.5px solid #d8e6f5"],
+  [data-theme="dark"] [style*="border: 1.5px solid #d8e6f5"],
+  [data-theme="dark"] [style*="border:1.5px solid #ddd"],
+  [data-theme="dark"] [style*="border: 1.5px solid #ddd"] {
+    border-color: var(--c-divider) !important;
+  }
+
   /* RESPONSIVT LAYOUT */
   .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }
   .bh-sidebar { position:fixed; top:0; left:0; width:225px; height:100vh; background:var(--c-sidebar); z-index:100; display:flex; flex-direction:column; overflow-y:auto; transition:transform 0.28s ease, background 0.25s; }
@@ -4276,7 +4356,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
         <div style={{display:"flex",gap:6,flexWrap:"nowrap",width:"max-content"}}>
           {options.map(o=>(
             <button key={o.id} type="button" className="btn" onClick={()=>onChange(o.id)}
-              style={{padding:"6px 11px",fontSize:11,background:value===o.id?C.g:"#e8eff8",color:value===o.id?"#fff":C.t,whiteSpace:"nowrap",flexShrink:0,border:"none",borderRadius:8,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>
+              style={{padding:"6px 11px",fontSize:11,background:value===o.id?C.g:C.lg2,color:value===o.id?"#fff":C.t,whiteSpace:"nowrap",flexShrink:0,border:"none",borderRadius:8,cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>
               {o.ikon?o.ikon+" ":""}{o.navn||o.id}
             </button>
           ))}
@@ -4303,9 +4383,9 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
                 style={{
                   padding:"10px 6px",
                   fontSize:11,
-                  background:type===t.id?"linear-gradient(135deg, #2c5b8e, #4178bd)":"#f5f9fd",
+                  background:type===t.id?"linear-gradient(135deg, #2c5b8e, #4178bd)":C.lg2,
                   color:type===t.id?"#fff":C.t,
-                  border:type===t.id?"2px solid #2c5b8e":"2px solid #e8eff8",
+                  border:type===t.id?"2px solid #2c5b8e":`2px solid var(--c-divider)`,
                   borderRadius:10,
                   cursor:"pointer",
                   fontFamily:"'Nunito',sans-serif",
