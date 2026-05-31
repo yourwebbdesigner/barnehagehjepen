@@ -3241,7 +3241,10 @@ function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
   useEffect(() => {
     if (!aktivBruker?.id) return;
     setLasterMine(true);
-    hentUserSanger(aktivBruker.id).then(s => { setUserSanger(s); setLasterMine(false); });
+    hentUserSanger(aktivBruker.id)
+      .then(s => setUserSanger(s))
+      .catch(() => {})
+      .finally(() => setLasterMine(false));
   }, [aktivBruker?.id]);
 
   const userSangerMapped = userSanger.map(s => ({ id:"user_"+s.id, tittel:s.tittel, tekst:s.tekst, kategori:s.kategori, alder:s.alder, melodi:s.melodi, tips:s.tips, rammeplan:s.rammeplan||[], _dbId:s.id, _erMin:true }));
@@ -5329,10 +5332,15 @@ function AuthScreen({ onLoginSuccess }) {
     setFeil("");
     if (!g_epost.trim()) { setFeil("Skriv e-postadressen din"); return; }
     setLoading(true);
-    const r = await sendTilbakestillEpost(g_epost);
-    setLoading(false);
-    if (!r.ok) { setFeil(r.feil); return; }
-    setSuksess("✅ E-post sendt! Sjekk innboksen for en lenke for å tilbakestille passordet.");
+    try {
+      const r = await sendTilbakestillEpost(g_epost);
+      if (!r.ok) { setFeil(r.feil); return; }
+      setSuksess("✅ E-post sendt! Sjekk innboksen for en lenke for å tilbakestille passordet.");
+    } catch {
+      setFeil("Noe gikk galt. Prøv igjen.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputStil = {
@@ -5601,9 +5609,14 @@ function AdminPanel({ aktivBruker }) {
 
   const last = async () => {
     setLoading(true);
-    const { data } = await supabase.from("user_profiles").select("*").order("created_at");
-    setBrukere(data || []);
-    setLoading(false);
+    try {
+      const { data } = await supabase.from("user_profiles").select("*").order("created_at");
+      setBrukere(data || []);
+    } catch (e) {
+      console.error("Admin: feil ved lasting av brukere:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { last(); }, []);

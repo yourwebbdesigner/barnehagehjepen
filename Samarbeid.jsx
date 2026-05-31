@@ -211,9 +211,10 @@ async function aksepterInvitasjon(invId, brukerId, deltPlanId, rolle) {
     lagt_til_av:  null,
   });
   if (t) throw t;
-  await supabase.from("plan_invitasjoner")
+  const { error: invErr } = await supabase.from("plan_invitasjoner")
     .update({ akseptert: true, akseptert_av: brukerId })
     .eq("id", invId);
+  if (invErr) console.error("Kunne ikke oppdatere invitasjonsstatus:", invErr.message);
 }
 
 async function oppdaterDelPlan(deltPlanId, payload, brukerId, brukerNavn) {
