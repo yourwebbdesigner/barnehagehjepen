@@ -323,6 +323,15 @@ const CSS = `
   [data-theme="dark"] [style*="border-left: 4px solid #c2185b"] {
     border-left-color: #f472b6 !important;
   }
+  /* Fagområder – garantert dark mode via data-fag attributt */
+  [data-theme="dark"] [data-fag="kommunikasjon"] { background: #0e2a18 !important; color: #6fcf97 !important; border-color: #1a4020 !important; }
+  [data-theme="dark"] [data-fag="kropp"] { background: #2a1800 !important; color: #f5a623 !important; border-color: #4a2800 !important; }
+  [data-theme="dark"] [data-fag="kunst"] { background: #200a22 !important; color: #e879f9 !important; border-color: #3a1040 !important; }
+  [data-theme="dark"] [data-fag="natur"] { background: #0a1830 !important; color: #60a5fa !important; border-color: #1a3050 !important; }
+  [data-theme="dark"] [data-fag="antall"] { background: #1a0e28 !important; color: #c084fc !important; border-color: #2a1a40 !important; }
+  [data-theme="dark"] [data-fag="etikk"] { background: #2a0808 !important; color: #ff9090 !important; border-color: #4a1010 !important; }
+  [data-theme="dark"] [data-fag="naermiljo"] { background: #171e24 !important; color: #90a4ae !important; border-color: #2a3840 !important; }
+
   /* Tegneark: gradient-bakgrunner for SVG-visning og kortthumbnail */
   [data-theme="dark"] [style*="background:linear-gradient(135deg,#fafffe"],
   [data-theme="dark"] [style*="background: linear-gradient(135deg,#fafffe"],
@@ -3177,7 +3186,7 @@ const TEGNEKAT = [
 function FagTag({ rid }) {
   const f = FAGOMRADER.find(x => x.id === rid);
   if (!f) return null;
-  return <span className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
+  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
 }
 function Tilbake({ onClick }) {
   return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
@@ -3629,7 +3638,7 @@ function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
                   <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
                     <span className="tag" style={{background:C.mint,color:C.g}}>{s.kategori}</span>
                     <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{s.alder}</span>
-                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>
                 <button className={`fav-btn ${favSet.has(s.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("sanger",s.id);}} title={favSet.has(s.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
@@ -3910,7 +3919,7 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
                   <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                     <span className="tag" style={{background:C.mint,color:C.g}}>{a.kategori}</span>
                     <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{a.alder}</span>
-                    {(a.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    {(a.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>
                 <button className={`fav-btn ${favSet.has(a.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("aktiviteter",a.id);}} title={favSet.has(a.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
@@ -7060,7 +7069,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
                   {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
                   <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                     {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
-                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>
                 <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
@@ -7182,7 +7191,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
             ):(
               <div className="fade">
                 <Tilbake onClick={()=>setValgtFag(null)} />
-                <div style={{background:valgtFag.lys,borderRadius:13,padding:18,marginBottom:12,borderLeft:`5px solid ${valgtFag.farge}`}}>
+                <div data-fag={valgtFag.id} style={{background:valgtFag.lys,borderRadius:13,padding:18,marginBottom:12,borderLeft:`5px solid ${valgtFag.farge}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:9}}>
                     <span style={{fontSize:30}}>{valgtFag.ikon}</span>
                     <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:valgtFag.farge}}>{valgtFag.navn}</div>
@@ -7202,12 +7211,12 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
                 ))}
                 <div style={{background:C.w,borderRadius:11,padding:14,marginBottom:10,boxShadow:"0 2px 6px rgba(44,91,142,0.07)"}}>
                   <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:C.t,marginBottom:8}}>📈 Progresjon</div>
-                  <div style={{background:valgtFag.lys,borderRadius:8,padding:11,fontSize:13,color:C.t,lineHeight:1.7}}>{valgtFag.progresjon}</div>
+                  <div data-fag={valgtFag.id} style={{background:valgtFag.lys,borderRadius:8,padding:11,fontSize:13,color:C.t,lineHeight:1.7}}>{valgtFag.progresjon}</div>
                 </div>
                 <div style={{background:C.w,borderRadius:11,padding:14,marginBottom:10,boxShadow:"0 2px 6px rgba(44,91,142,0.07)"}}>
                   <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:C.t,marginBottom:8}}>🛠 Arbeidsmetoder</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    {valgtFag.arbeidsmater.map((a,i)=><div key={i} style={{background:valgtFag.lys,borderRadius:8,padding:"7px 10px",fontSize:11,color:valgtFag.farge,fontWeight:600}}>✓ {a}</div>)}
+                    {valgtFag.arbeidsmater.map((a,i)=><div data-fag={valgtFag.id} key={i} style={{background:valgtFag.lys,borderRadius:8,padding:"7px 10px",fontSize:11,color:valgtFag.farge,fontWeight:600}}>✓ {a}</div>)}
                   </div>
                 </div>
                 <div style={{background:C.w,borderRadius:11,padding:14,marginBottom:10,boxShadow:"0 2px 6px rgba(44,91,142,0.07)"}}>
@@ -7845,7 +7854,7 @@ ${innhold}
                     <div style={{fontWeight:800,color:C.t,fontSize:13,lineHeight:1.3,marginBottom:3}}>{t._erMin&&<span style={{fontSize:9,background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"1px 5px",marginRight:4,fontWeight:700}}>🤖 AI</span>}{t.tittel}</div>
                     <div style={{fontSize:10,color:C.gr,marginBottom:5}}>👶 {t.alder}</div>
                     <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                      {(t.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
+                      {(t.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
                     </div>
                   </div>
                 </div>
@@ -7948,7 +7957,7 @@ ${innhold}
             <div>
               <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>{valgt.tittel}</div>
               <div style={{fontSize:12,color:C.gr,marginTop:2}}>{MAANEDER[valgt.maaned-1]} {valgt.aar} {valgt.tema&&`• Tema: ${valgt.tema}`}</div>
-              {valgt.fagomrader?.length>0&&<div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:6}}>{valgt.fagomrader.map(f=>{const fg=FAGOMRADER.find(x=>x.id===f);return fg?<span key={f} style={{background:fg.lys,color:fg.farge,borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:700}}>{fg.ikon} {fg.navn.split(",")[0]}</span>:null;})}</div>}
+              {valgt.fagomrader?.length>0&&<div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:6}}>{valgt.fagomrader.map(f=>{const fg=FAGOMRADER.find(x=>x.id===f);return fg?<span data-fag={fg.id} key={f} style={{background:fg.lys,color:fg.farge,borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:700}}>{fg.ikon} {fg.navn.split(",")[0]}</span>:null;})}</div>}
             </div>
             <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
               <button onClick={()=>skrivUtGenerell({tittel:valgt.tittel||`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}${valgt.tema?" • Tema: "+valgt.tema:""}`,seksjoner:[...["uke1","uke2","uke3","uke4"].map((u,i)=>({label:`Uke ${i+1}`,tekst:valgt[u],farge:"#2c5b8e",bg:"#f5f9fd"})),{label:"Notat",tekst:valgt.notat,farge:"#795548",bg:"#fff9c4"}]})} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🖨️ Skriv ut</button>
@@ -8029,7 +8038,7 @@ ${innhold}
             <div>
               <div style={{fontWeight:800,color:C.t,fontSize:14}}>{p.tittel}</div>
               <div style={{fontSize:12,color:C.gr,marginTop:2}}>{MAANEDER[p.maaned-1]} {p.aar}{p.tema&&` • ${p.tema}`}</div>
-              {p.fagomrader?.length>0&&<div style={{display:"flex",gap:4,marginTop:5,flexWrap:"wrap"}}>{p.fagomrader.slice(0,3).map(f=>{const fg=FAGOMRADER.find(x=>x.id===f);return fg?<span key={f} style={{background:fg.lys,color:fg.farge,borderRadius:6,padding:"1px 6px",fontSize:10,fontWeight:700}}>{fg.ikon}</span>:null;})}</div>}
+              {p.fagomrader?.length>0&&<div style={{display:"flex",gap:4,marginTop:5,flexWrap:"wrap"}}>{p.fagomrader.slice(0,3).map(f=>{const fg=FAGOMRADER.find(x=>x.id===f);return fg?<span data-fag={fg.id} key={f} style={{background:fg.lys,color:fg.farge,borderRadius:6,padding:"1px 6px",fontSize:10,fontWeight:700}}>{fg.ikon}</span>:null;})}</div>}
             </div>
             <span style={{color:C.gr,fontSize:18}}>›</span>
           </div>
@@ -9601,7 +9610,7 @@ ${innhold}
             <div style={{fontSize:12,color:C.gr,marginBottom:14,display:"flex",flexWrap:"wrap",gap:10}}>
               <span>📅 {new Date(valgt.dato).toLocaleDateString("no-NO",{day:"numeric",month:"long",year:"numeric"})}</span>
               {valgt.fag?.length>0 && (
-                <span style={{display:"flex",gap:5,flexWrap:"wrap"}}>{valgt.fag.map(fid=>{const f=FAGOMRADER.find(x=>x.id===fid);return f?<span key={fid} style={{background:f.lys,color:f.farge,padding:"1px 8px",borderRadius:7,fontSize:10,fontWeight:700}}>{f.ikon} {f.navn}</span>:null;})}</span>
+                <span style={{display:"flex",gap:5,flexWrap:"wrap"}}>{valgt.fag.map(fid=>{const f=FAGOMRADER.find(x=>x.id===fid);return f?<span data-fag={f.id} key={fid} style={{background:f.lys,color:f.farge,padding:"1px 8px",borderRadius:7,fontSize:10,fontWeight:700}}>{f.ikon} {f.navn}</span>:null;})}</span>
               )}
             </div>
 
@@ -9679,7 +9688,7 @@ ${innhold}
                 <div style={{fontSize:12,color:C.gr,lineHeight:1.5,marginBottom:6,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{d.fortelling}</div>
                 {d.fag?.length>0 && (
                   <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                    {d.fag.slice(0,3).map(fid=>{const f=FAGOMRADER.find(x=>x.id===fid);return f?<span key={fid} style={{background:f.lys,color:f.farge,padding:"1px 7px",borderRadius:6,fontSize:9,fontWeight:700}}>{f.ikon} {f.navn}</span>:null;})}
+                    {d.fag.slice(0,3).map(fid=>{const f=FAGOMRADER.find(x=>x.id===fid);return f?<span data-fag={f.id} key={fid} style={{background:f.lys,color:f.farge,padding:"1px 7px",borderRadius:6,fontSize:9,fontWeight:700}}>{f.ikon} {f.navn}</span>:null;})}
                     {d.fag.length>3 && <span style={{fontSize:10,color:C.gr}}>+{d.fag.length-3} til</span>}
                   </div>
                 )}
