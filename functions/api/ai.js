@@ -1,16 +1,27 @@
 // Cloudflare Pages Function – backend-proxy for Anthropic API
 // Plassering: functions/api/ai.js  →  tilgjengelig på /api/ai
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+const ALLOWED_ORIGINS = [
+  "https://barnehagehjelpen.pages.dev",
+  "https://barnehagehjelpen.no",
+  "https://www.barnehagehjelpen.no",
+];
 
-function json(data, status = 200) {
+function corsHeaders(request) {
+  const origin = request?.headers?.get("Origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
+  };
+}
+
+function json(data, status = 200, request = null) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...CORS },
+    headers: { "Content-Type": "application/json", ...corsHeaders(request) },
   });
 }
 
@@ -18,10 +29,10 @@ export async function onRequest(context) {
   const { request, env } = context;
 
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS });
+    return new Response(null, { status: 204, headers: corsHeaders(request) });
   }
   if (request.method !== "POST") {
-    return json({ error: "Bruk POST" }, 405);
+    return json({ error: "Bruk POST" }, 405, request);
   }
 
   try {
@@ -29,20 +40,22 @@ export async function onRequest(context) {
     try {
       body = await request.json();
     } catch {
-      return json({ error: "Ugyldig JSON i forespørselen" }, 400);
+      return json({ error: "Ugyldig JSON i forespørselen" }, 400, request);
     }
 
     const { prompt, system, max_tokens: reqTokens, image } = body || {};
-    if (typeof prompt !== "string") return json({ error: "Mangler 'prompt' (string)" }, 400);
-    if (prompt.length < 5) return json({ error: "Forespørselen er for kort" }, 400);
-    if (prompt.length > 20000) return json({ error: "Forespørselen er for lang (maks 20000 tegn)" }, 400);
+    if (typeof prompt !== "string") return json({ error: "Mangler 'prompt' (string)" }, 400, request);
+    if (prompt.length < 5) return json({ error: "Forespørselen er for kort" }, 400, request);
+    if (prompt.length > 20000) return json({ error: "Forespørselen er for lang (maks 20000 tegn)" }, 400, request);
     const maxTokens = Math.min(Math.max(parseInt(reqTokens) || 1800, 500), 4096);
 
     // Bygg meldingsinnhold – støtter valgfritt bilde (base64) for vision/OCR
     let messageContent;
     if (image && typeof image.data === "string" && typeof image.media_type === "string") {
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      const mediaType = allowedTypes.includes(image.media_type) ? image.media_type : "image/jpeg";
       messageContent = [
-        { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } },
+        { type: "image", source: { type: "base64", media_type: mediaType, data: image.data } },
         { type: "text", text: prompt },
       ];
     } else {
@@ -51,7 +64,7 @@ export async function onRequest(context) {
 
     const apiKey = (env.ANTHROPIC_API_KEY || "").replace(/[\s\r\n\t"']/g, "");
     if (!apiKey) {
-      return json({ error: "ANTHROPIC_API_KEY mangler i miljøvariabler" }, 500);
+      return json({ error: "ANTHROPIC_API_KEY mangler i miljøvariabler" }, 500, request);
     }
 
     // Bygg API-payload – bruker system-felt + prompt caching for raskere og billigere gjentatte kall
@@ -75,14 +88,21 @@ export async function onRequest(context) {
           "anthropic-beta": "prompt-caching-2024-07-31",
         },
         body: JSON.stringify(apiPayload),
+        signal: AbortSignal.timeout(25000),
       });
     } catch (e) {
-      return json({ error: "Nettverksfeil: " + (e.message || "ukjent") }, 502);
+      if (e.name === "TimeoutError" || e.name === "AbortError") {
+        return json({ error: "AI brukte for lang tid – prøv igjen" }, 504, request);
+      }
+      console.error("[AI] Nettverksfeil:", e.message);
+      return json({ error: "AI-tjenesten er utilgjengelig" }, 502, request);
     }
 
     if (!anthropicResponse.ok) {
       const errText = await anthropicResponse.text().catch(() => "");
-      return json({ error: `Anthropic ${anthropicResponse.status}: ${errText.slice(0, 300)}` }, 502);
+      console.error(`[AI] Anthropic HTTP ${anthropicResponse.status}: ${errText.slice(0, 300)}`);
+      if (anthropicResponse.status === 429) return json({ error: "AI-tjenesten er overbelastet, prøv igjen" }, 429, request);
+      return json({ error: "Kunne ikke generere innhold" }, 502, request);
     }
 
     const data = await anthropicResponse.json();
@@ -92,12 +112,13 @@ export async function onRequest(context) {
 
     // For vision-forespørsler (bilde vedlagt) er tom tekst et gyldig svar – dokumentet hadde ingen lesbar tekst
     if (!tekst && !image) {
-      return json({ error: "AI ga tomt svar" }, 502);
+      return json({ error: "AI ga tomt svar" }, 502, request);
     }
 
-    return json({ text: tekst });
+    return json({ text: tekst }, 200, request);
 
   } catch (e) {
-    return json({ error: "Intern serverfeil: " + (e.message || "ukjent") }, 500);
+    console.error("[AI] Uventet feil:", e);
+    return json({ error: "Intern serverfeil" }, 500, request);
   }
 }

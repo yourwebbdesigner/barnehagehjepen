@@ -2965,6 +2965,7 @@ function NyttSkjemaForm({ onSave, onNavigate }) {
 // Defined OUTSIDE the main component so they never remount on parent re-renders
 function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
   const w = window.open("", "_blank");
+  if (!w) { alert("Popup ble blokkert av nettleseren. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut."); return; }
   w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -4634,8 +4635,8 @@ async function registrerBruker({ brukernavn, epost, passord, telefon }) {
   const user = data?.user;
   if (!user) return { ok: false, feil: "Registrering feilet – prøv igjen" };
 
-  const { count } = await supabase.from("user_profiles").select("id", { count: "exact", head: true });
-  const erAdmin = (count || 0) === 0;
+  const { count, error: countErr } = await supabase.from("user_profiles").select("id", { count: "exact", head: true });
+  const erAdmin = !countErr && count === 0;
 
   const { error: insertErr } = await supabase.from("user_profiles").insert({
     id: user.id,
@@ -4835,11 +4836,9 @@ async function oppdaterEpost(brukerId, nyEpost) {
   if (!epost.includes("@") || !epost.includes(".")) return { ok: false, feil: "Ugyldig e-postadresse" };
   const { error } = await supabase.auth.updateUser({ email: epost });
   if (error) return { ok: false, feil: error.message };
-  const { error: profileErr } = await supabase.from("user_profiles").update({ epost }).eq("id", brukerId);
-  if (profileErr) return { ok: false, feil: "E-post oppdatert i auth, men profil-oppdatering feilet: " + profileErr.message };
-  const profil = await hentProfil(brukerId);
-  const { data } = await supabase.auth.getUser();
-  return { ok: true, bruker: data.user ? byggBruker(data.user, profil) : null };
+  // Oppdaterer IKKE user_profiles.epost her — Supabase sender bekreftelsesmail til ny adresse.
+  // Profilen oppdateres automatisk via onAuthStateChange når brukeren bekrefter den nye adressen.
+  return { ok: true, bekreftEpost: true };
 }
 
 async function oppdaterPassord(brukerId, gammeltPassord, nyttPassord) {
@@ -9415,9 +9414,8 @@ ${innhold}
       const r = await oppdaterEpost(aktivBruker.id, ne_nytt);
       setPfLoading(false);
       if (!r.ok) { setPfFeil(r.feil); return; }
-      onUserUpdate(r.bruker);
       setNeNytt("");
-      visBekreftelse("✅ E-post sendt – sjekk innboksen for bekreftelse!");
+      visBekreftelse("✅ Bekreftelseslenke sendt til ny e-post – klikk lenken for å bekrefte endringen.");
     };
 
     const lagreTelefonEndr = async () => {
@@ -9899,15 +9897,66 @@ export class ErrorBoundary extends React.Component {
   }
 }
 
+function GjenopprettPassordSkjerm({ onFerdig }) {
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [feil, setFeil] = useState("");
+  const [laster, setLaster] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFeil("");
+    if (pw.length < 6) return setFeil("Passord må være minst 6 tegn");
+    if (pw !== pw2) return setFeil("Passordene er ikke like");
+    setLaster(true);
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setLaster(false);
+    if (error) return setFeil(error.message);
+    setOk(true);
+    setTimeout(() => onFerdig(), 2000);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#1a3a5c 0%,#2c7be5 100%)" }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "36px 32px", width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
+        <h2 style={{ margin: "0 0 8px", fontSize: 22, color: "#1a2a3a" }}>🔑 Sett nytt passord</h2>
+        <p style={{ margin: "0 0 24px", color: "#666", fontSize: 14 }}>Velg et nytt passord for kontoen din.</p>
+        {ok ? (
+          <p style={{ color: "#2e7d32", fontWeight: 700, textAlign: "center" }}>✅ Passord oppdatert! Logger inn…</p>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <label style={{ display: "block", marginBottom: 4, fontSize: 13, color: "#444" }}>Nytt passord</label>
+            <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Minst 6 tegn" required
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #ddd", fontSize: 15, marginBottom: 14, boxSizing: "border-box" }} />
+            <label style={{ display: "block", marginBottom: 4, fontSize: 13, color: "#444" }}>Gjenta passord</label>
+            <input type="password" value={pw2} onChange={e => setPw2(e.target.value)} placeholder="Gjenta passord" required
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #ddd", fontSize: 15, marginBottom: 14, boxSizing: "border-box" }} />
+            {feil && <p style={{ color: "#c62828", fontSize: 13, margin: "0 0 12px" }}>{feil}</p>}
+            <button type="submit" disabled={laster}
+              style={{ width: "100%", padding: "12px", background: "#2c5b8e", color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: laster ? "not-allowed" : "pointer", opacity: laster ? 0.7 : 1 }}>
+              {laster ? "Lagrer…" : "Lagre nytt passord"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [aktivBruker, setAktivBruker] = useState(null);
   const [laster, setLaster] = useState(true);
   const [visInnlogging, setVisInnlogging] = useState(false);
+  const [visGjenopprettPassord, setVisGjenopprettPassord] = useState(false);
 
   useEffect(() => {
     // onAuthStateChange setter bruker FØR getSession() (synkront fra cache)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      if (event === "PASSWORD_RECOVERY") {
+        setVisGjenopprettPassord(true);
+        setLaster(false);
+      } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
         if (session?.user) {
           setAktivBruker(byggBruker(session.user, null));
           hentProfil(session.user.id).then(p => {
@@ -9916,6 +9965,7 @@ export default function App() {
         }
       } else if (event === "SIGNED_OUT") {
         setAktivBruker(null);
+        setVisGjenopprettPassord(false);
       }
     });
 
@@ -9960,6 +10010,10 @@ export default function App() {
 
   if (laster) {
     return <Velkomst onStart={() => {}} sjekkSesjon={true}/>;
+  }
+
+  if (visGjenopprettPassord) {
+    return <GjenopprettPassordSkjerm onFerdig={() => { setVisGjenopprettPassord(false); setVisInnlogging(true); }} />;
   }
 
   if (!aktivBruker && !visInnlogging) {
