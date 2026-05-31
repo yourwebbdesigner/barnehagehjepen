@@ -308,6 +308,25 @@ const CSS = `
   [data-theme="dark"] [style*="background: rgb(248, 251, 255)"] {
     background: var(--c-lg2) !important;
   }
+  /* Nøytrale grå bakgrunner (Samarbeid: read-only felt, knapper) */
+  [data-theme="dark"] [style*="background:#f9f9f9"],
+  [data-theme="dark"] [style*="background: #f9f9f9"],
+  [data-theme="dark"] [style*="background:#e0e0e0"],
+  [data-theme="dark"] [style*="background: #e0e0e0"] {
+    background: var(--c-lg2) !important;
+    color: var(--c-t) !important;
+  }
+  /* Ekstra tekst-farger */
+  [data-theme="dark"] [style*="color:#5b8bbf"],
+  [data-theme="dark"] [style*="color: #5b8bbf"] {
+    color: var(--c-gr) !important;
+  }
+  [data-theme="dark"] [style*="color:#e65100"],
+  [data-theme="dark"] [style*="color: #e65100"],
+  [data-theme="dark"] [style*="color:rgb(230, 81, 0)"],
+  [data-theme="dark"] [style*="color: rgb(230, 81, 0)"] {
+    color: #ffab76 !important;
+  }
   /* Mørke tekst-farger – hex og rgb() fallback for alle nettlesere */
   [data-theme="dark"] [style*="color:#6a1b9a"],
   [data-theme="dark"] [style*="color: #6a1b9a"],
@@ -444,12 +463,16 @@ const CSS = `
   [data-theme="dark"] [data-fag-color="rolle-assistent"] { color: #c084fc !important; }
   [data-theme="dark"] [data-fag-color="rolle-kommune"] { color: #90a4ae !important; }
 
-  /* Tegneark: gradient-bakgrunner for SVG-visning og kortthumbnail */
+  /* Gradient-bakgrunner – alle varianter */
   [data-theme="dark"] [style*="background:linear-gradient(135deg,#fafffe"],
   [data-theme="dark"] [style*="background: linear-gradient(135deg,#fafffe"],
   [data-theme="dark"] [style*="background:linear-gradient(135deg,#f0f9f4"],
   [data-theme="dark"] [style*="background: linear-gradient(135deg,#f0f9f4"] {
     background: #0a1e10 !important;
+  }
+  [data-theme="dark"] [style*="background:linear-gradient(135deg,#e3f2fd"],
+  [data-theme="dark"] [style*="background: linear-gradient(135deg,#e3f2fd"] {
+    background: var(--c-lg2) !important;
   }
   /* FAGOMRADER: orange/hud-farge */
   [data-theme="dark"] [style*="background:#fdebd0"],
@@ -8297,19 +8320,19 @@ ${innhold}
   const PlanleggingSide = () => (
     <div className="fade">
       <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:10}}>📋 Planlegging</div>
-      <div style={{background:"linear-gradient(135deg,#e3f2fd,#f0f7ff)",borderRadius:13,padding:"13px 14px",marginBottom:18,border:"1.5px solid #90caf9"}}>
-        <div style={{fontWeight:800,fontSize:12,color:"#1565c0",marginBottom:7,display:"flex",alignItems:"center",gap:5}}>
+      <div style={{background:C.lg2,borderRadius:13,padding:"13px 14px",marginBottom:18,border:`1.5px solid ${C.lg}`}}>
+        <div style={{fontWeight:800,fontSize:12,color:C.g,marginBottom:7,display:"flex",alignItems:"center",gap:5}}>
           🎯 Felles tema
-          {planTema && <span style={{background:"#1565c0",color:"#fff",borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>Aktivt</span>}
+          {planTema && <span style={{background:C.g,color:"#fff",borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>Aktivt</span>}
         </div>
         <input
           key={planTema}
           defaultValue={planTema}
           onBlur={e=>setPlanTema(e.target.value.trim())}
           placeholder="Skriv inn felles tema for alle planer..."
-          style={{width:"100%",padding:"8px 11px",borderRadius:8,border:"1.5px solid #90caf9",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none",background:"#fff"}}
+          style={{width:"100%",padding:"8px 11px",borderRadius:8,border:`1.5px solid ${C.lg}`,fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none",background:C.w,color:C.t}}
         />
-        <div style={{fontSize:11,color:"#5b8bbf",marginTop:6,lineHeight:1.5}}>
+        <div style={{fontSize:11,color:C.gr,marginTop:6,lineHeight:1.5}}>
           {planTema
             ? `Temaet «${planTema}» fylles automatisk inn i nye ukeplaner og månedsplaner.`
             : "Sett et felles tema som automatisk fylles inn i nye planer – du kan alltid endre det per plan."}
