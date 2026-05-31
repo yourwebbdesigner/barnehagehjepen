@@ -1,0 +1,8 @@
+name = "barnehagehjelpen"
+compatibility_date = "2025-05-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barnehagehjelpen-db"
+database_id = "9c9792ef-7ebf-49f9-8eb7-a6d3611b4a63"
