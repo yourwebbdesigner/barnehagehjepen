@@ -312,6 +312,41 @@ const CSS = `
   [data-theme="dark"] [style*="border-left: 4px solid #c2185b"] {
     border-left-color: #f472b6 !important;
   }
+  /* Tegneark: gradient-bakgrunner for SVG-visning og kortthumbnail */
+  [data-theme="dark"] [style*="background:linear-gradient(135deg,#fafffe"],
+  [data-theme="dark"] [style*="background: linear-gradient(135deg,#fafffe"],
+  [data-theme="dark"] [style*="background:linear-gradient(135deg,#f0f9f4"],
+  [data-theme="dark"] [style*="background: linear-gradient(135deg,#f0f9f4"] {
+    background: #0a1e10 !important;
+  }
+  /* FAGOMRADER: orange/hud-farge */
+  [data-theme="dark"] [style*="background:#fdebd0"],
+  [data-theme="dark"] [style*="background: #fdebd0"] {
+    background: #2a1400 !important;
+    color: #f5a623 !important;
+  }
+  /* FAGOMRADER: rosa/lilla (Kunst, kultur) */
+  [data-theme="dark"] [style*="background:#f8e7f6"],
+  [data-theme="dark"] [style*="background: #f8e7f6"] {
+    background: #1e0a20 !important;
+    color: #e879f9 !important;
+  }
+  /* Manglende tekst-farger */
+  [data-theme="dark"] [style*="color:#37474f"],
+  [data-theme="dark"] [style*="color: #37474f"] {
+    color: #90a4ae !important;
+  }
+  [data-theme="dark"] [style*="color:#b5179e"],
+  [data-theme="dark"] [style*="color: #b5179e"] {
+    color: #e879f9 !important;
+  }
+  /* Border: #d8f3dc (grønn) */
+  [data-theme="dark"] [style*="border:2px solid #d8f3dc"],
+  [data-theme="dark"] [style*="border: 2px solid #d8f3dc"],
+  [data-theme="dark"] [style*="border:2px dashed #d8f3dc"],
+  [data-theme="dark"] [style*="border: 2px dashed #d8f3dc"] {
+    border-color: var(--c-divider) !important;
+  }
 
   /* RESPONSIVT LAYOUT */
   .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }
