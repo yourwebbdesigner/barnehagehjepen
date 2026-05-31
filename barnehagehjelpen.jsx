@@ -3002,8 +3002,8 @@ async function lagreUserTegneark(ark) {
   const { data, error } = await supabase.from("user_tegneark").insert(ark).select().single();
   return { data, error };
 }
-async function slettUserTegneark(id) {
-  return await supabase.from("user_tegneark").delete().eq("id", id);
+async function slettUserTegneark(id, userId) {
+  return await supabase.from("user_tegneark").delete().eq("id", id).eq("user_id", userId);
 }
 
 function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
@@ -3116,8 +3116,8 @@ async function lagreUserSang(sang) {
   const { data, error } = await supabase.from("user_sanger").insert(sang).select().single();
   return { data, error };
 }
-async function slettUserSang(id) {
-  return await supabase.from("user_sanger").delete().eq("id", id);
+async function slettUserSang(id, userId) {
+  return await supabase.from("user_sanger").delete().eq("id", id).eq("user_id", userId);
 }
 
 function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
@@ -3258,7 +3258,7 @@ function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
     skrivUtVindu('<div style="max-width:620px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + s.tittel + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + s.kategori + ' · ' + s.alder + melodiHtml + '</div><pre style="font-size:16px;line-height:2.1;white-space:pre-wrap;font-family:inherit;background:#f5f9fd;padding:18px;border-radius:10px;border:1px solid #c4d6ec;">' + s.tekst + '</pre>' + tipsHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', s.tittel);
   };
   const slettMin = async (dbId) => {
-    await slettUserSang(dbId);
+    await slettUserSang(dbId, aktivBruker.id);
     setUserSanger(p => p.filter(s => s.id !== dbId));
     setValgt(null);
   };
@@ -5044,7 +5044,8 @@ async function slettAktivitetskort(id) {
 }
 async function hentKortFavoritter(userId) {
   if (!userId) return new Set();
-  const { data } = await supabase.from("activity_card_favorites").select("card_id").eq("user_id", userId);
+  const { data, error } = await supabase.from("activity_card_favorites").select("card_id").eq("user_id", userId);
+  if (error) return new Set();
   return new Set((data || []).map(r => r.card_id));
 }
 
@@ -5857,10 +5858,15 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
     if (!aktivBruker?.id) return;
     (async () => {
       setLaster(true);
-      const [data, favs] = await Promise.all([hentAktivitetskort(aktivBruker.id), hentKortFavoritter(aktivBruker.id)]);
-      setKort(data);
-      setFavSet(favs);
-      setLaster(false);
+      try {
+        const [data, favs] = await Promise.all([hentAktivitetskort(aktivBruker.id), hentKortFavoritter(aktivBruker.id)]);
+        setKort(data);
+        setFavSet(favs);
+      } catch (e) {
+        console.error("Feil ved lasting av aktivitetskort:", e);
+      } finally {
+        setLaster(false);
+      }
     })();
   }, [aktivBruker?.id]);
 
@@ -5870,10 +5876,12 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
     const ny = new Set(favSet);
     if (har) {
       ny.delete(kortId);
-      await supabase.from("activity_card_favorites").delete().eq("user_id", aktivBruker.id).eq("card_id", kortId);
+      const { error } = await supabase.from("activity_card_favorites").delete().eq("user_id", aktivBruker.id).eq("card_id", kortId);
+      if (error) { vis("Kunne ikke fjerne favoritt"); return; }
     } else {
       ny.add(kortId);
-      await supabase.from("activity_card_favorites").insert({ user_id: aktivBruker.id, card_id: kortId });
+      const { error } = await supabase.from("activity_card_favorites").insert({ user_id: aktivBruker.id, card_id: kortId });
+      if (error) { vis("Kunne ikke legge til favoritt"); return; }
     }
     setFavSet(ny);
     vis(har ? "Fjernet fra favoritter" : "⭐ Lagt til i favoritter");
@@ -7401,7 +7409,7 @@ ${innhold}
     
     if (visAiPanel) return <AiTegnearkView aktivBruker={aktivBruker} onLagre={(ny) => { setUserTegneark(p => [ny, ...p]); setGlobalUserTegneark(p => [ny, ...p]); setVisAiPanel(false); }} onAvbryt={() => setVisAiPanel(false)} />;
     const slettMin = async (dbId) => {
-      await slettUserTegneark(dbId);
+      await slettUserTegneark(dbId, aktivBruker.id);
       setUserTegneark(p => p.filter(t => t.id !== dbId));
       setValgtT(null);
     };
