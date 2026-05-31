@@ -3491,6 +3491,7 @@ function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
     const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag et tegneark-opplegg for barn i alderen ${form.alder} år.\n\nTema: ${form.tema}${form.fagomrade?"\nFagområde: "+form.fagomrade:""}${form.vanskelighet?"\nVanskelighetsgrad: "+form.vanskelighet:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på tegnearket",\n  "ikon": "ett passende emoji",\n  "oppgave": "fire nummererte tegnetrinn (1. ... 2. ... 3. ... 4. ...)",\n  "samtale": "tre åpne samtalespørsmål separert med spørsmålstegn",\n  "mal": "rammeplanmål – én setning",\n  "kategori": "passende kategori (dyr/natur/mennesker/mat/sport/teknologi/romfart/musikk/festlig/folelser)",\n  "alder": "${form.alder} år",\n  "rammeplan": ["id-er fra: kropp, kunst, natur, antall, etikk, naermiljo, kommunikasjon"]\n}`;
     try {
       const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:800 }) });
+      if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       const raw = json.text || "";
@@ -3606,6 +3607,7 @@ function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
     const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag en original ${sjangerTekst} for barn i alderen ${form.aldersgruppe} år.\n\nTema: ${form.tema}\nAntall vers: ${form.antallVers}${form.melodi?"\nMelodi/toneleie: "+form.melodi:""}${form.fagomrade?"\nKobling til fagområde: "+form.fagomrade:""}${form.ekstra?"\nØnsker: "+form.ekstra:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på sangen",\n  "tekst": "hele teksten med vers og evt. refreng, formatert med linjeskift",\n  "kategori": "${form.sjanger}",\n  "alder": "${form.aldersgruppe} år",\n  "melodi": "eventuell melodi-anbefaling eller null",\n  "tips": "pedagogisk tips til pedagogen eller null",\n  "rammeplan": ["id-er fra: kropp_bevegelse, kunst_kultur, natur_miljo, antall_rom_form, etikk_religion, naerlighet_vennskap, kommunikasjon_sprak"]\n}`;
     try {
       const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer og forfatter av barnesanger. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:1200 }) });
+      if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       const raw = json.text || "";
@@ -6475,6 +6477,7 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
       const system = `Du er en pedagogisk assistent for norske barnehager. Lag et detaljert aktivitetskort. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:
 {"title":"...","description":"...","category":"Lek|Natur|Vann|Bevegelse|Kreativt|Språk|Antall|Musikk|Ute|Rolig|Eksperiment|Sosialt","age_group":"...","materials":"...","steps":"Steg 1: ...\\nSteg 2: ...\\nSteg 3: ...","curriculum_area":["kommunikasjon"],"learning_goal":"...","duration":"...","difficulty":"enkel|middels|avansert","indoor_outdoor":"inne|ute|begge","icon":"🎯","weather_tags":["sol","regn"]}`;
       const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt }) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
       const d = await r.json();
       const tekst = d.text || "";
       const jsonMatch = tekst.match(/\{[\s\S]*\}/);
@@ -6763,6 +6766,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [rammeSeksjon, setRammeSeksjon] = useState("oversikt");
   const [valgtSkjema, setValgtSkjema] = useState(null);
   const [redigerSkjemaTittel, setRedigerSkjemaTittel] = useState(null);
+  const [bekreftSlettSkjema, setBekreftSlettSkjema] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [favoritter, setFavoritter] = useState({ sanger: [], aktiviteter: [], tegneark: [] });
   const [globalUkeplaner, setGlobalUkeplaner] = useState([]);
@@ -7207,7 +7211,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
           ))}
           <div style={{display:"flex",gap:8,marginTop:4}}>
             <button onClick={()=>skrivUtGenerell({tittel:valgtSkjema.tittel,meta:[valgtSkjema.alder,valgtSkjema.kategori].filter(Boolean).join(" • "),seksjoner:[{label:"🎯 Hva",tekst:valgtSkjema.hva,farge:"#795548",bg:"#fff9c4"},{label:"📦 Materialer",tekst:valgtSkjema.materialer,farge:"#c62828",bg:"#fce4ec"},{label:"⚙️ Hvordan",tekst:valgtSkjema.hvordan,farge:"#2e7d32",bg:"#e8f5e9"},{label:"❓ Hvorfor",tekst:valgtSkjema.hvorfor,farge:"#1565c0",bg:"#e3f2fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"8px 16px",fontSize:12,border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
-            <button className="btn" onClick={()=>{if(!window.confirm(`Slette «${valgtSkjema.tittel}»? Dette kan ikke angres.`))return;setSkjemaer(p=>p.filter(s=>s.id!==valgtSkjema.id));setValgtSkjema(null);setRedigerSkjemaTittel(null);vis("🗑 Slettet");}} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
+            <button className="btn" onClick={()=>setBekreftSlettSkjema(valgtSkjema)} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
           </div>
         </div>
       ):(
@@ -10392,6 +10396,18 @@ ${innhold}
           }
         </main>
       </div>
+      {bekreftSlettSkjema && (
+        <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBekreftSlettSkjema(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.w,borderRadius:14,padding:22,maxWidth:360,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#c62828",marginBottom:10}}>🗑 Slette skjema?</div>
+            <p style={{fontSize:13,color:C.t,lineHeight:1.6,marginBottom:16}}>Vil du slette <strong>«{bekreftSlettSkjema.tittel}»</strong>? Dette kan ikke angres.</p>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setBekreftSlettSkjema(null)} style={{flex:1,padding:"11px",background:C.lg2,color:C.t,border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+              <button onClick={()=>{setSkjemaer(p=>p.filter(s=>s.id!==bekreftSlettSkjema.id));setValgtSkjema(null);setRedigerSkjemaTittel(null);setBekreftSlettSkjema(null);vis("🗑 Slettet");}} style={{flex:1,padding:"11px",background:"#c62828",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
