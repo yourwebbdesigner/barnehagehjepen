@@ -6393,13 +6393,14 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
 }
 
 function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
-  const [tema, setTema] = useState(() => localStorage.getItem("bh_tema") || "auto");
+  const [tema, setTema] = useState(() => {
+    const lagret = localStorage.getItem("bh_tema");
+    if (lagret === "dark" || lagret === "light") return lagret;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
-    const html = document.documentElement;
-    if (tema === "dark") { html.setAttribute("data-theme", "dark"); }
-    else if (tema === "light") { html.setAttribute("data-theme", "light"); }
-    else { html.removeAttribute("data-theme"); }
+    document.documentElement.setAttribute("data-theme", tema);
     localStorage.setItem("bh_tema", tema);
   }, [tema]);
 
@@ -6723,16 +6724,16 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>🚀 Hurtigtilgang</div>
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:20}}>
         {[
-          ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","#e8eff8","sanger"],
-          ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","#e3f2fd","aktiviteter"],
-          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","#e0f2f1","boker"],
-          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","#fff8e1","aktivitetskort"],
-          ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","#f3e5f5","skjema-ny"],
-          ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","#ffebee","tegneark"],
-          ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","#d8f3dc","rammeplan"],
-          ["🤖","AI-assistent","Lag sanger, planer og mer","#37474f","#eceff1","ai"],
-        ].map(([ic,t,u,fc,lys,sid])=>(
-          <div key={t} className="hover fade" onClick={()=>setSide(sid)} style={{background:lys, borderRadius:14, padding:"16px 14px", cursor:"pointer", boxShadow:`0 2px 10px ${fc}22`, borderLeft:`4px solid ${fc}`}}>
+          ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","sanger"],
+          ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","aktiviteter"],
+          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","boker"],
+          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","aktivitetskort"],
+          ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","skjema-ny"],
+          ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","tegneark"],
+          ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","rammeplan"],
+          ["🤖","AI-assistent","Lag sanger, planer og mer","#37474f","ai"],
+        ].map(([ic,t,u,fc,sid])=>(
+          <div key={t} className="hover fade" onClick={()=>setSide(sid)} style={{background:C.w, borderRadius:14, padding:"16px 14px", cursor:"pointer", boxShadow:`0 2px 10px ${fc}22`, borderLeft:`4px solid ${fc}`}}>
             <div style={{fontSize:26, marginBottom:4}}>{ic}</div>
             <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>{t}</div>
             <div style={{fontSize:11, color:C.gr, marginTop:2}}>{u}</div>
@@ -6747,12 +6748,12 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       </div>
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
         {[
-          ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0","#e3f2fd"],
-          ["🗓️","Månedsplan","Hele måneden strukturert","manedsplan","#6a1b9a","#f3e5f5"],
-          ["✉️","Månedsbrev","Brev til foreldre","manedsbrev","#e67e22","#fff3e0"],
-          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f","#d8f3dc"],
-        ].map(([ic,t,u,typeId,fc,lys])=>(
-          <div key={t} className="hover" onClick={()=>aapneAImedType(typeId)} style={{background:lys, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
+          ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
+          ["🗓️","Månedsplan","Hele måneden strukturert","manedsplan","#6a1b9a"],
+          ["✉️","Månedsbrev","Brev til foreldre","manedsbrev","#e67e22"],
+          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
+        ].map(([ic,t,u,typeId,fc])=>(
+          <div key={t} className="hover" onClick={()=>aapneAImedType(typeId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
               <span style={{fontSize:18}}>{ic}</span>
               <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t}</div>
@@ -10000,7 +10001,7 @@ ${innhold}
                 {tema==="dark" ? "🌙 Mørk modus" : "☀️ Lys modus"}
               </span>
               <button
-                onClick={()=>setTema(t=>t==="dark"?"auto":"dark")}
+                onClick={()=>setTema(t=>t==="dark"?"light":"dark")}
                 title="Bytt tema"
                 style={{background:tema==="dark"?"var(--c-g)":"rgba(255,255,255,0.25)",border:"none",borderRadius:20,padding:"3px",width:44,height:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:tema==="dark"?"flex-end":"flex-start",transition:"background 0.25s, justify-content 0s",flexShrink:0}}
               >
