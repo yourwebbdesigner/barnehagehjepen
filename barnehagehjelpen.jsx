@@ -250,53 +250,91 @@ const CSS = `
   [data-theme="dark"] [style*="background: #f8fbff"] {
     background: var(--c-lg2) !important;
   }
-  /* Mørke tekst-farger som trenger lysere versjon i dark mode */
+  /* Mørke tekst-farger – hex og rgb() fallback for alle nettlesere */
   [data-theme="dark"] [style*="color:#6a1b9a"],
-  [data-theme="dark"] [style*="color: #6a1b9a"] {
-    color: #c084fc !important;
-  }
+  [data-theme="dark"] [style*="color: #6a1b9a"],
+  [data-theme="dark"] [style*="color:rgb(106, 27, 154)"],
+  [data-theme="dark"] [style*="color: rgb(106, 27, 154)"] { color: #c084fc !important; }
   [data-theme="dark"] [style*="color:#1565c0"],
-  [data-theme="dark"] [style*="color: #1565c0"] {
-    color: #60a5fa !important;
-  }
+  [data-theme="dark"] [style*="color: #1565c0"],
+  [data-theme="dark"] [style*="color:rgb(21, 101, 192)"],
+  [data-theme="dark"] [style*="color: rgb(21, 101, 192)"] { color: #60a5fa !important; }
   [data-theme="dark"] [style*="color:#00695c"],
-  [data-theme="dark"] [style*="color: #00695c"] {
-    color: #4db6ac !important;
-  }
+  [data-theme="dark"] [style*="color: #00695c"],
+  [data-theme="dark"] [style*="color:rgb(0, 105, 92)"],
+  [data-theme="dark"] [style*="color: rgb(0, 105, 92)"] { color: #4db6ac !important; }
   [data-theme="dark"] [style*="color:#1b5e20"],
   [data-theme="dark"] [style*="color: #1b5e20"],
+  [data-theme="dark"] [style*="color:rgb(27, 94, 32)"],
+  [data-theme="dark"] [style*="color: rgb(27, 94, 32)"],
   [data-theme="dark"] [style*="color:#2e7d32"],
   [data-theme="dark"] [style*="color: #2e7d32"],
+  [data-theme="dark"] [style*="color:rgb(46, 125, 50)"],
+  [data-theme="dark"] [style*="color: rgb(46, 125, 50)"],
   [data-theme="dark"] [style*="color:#2d6a4f"],
   [data-theme="dark"] [style*="color: #2d6a4f"],
+  [data-theme="dark"] [style*="color:rgb(45, 106, 79)"],
+  [data-theme="dark"] [style*="color: rgb(45, 106, 79)"],
   [data-theme="dark"] [style*="color:#33691e"],
-  [data-theme="dark"] [style*="color: #33691e"] {
-    color: #6fcf97 !important;
-  }
+  [data-theme="dark"] [style*="color: #33691e"],
+  [data-theme="dark"] [style*="color:rgb(51, 105, 30)"],
+  [data-theme="dark"] [style*="color: rgb(51, 105, 30)"] { color: #6fcf97 !important; }
   [data-theme="dark"] [style*="color:#795548"],
   [data-theme="dark"] [style*="color: #795548"],
+  [data-theme="dark"] [style*="color:rgb(121, 85, 72)"],
+  [data-theme="dark"] [style*="color: rgb(121, 85, 72)"],
   [data-theme="dark"] [style*="color:#5d4037"],
-  [data-theme="dark"] [style*="color: #5d4037"] {
-    color: #bcaaa4 !important;
-  }
+  [data-theme="dark"] [style*="color: #5d4037"],
+  [data-theme="dark"] [style*="color:rgb(93, 64, 55)"],
+  [data-theme="dark"] [style*="color: rgb(93, 64, 55)"] { color: #bcaaa4 !important; }
   [data-theme="dark"] [style*="color:#856404"],
-  [data-theme="dark"] [style*="color: #856404"] {
-    color: #e8c87a !important;
-  }
+  [data-theme="dark"] [style*="color: #856404"],
+  [data-theme="dark"] [style*="color:rgb(133, 100, 4)"],
+  [data-theme="dark"] [style*="color: rgb(133, 100, 4)"] { color: #e8c87a !important; }
   [data-theme="dark"] [style*="color:#455a64"],
-  [data-theme="dark"] [style*="color: #455a64"] {
-    color: #90a4ae !important;
-  }
+  [data-theme="dark"] [style*="color: #455a64"],
+  [data-theme="dark"] [style*="color:rgb(69, 90, 100)"],
+  [data-theme="dark"] [style*="color: rgb(69, 90, 100)"],
+  [data-theme="dark"] [style*="color:#37474f"],
+  [data-theme="dark"] [style*="color: #37474f"],
+  [data-theme="dark"] [style*="color:rgb(55, 71, 79)"],
+  [data-theme="dark"] [style*="color: rgb(55, 71, 79)"] { color: #90a4ae !important; }
   [data-theme="dark"] [style*="color:#c62828"],
   [data-theme="dark"] [style*="color: #c62828"],
+  [data-theme="dark"] [style*="color:rgb(198, 40, 40)"],
+  [data-theme="dark"] [style*="color: rgb(198, 40, 40)"],
   [data-theme="dark"] [style*="color:#c2185b"],
-  [data-theme="dark"] [style*="color: #c2185b"] {
-    color: #ff9090 !important;
-  }
+  [data-theme="dark"] [style*="color: #c2185b"],
+  [data-theme="dark"] [style*="color:rgb(194, 24, 91)"],
+  [data-theme="dark"] [style*="color: rgb(194, 24, 91)"] { color: #ff9090 !important; }
   [data-theme="dark"] [style*="color:#0277bd"],
-  [data-theme="dark"] [style*="color: #0277bd"] {
-    color: #4fc3f7 !important;
-  }
+  [data-theme="dark"] [style*="color: #0277bd"],
+  [data-theme="dark"] [style*="color:rgb(2, 119, 189)"],
+  [data-theme="dark"] [style*="color: rgb(2, 119, 189)"] { color: #4fc3f7 !important; }
+  [data-theme="dark"] [style*="color:#1a2c45"],
+  [data-theme="dark"] [style*="color: #1a2c45"],
+  [data-theme="dark"] [style*="color:rgb(26, 44, 69)"],
+  [data-theme="dark"] [style*="color: rgb(26, 44, 69)"],
+  [data-theme="dark"] [style*="color:#1a2a3a"],
+  [data-theme="dark"] [style*="color: #1a2a3a"],
+  [data-theme="dark"] [style*="color:rgb(26, 42, 58)"],
+  [data-theme="dark"] [style*="color: rgb(26, 42, 58)"] { color: var(--c-t) !important; }
+  [data-theme="dark"] [style*="color:#5d7390"],
+  [data-theme="dark"] [style*="color: #5d7390"],
+  [data-theme="dark"] [style*="color:rgb(93, 115, 144)"],
+  [data-theme="dark"] [style*="color: rgb(93, 115, 144)"],
+  [data-theme="dark"] [style*="color:#888"],
+  [data-theme="dark"] [style*="color: #888"],
+  [data-theme="dark"] [style*="color:#666"],
+  [data-theme="dark"] [style*="color: #666"],
+  [data-theme="dark"] [style*="color:#999"],
+  [data-theme="dark"] [style*="color: #999"],
+  [data-theme="dark"] [style*="color:rgb(136, 136, 136)"],
+  [data-theme="dark"] [style*="color: rgb(136, 136, 136)"] { color: var(--c-gr) !important; }
+  [data-theme="dark"] [style*="color:#b5179e"],
+  [data-theme="dark"] [style*="color: #b5179e"],
+  [data-theme="dark"] [style*="color:rgb(181, 23, 158)"],
+  [data-theme="dark"] [style*="color: rgb(181, 23, 158)"] { color: #e879f9 !important; }
   /* AI-badge (lilla) */
   [data-theme="dark"] [style*="background:#ede9fe"],
   [data-theme="dark"] [style*="background: #ede9fe"] {
@@ -323,7 +361,7 @@ const CSS = `
   [data-theme="dark"] [style*="border-left: 4px solid #c2185b"] {
     border-left-color: #f472b6 !important;
   }
-  /* Fagområder – garantert dark mode via data-fag attributt */
+  /* Fagområder – garantert dark mode via data-fag attributt (bakgrunn + tekst + kant) */
   [data-theme="dark"] [data-fag="kommunikasjon"] { background: #0e2a18 !important; color: #6fcf97 !important; border-color: #1a4020 !important; }
   [data-theme="dark"] [data-fag="kropp"] { background: #2a1800 !important; color: #f5a623 !important; border-color: #4a2800 !important; }
   [data-theme="dark"] [data-fag="kunst"] { background: #200a22 !important; color: #e879f9 !important; border-color: #3a1040 !important; }
@@ -331,6 +369,22 @@ const CSS = `
   [data-theme="dark"] [data-fag="antall"] { background: #1a0e28 !important; color: #c084fc !important; border-color: #2a1a40 !important; }
   [data-theme="dark"] [data-fag="etikk"] { background: #2a0808 !important; color: #ff9090 !important; border-color: #4a1010 !important; }
   [data-theme="dark"] [data-fag="naermiljo"] { background: #171e24 !important; color: #90a4ae !important; border-color: #2a3840 !important; }
+  /* Fagområde-farger kun som tekstfarge (ingen bakgrunnsendring) */
+  [data-theme="dark"] [data-fag-color="kommunikasjon"] { color: #6fcf97 !important; }
+  [data-theme="dark"] [data-fag-color="kropp"] { color: #f5a623 !important; }
+  [data-theme="dark"] [data-fag-color="kunst"] { color: #e879f9 !important; }
+  [data-theme="dark"] [data-fag-color="natur"] { color: #60a5fa !important; }
+  [data-theme="dark"] [data-fag-color="antall"] { color: #c084fc !important; }
+  [data-theme="dark"] [data-fag-color="etikk"] { color: #ff9090 !important; }
+  [data-theme="dark"] [data-fag-color="naermiljo"] { color: #90a4ae !important; }
+  /* Roller-farger som tekstfarge */
+  [data-theme="dark"] [data-fag-color="rolle-eier"] { color: #7a9ab8 !important; }
+  [data-theme="dark"] [data-fag-color="rolle-styrer"] { color: #60a5fa !important; }
+  [data-theme="dark"] [data-fag-color="rolle-pedleder"] { color: #6fcf97 !important; }
+  [data-theme="dark"] [data-fag-color="rolle-barnehagelaerer"] { color: #4db6ac !important; }
+  [data-theme="dark"] [data-fag-color="rolle-bua"] { color: #f5a623 !important; }
+  [data-theme="dark"] [data-fag-color="rolle-assistent"] { color: #c084fc !important; }
+  [data-theme="dark"] [data-fag-color="rolle-kommune"] { color: #90a4ae !important; }
 
   /* Tegneark: gradient-bakgrunner for SVG-visning og kortthumbnail */
   [data-theme="dark"] [style*="background:linear-gradient(135deg,#fafffe"],
@@ -5971,7 +6025,7 @@ function AdminPanel({ aktivBruker }) {
       {loading && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>}
       {!loading && brukere.length === 0 && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}>Ingen brukere</div>}
       {!loading && brukere.map(u => (
-        <div key={u.id} style={{background:"#fff",borderRadius:12,padding:"13px 15px",marginBottom:9,boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
+        <div key={u.id} style={{background:C.lg2,borderRadius:12,padding:"13px 15px",marginBottom:9,boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,gap:8}}>
             <div>
               <div style={{fontWeight:800,color:"#1a2c45",fontSize:14}}>{u.brukernavn} {u.is_admin&&<span style={{background:"#fff9c4",color:"#795548",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>👑 ADMIN</span>}{u.id===aktivBruker.id&&<span style={{background:"#d8f3dc",color:"#1b5e47",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>DU</span>}</div>
@@ -6972,7 +7026,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
               style={{background:C.lg2, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s", borderLeft:`3px solid ${f.farge}`}}>
               <span style={{fontSize:20}}>{f.ikon}</span>
               <div>
-                <div style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
+                <div data-fag-color={f.id} style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
                 <div style={{fontSize:9, color:C.gr, marginTop:1}}>{f.kortbeskrivelse}</div>
               </div>
             </div>
@@ -7180,7 +7234,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                         <div style={{display:"flex",alignItems:"center",gap:10}}>
                           <span style={{fontSize:24}}>{f.ikon}</span>
-                          <div><div style={{fontWeight:800,color:f.farge,fontSize:13}}>{f.nr}. {f.navn}</div><div style={{fontSize:11,color:C.gr}}>{f.kortbeskrivelse}</div></div>
+                          <div><div data-fag-color={f.id} style={{fontWeight:800,color:f.farge,fontSize:13}}>{f.nr}. {f.navn}</div><div style={{fontSize:11,color:C.gr}}>{f.kortbeskrivelse}</div></div>
                         </div>
                         <span style={{color:C.gr}}>›</span>
                       </div>
@@ -7194,7 +7248,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
                 <div data-fag={valgtFag.id} style={{background:valgtFag.lys,borderRadius:13,padding:18,marginBottom:12,borderLeft:`5px solid ${valgtFag.farge}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:9}}>
                     <span style={{fontSize:30}}>{valgtFag.ikon}</span>
-                    <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:valgtFag.farge}}>{valgtFag.navn}</div>
+                    <div data-fag-color={valgtFag.id} style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:valgtFag.farge}}>{valgtFag.navn}</div>
                   </div>
                   <p style={{fontSize:13,color:C.t,lineHeight:1.7}}>{valgtFag.innhold}</p>
                 </div>
