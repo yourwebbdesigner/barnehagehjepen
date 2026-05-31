@@ -4874,7 +4874,7 @@ const AVATAR_VALG = ["👤","🌿","🌸","🌻","🌳","🌈","🐰","🐱","�
 
 
 // E-postadresse til support – brukes av Kontakt-knapper i UI
-const SUPPORT_E_POST = "joel94@live.no";
+const SUPPORT_E_POST = "Barnehagehjelpen@hotmail.com";
 
 function supportMailto() {
   return `mailto:${SUPPORT_E_POST}?subject=Barnehagehjelpen`;
@@ -5101,7 +5101,7 @@ function VilkaarModal({ type, onLukk }) {
           {erPersonvern ? (
             <>
               <Section ikon="🏢" tittel="Behandlingsansvarlig">
-                Barnehagehjelpen v/Joel Ingvoldstad er behandlingsansvarlig for personopplysninger som samles inn via denne tjenesten. Kontakt: <a href="mailto:joel94@live.no" style={{color:"#2c5b8e",fontWeight:700}}>joel94@live.no</a>
+                Barnehagehjelpen v/Joel Ingvoldstad er behandlingsansvarlig for personopplysninger som samles inn via denne tjenesten. Kontakt: <a href="mailto:Barnehagehjelpen@hotmail.com" style={{color:"#2c5b8e",fontWeight:700}}>Barnehagehjelpen@hotmail.com</a>
               </Section>
               <Section ikon="⚖️" tittel="Behandlingsgrunnlag (GDPR art. 6)">
                 Behandlingen av dine personopplysninger er basert på <strong>samtykke</strong> (GDPR art. 6 nr. 1 bokstav a), som du gir ved registrering og aksept av disse vilkårene. Du kan trekke tilbake samtykket når som helst ved å slette kontoen din.
@@ -5153,7 +5153,7 @@ function VilkaarModal({ type, onLukk }) {
                   <li><strong>Dataportabilitet</strong> – be om å få utlevert dine data i maskinlesbart format</li>
                   <li><strong>Innsigelse</strong> – protestere mot behandlingen av dine opplysninger</li>
                 </ul>
-                <p style={{marginTop:8}}>Send forespørsel til <a href="mailto:joel94@live.no" style={{color:"#2c5b8e",fontWeight:700}}>joel94@live.no</a>. Vi besvarer henvendelser innen 30 dager.</p>
+                <p style={{marginTop:8}}>Send forespørsel til <a href="mailto:Barnehagehjelpen@hotmail.com" style={{color:"#2c5b8e",fontWeight:700}}>Barnehagehjelpen@hotmail.com</a>. Vi besvarer henvendelser innen 30 dager.</p>
               </Section>
               <Section ikon="🏛" tittel="Klagerett">
                 Hvis du mener vi behandler personopplysningene dine i strid med personvernregelverket, har du rett til å klage til <strong>Datatilsynet</strong> (datatilsynet.no).
