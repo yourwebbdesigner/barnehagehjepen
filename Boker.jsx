@@ -606,7 +606,7 @@ export default function BokerSide({ aktivBruker }) {
     if (kategoriFilter !== "alle" && b.kategori !== kategoriFilter) return false;
     if (søk) {
       const s = søk.toLowerCase();
-      return (b.tittel?.toLowerCase().includes(s) || b.forfatter?.toLowerCase().includes(s) || b.beskrivelse?.toLowerCase().includes(s));
+      return ((b.tittel||"").toLowerCase().includes(s) || (b.forfatter||"").toLowerCase().includes(s) || (b.beskrivelse||"").toLowerCase().includes(s));
     }
     return true;
   });

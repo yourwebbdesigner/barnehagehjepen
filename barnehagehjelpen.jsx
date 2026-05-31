@@ -3590,11 +3590,11 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:800,color:C.t,fontSize:14}}>{a.tittel}</div>
-                  <div style={{color:C.gr,fontSize:11,marginTop:2}}>{a.hva.substring(0,70)}{a.hva.length>70?"...":""}</div>
+                  <div style={{color:C.gr,fontSize:11,marginTop:2}}>{(a.hva||"").substring(0,70)}{(a.hva||"").length>70?"...":""}</div>
                   <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                     <span className="tag" style={{background:C.mint,color:C.g}}>{a.kategori}</span>
                     <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{a.alder}</span>
-                    {a.rammeplan.map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    {(a.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>
                 <button className={`fav-btn ${favSet.has(a.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("aktiviteter",a.id);}} title={favSet.has(a.id)?"Fjern fra favoritter":"Legg til i favoritter"} aria-label="Favoritt">
@@ -5866,6 +5866,7 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
   }, [aktivBruker?.id]);
 
   const toggleFavKort = async (kortId) => {
+    if (!aktivBruker?.id) return;
     const har = favSet.has(kortId);
     const ny = new Set(favSet);
     if (har) {
@@ -7501,7 +7502,7 @@ ${innhold}
                     <div style={{fontWeight:800,color:C.t,fontSize:13,lineHeight:1.3,marginBottom:3}}>{t._erMin&&<span style={{fontSize:9,background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"1px 5px",marginRight:4,fontWeight:700}}>🤖 AI</span>}{t.tittel}</div>
                     <div style={{fontSize:10,color:C.gr,marginBottom:5}}>👶 {t.alder}</div>
                     <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                      {t.rammeplan.map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
+                      {(t.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
                     </div>
                   </div>
                 </div>
