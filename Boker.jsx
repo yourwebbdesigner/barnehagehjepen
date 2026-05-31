@@ -82,6 +82,23 @@ const CSS = `
     color: #8898ad;
     font-family: 'Nunito', sans-serif;
   }
+
+  [data-theme="dark"] .bk-kort {
+    background: var(--c-card);
+    border-color: var(--c-divider);
+    color: var(--c-t);
+  }
+  [data-theme="dark"] .bk-kort:hover { border-color: var(--c-lg); }
+  [data-theme="dark"] .bk-btn-sek { background: var(--c-lg2); color: var(--c-g); }
+  [data-theme="dark"] .bk-btn-sek:hover:not(:disabled) { background: var(--c-input-bg); }
+  [data-theme="dark"] .bk-btn-fare { background: #2a0808; color: #ff9090; }
+  [data-theme="dark"] .bk-btn-fare:hover:not(:disabled) { background: #3a0e0e; }
+  [data-theme="dark"] .bk-input {
+    background: var(--c-input-bg);
+    color: var(--c-input-t);
+    border-color: var(--c-input-border);
+  }
+  [data-theme="dark"] .bk-input:focus { background: var(--c-input-bg); border-color: var(--c-lg); }
 `;
 
 const KATEGORIER = [

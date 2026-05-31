@@ -106,46 +106,76 @@ const CSS = `
   [data-theme="dark"] [style*="background:#ffffff"],
   [data-theme="dark"] [style*="background: #ffffff"],
   [data-theme="dark"] [style*="background:white"],
-  [data-theme="dark"] [style*="background: white"] {
+  [data-theme="dark"] [style*="background: white"],
+  [data-theme="dark"] [style*="background:rgb(255, 255, 255)"],
+  [data-theme="dark"] [style*="background: rgb(255, 255, 255)"] {
     background: var(--c-w) !important;
     color: var(--c-t);
   }
-  /* Lys grå bakgrunn */
+  /* Lys grå bakgrunn – hex og rgb() fallback */
   [data-theme="dark"] [style*="background:#f5f9fd"],
   [data-theme="dark"] [style*="background: #f5f9fd"],
+  [data-theme="dark"] [style*="background:rgb(245, 249, 253)"],
+  [data-theme="dark"] [style*="background: rgb(245, 249, 253)"],
+  [data-theme="dark"] [style*="background:#f5f7fa"],
+  [data-theme="dark"] [style*="background: #f5f7fa"],
+  [data-theme="dark"] [style*="background:rgb(245, 247, 250)"],
+  [data-theme="dark"] [style*="background: rgb(245, 247, 250)"],
   [data-theme="dark"] [style*="background:#f3f7fc"],
   [data-theme="dark"] [style*="background: #f3f7fc"],
+  [data-theme="dark"] [style*="background:rgb(243, 247, 252)"],
+  [data-theme="dark"] [style*="background: rgb(243, 247, 252)"],
   [data-theme="dark"] [style*="background:#f8fafd"],
-  [data-theme="dark"] [style*="background: #f8fafd"] {
+  [data-theme="dark"] [style*="background: #f8fafd"],
+  [data-theme="dark"] [style*="background:rgb(248, 250, 253)"],
+  [data-theme="dark"] [style*="background: rgb(248, 250, 253)"] {
     background: var(--c-lg2) !important;
   }
-  /* Gule info-bokser – dempet i mørk modus */
+  /* Gule info-bokser – dempet i mørk modus + rgb() fallback */
   [data-theme="dark"] [style*="background:#fffde7"],
   [data-theme="dark"] [style*="background: #fffde7"],
+  [data-theme="dark"] [style*="background:rgb(255, 253, 231)"],
+  [data-theme="dark"] [style*="background: rgb(255, 253, 231)"],
   [data-theme="dark"] [style*="background:#fff9c4"],
   [data-theme="dark"] [style*="background: #fff9c4"],
+  [data-theme="dark"] [style*="background:rgb(255, 249, 196)"],
+  [data-theme="dark"] [style*="background: rgb(255, 249, 196)"],
   [data-theme="dark"] [style*="background:#fff3e0"],
-  [data-theme="dark"] [style*="background: #fff3e0"] {
+  [data-theme="dark"] [style*="background: #fff3e0"],
+  [data-theme="dark"] [style*="background:rgb(255, 243, 224)"],
+  [data-theme="dark"] [style*="background: rgb(255, 243, 224)"] {
     background: #2a2510 !important;
     color: #e8d87a !important;
   }
-  /* Grønne info-bokser */
+  /* Grønne info-bokser + rgb() fallback */
   [data-theme="dark"] [style*="background:#e8f5e9"],
   [data-theme="dark"] [style*="background: #e8f5e9"],
+  [data-theme="dark"] [style*="background:rgb(232, 245, 233)"],
+  [data-theme="dark"] [style*="background: rgb(232, 245, 233)"],
   [data-theme="dark"] [style*="background:#d8f3dc"],
   [data-theme="dark"] [style*="background: #d8f3dc"],
+  [data-theme="dark"] [style*="background:rgb(216, 243, 220)"],
+  [data-theme="dark"] [style*="background: rgb(216, 243, 220)"],
   [data-theme="dark"] [style*="background:#f0fdf4"],
-  [data-theme="dark"] [style*="background: #f0fdf4"] {
+  [data-theme="dark"] [style*="background: #f0fdf4"],
+  [data-theme="dark"] [style*="background:rgb(240, 253, 244)"],
+  [data-theme="dark"] [style*="background: rgb(240, 253, 244)"] {
     background: #0e2a18 !important;
     color: #6fcf97 !important;
   }
-  /* Blå info-bokser */
+  /* Blå info-bokser + rgb() fallback */
   [data-theme="dark"] [style*="background:#e3f2fd"],
   [data-theme="dark"] [style*="background: #e3f2fd"],
+  [data-theme="dark"] [style*="background:rgb(227, 242, 253)"],
+  [data-theme="dark"] [style*="background: rgb(227, 242, 253)"],
   [data-theme="dark"] [style*="background:#d8e6f5"],
   [data-theme="dark"] [style*="background: #d8e6f5"],
+  [data-theme="dark"] [style*="background:rgb(216, 230, 245)"],
+  [data-theme="dark"] [style*="background: rgb(216, 230, 245)"],
   [data-theme="dark"] [style*="background:#e8eff8"],
-  [data-theme="dark"] [style*="background: #e8eff8"] {
+  [data-theme="dark"] [style*="background: #e8eff8"],
+  [data-theme="dark"] [style*="background:rgb(232, 239, 248)"],
+  [data-theme="dark"] [style*="background: rgb(232, 239, 248)"] {
     background: var(--c-lg2) !important;
   }
   /* Mørk tekst på lyse bakgrunner */
@@ -195,59 +225,87 @@ const CSS = `
   [data-theme="dark"] [style*="border: 1.5px dashed #66bb6a"] {
     border-color: var(--c-divider) !important;
   }
-  /* Røde feil/slett-bokser */
+  /* Røde feil/slett-bokser + rgb() fallback */
   [data-theme="dark"] [style*="background:#ffebee"],
   [data-theme="dark"] [style*="background: #ffebee"],
+  [data-theme="dark"] [style*="background:rgb(255, 235, 238)"],
+  [data-theme="dark"] [style*="background: rgb(255, 235, 238)"],
   [data-theme="dark"] [style*="background:#fdecea"],
   [data-theme="dark"] [style*="background: #fdecea"],
+  [data-theme="dark"] [style*="background:rgb(253, 236, 234)"],
+  [data-theme="dark"] [style*="background: rgb(253, 236, 234)"],
   [data-theme="dark"] [style*="background:#fce4ec"],
-  [data-theme="dark"] [style*="background: #fce4ec"] {
+  [data-theme="dark"] [style*="background: #fce4ec"],
+  [data-theme="dark"] [style*="background:rgb(252, 228, 236)"],
+  [data-theme="dark"] [style*="background: rgb(252, 228, 236)"] {
     background: #2a0808 !important;
     color: #ff9090 !important;
   }
-  /* Lilla bakgrunner */
+  /* Lilla bakgrunner + rgb() fallback */
   [data-theme="dark"] [style*="background:#f9f3fd"],
   [data-theme="dark"] [style*="background: #f9f3fd"],
+  [data-theme="dark"] [style*="background:rgb(249, 243, 253)"],
+  [data-theme="dark"] [style*="background: rgb(249, 243, 253)"],
   [data-theme="dark"] [style*="background:#f3e5f5"],
-  [data-theme="dark"] [style*="background: #f3e5f5"] {
+  [data-theme="dark"] [style*="background: #f3e5f5"],
+  [data-theme="dark"] [style*="background:rgb(243, 229, 245)"],
+  [data-theme="dark"] [style*="background: rgb(243, 229, 245)"] {
     background: #1a0e28 !important;
     color: #c084fc !important;
   }
-  /* Lysegrønne varianter (supplement til eksisterende) */
+  /* Lysegrønne varianter + rgb() fallback */
   [data-theme="dark"] [style*="background:#f0faf4"],
   [data-theme="dark"] [style*="background: #f0faf4"],
+  [data-theme="dark"] [style*="background:rgb(240, 250, 244)"],
+  [data-theme="dark"] [style*="background: rgb(240, 250, 244)"],
   [data-theme="dark"] [style*="background:#f1f8e9"],
-  [data-theme="dark"] [style*="background: #f1f8e9"] {
+  [data-theme="dark"] [style*="background: #f1f8e9"],
+  [data-theme="dark"] [style*="background:rgb(241, 248, 233)"],
+  [data-theme="dark"] [style*="background: rgb(241, 248, 233)"] {
     background: #0a1e0e !important;
     color: #6fcf97 !important;
   }
-  /* Teal/cyan bakgrunner */
+  /* Teal/cyan bakgrunner + rgb() fallback */
   [data-theme="dark"] [style*="background:#e0f2f1"],
   [data-theme="dark"] [style*="background: #e0f2f1"],
+  [data-theme="dark"] [style*="background:rgb(224, 242, 241)"],
+  [data-theme="dark"] [style*="background: rgb(224, 242, 241)"],
   [data-theme="dark"] [style*="background:#e1f5fe"],
-  [data-theme="dark"] [style*="background: #e1f5fe"] {
+  [data-theme="dark"] [style*="background: #e1f5fe"],
+  [data-theme="dark"] [style*="background:rgb(225, 245, 254)"],
+  [data-theme="dark"] [style*="background: rgb(225, 245, 254)"] {
     background: #071e1c !important;
     color: #4db6ac !important;
   }
-  /* Amber/gul varianter (supplement) */
+  /* Amber/gul varianter + rgb() fallback */
   [data-theme="dark"] [style*="background:#fff8e1"],
   [data-theme="dark"] [style*="background: #fff8e1"],
+  [data-theme="dark"] [style*="background:rgb(255, 248, 225)"],
+  [data-theme="dark"] [style*="background: rgb(255, 248, 225)"],
   [data-theme="dark"] [style*="background:#fff3cd"],
-  [data-theme="dark"] [style*="background: #fff3cd"] {
+  [data-theme="dark"] [style*="background: #fff3cd"],
+  [data-theme="dark"] [style*="background:rgb(255, 243, 205)"],
+  [data-theme="dark"] [style*="background: rgb(255, 243, 205)"] {
     background: #221a06 !important;
     color: #e8c87a !important;
   }
-  /* Lysegrå bakgrunn */
+  /* Lysegrå bakgrunn + rgb() fallback */
   [data-theme="dark"] [style*="background:#eceff1"],
-  [data-theme="dark"] [style*="background: #eceff1"] {
+  [data-theme="dark"] [style*="background: #eceff1"],
+  [data-theme="dark"] [style*="background:rgb(236, 239, 241)"],
+  [data-theme="dark"] [style*="background: rgb(236, 239, 241)"] {
     background: #171e24 !important;
     color: #90a4ae !important;
   }
-  /* Lysblå varianter (supplement) */
+  /* Lysblå varianter + rgb() fallback */
   [data-theme="dark"] [style*="background:#f0f7ff"],
   [data-theme="dark"] [style*="background: #f0f7ff"],
+  [data-theme="dark"] [style*="background:rgb(240, 247, 255)"],
+  [data-theme="dark"] [style*="background: rgb(240, 247, 255)"],
   [data-theme="dark"] [style*="background:#f8fbff"],
-  [data-theme="dark"] [style*="background: #f8fbff"] {
+  [data-theme="dark"] [style*="background: #f8fbff"],
+  [data-theme="dark"] [style*="background:rgb(248, 251, 255)"],
+  [data-theme="dark"] [style*="background: rgb(248, 251, 255)"] {
     background: var(--c-lg2) !important;
   }
   /* Mørke tekst-farger – hex og rgb() fallback for alle nettlesere */
