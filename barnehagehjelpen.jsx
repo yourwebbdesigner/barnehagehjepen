@@ -167,6 +167,151 @@ const CSS = `
   [data-theme="dark"] [style*="border: 1.5px solid #ddd"] {
     border-color: var(--c-divider) !important;
   }
+  /* Ekstra border-varianter */
+  [data-theme="dark"] [style*="border:1px solid #c4d6ec"],
+  [data-theme="dark"] [style*="border: 1px solid #c4d6ec"],
+  [data-theme="dark"] [style*="border:1.5px solid #c4d6ec"],
+  [data-theme="dark"] [style*="border: 1.5px solid #c4d6ec"],
+  [data-theme="dark"] [style*="border:1.5px solid #c3d9f5"],
+  [data-theme="dark"] [style*="border: 1.5px solid #c3d9f5"],
+  [data-theme="dark"] [style*="border:1px solid #b7e4c7"],
+  [data-theme="dark"] [style*="border: 1px solid #b7e4c7"],
+  [data-theme="dark"] [style*="border:1.5px solid #b7e4c7"],
+  [data-theme="dark"] [style*="border: 1.5px solid #b7e4c7"],
+  [data-theme="dark"] [style*="border:2px solid #2c5b8e"],
+  [data-theme="dark"] [style*="border: 2px solid #2c5b8e"],
+  [data-theme="dark"] [style*="border:1.5px dashed #66bb6a"],
+  [data-theme="dark"] [style*="border: 1.5px dashed #66bb6a"] {
+    border-color: var(--c-divider) !important;
+  }
+  /* Røde feil/slett-bokser */
+  [data-theme="dark"] [style*="background:#ffebee"],
+  [data-theme="dark"] [style*="background: #ffebee"],
+  [data-theme="dark"] [style*="background:#fdecea"],
+  [data-theme="dark"] [style*="background: #fdecea"],
+  [data-theme="dark"] [style*="background:#fce4ec"],
+  [data-theme="dark"] [style*="background: #fce4ec"] {
+    background: #2a0808 !important;
+    color: #ff9090 !important;
+  }
+  /* Lilla bakgrunner */
+  [data-theme="dark"] [style*="background:#f9f3fd"],
+  [data-theme="dark"] [style*="background: #f9f3fd"],
+  [data-theme="dark"] [style*="background:#f3e5f5"],
+  [data-theme="dark"] [style*="background: #f3e5f5"] {
+    background: #1a0e28 !important;
+    color: #c084fc !important;
+  }
+  /* Lysegrønne varianter (supplement til eksisterende) */
+  [data-theme="dark"] [style*="background:#f0faf4"],
+  [data-theme="dark"] [style*="background: #f0faf4"],
+  [data-theme="dark"] [style*="background:#f1f8e9"],
+  [data-theme="dark"] [style*="background: #f1f8e9"] {
+    background: #0a1e0e !important;
+    color: #6fcf97 !important;
+  }
+  /* Teal/cyan bakgrunner */
+  [data-theme="dark"] [style*="background:#e0f2f1"],
+  [data-theme="dark"] [style*="background: #e0f2f1"],
+  [data-theme="dark"] [style*="background:#e1f5fe"],
+  [data-theme="dark"] [style*="background: #e1f5fe"] {
+    background: #071e1c !important;
+    color: #4db6ac !important;
+  }
+  /* Amber/gul varianter (supplement) */
+  [data-theme="dark"] [style*="background:#fff8e1"],
+  [data-theme="dark"] [style*="background: #fff8e1"],
+  [data-theme="dark"] [style*="background:#fff3cd"],
+  [data-theme="dark"] [style*="background: #fff3cd"] {
+    background: #221a06 !important;
+    color: #e8c87a !important;
+  }
+  /* Lysegrå bakgrunn */
+  [data-theme="dark"] [style*="background:#eceff1"],
+  [data-theme="dark"] [style*="background: #eceff1"] {
+    background: #171e24 !important;
+    color: #90a4ae !important;
+  }
+  /* Lysblå varianter (supplement) */
+  [data-theme="dark"] [style*="background:#f0f7ff"],
+  [data-theme="dark"] [style*="background: #f0f7ff"],
+  [data-theme="dark"] [style*="background:#f8fbff"],
+  [data-theme="dark"] [style*="background: #f8fbff"] {
+    background: var(--c-lg2) !important;
+  }
+  /* Mørke tekst-farger som trenger lysere versjon i dark mode */
+  [data-theme="dark"] [style*="color:#6a1b9a"],
+  [data-theme="dark"] [style*="color: #6a1b9a"] {
+    color: #c084fc !important;
+  }
+  [data-theme="dark"] [style*="color:#1565c0"],
+  [data-theme="dark"] [style*="color: #1565c0"] {
+    color: #60a5fa !important;
+  }
+  [data-theme="dark"] [style*="color:#00695c"],
+  [data-theme="dark"] [style*="color: #00695c"] {
+    color: #4db6ac !important;
+  }
+  [data-theme="dark"] [style*="color:#1b5e20"],
+  [data-theme="dark"] [style*="color: #1b5e20"],
+  [data-theme="dark"] [style*="color:#2e7d32"],
+  [data-theme="dark"] [style*="color: #2e7d32"],
+  [data-theme="dark"] [style*="color:#2d6a4f"],
+  [data-theme="dark"] [style*="color: #2d6a4f"],
+  [data-theme="dark"] [style*="color:#33691e"],
+  [data-theme="dark"] [style*="color: #33691e"] {
+    color: #6fcf97 !important;
+  }
+  [data-theme="dark"] [style*="color:#795548"],
+  [data-theme="dark"] [style*="color: #795548"],
+  [data-theme="dark"] [style*="color:#5d4037"],
+  [data-theme="dark"] [style*="color: #5d4037"] {
+    color: #bcaaa4 !important;
+  }
+  [data-theme="dark"] [style*="color:#856404"],
+  [data-theme="dark"] [style*="color: #856404"] {
+    color: #e8c87a !important;
+  }
+  [data-theme="dark"] [style*="color:#455a64"],
+  [data-theme="dark"] [style*="color: #455a64"] {
+    color: #90a4ae !important;
+  }
+  [data-theme="dark"] [style*="color:#c62828"],
+  [data-theme="dark"] [style*="color: #c62828"],
+  [data-theme="dark"] [style*="color:#c2185b"],
+  [data-theme="dark"] [style*="color: #c2185b"] {
+    color: #ff9090 !important;
+  }
+  [data-theme="dark"] [style*="color:#0277bd"],
+  [data-theme="dark"] [style*="color: #0277bd"] {
+    color: #4fc3f7 !important;
+  }
+  /* AI-badge (lilla) */
+  [data-theme="dark"] [style*="background:#ede9fe"],
+  [data-theme="dark"] [style*="background: #ede9fe"] {
+    background: #1a0e2e !important;
+    color: #c084fc !important;
+  }
+  [data-theme="dark"] [style*="color:#6d28d9"],
+  [data-theme="dark"] [style*="color: #6d28d9"],
+  [data-theme="dark"] [style*="color:#7c3aed"],
+  [data-theme="dark"] [style*="color: #7c3aed"] {
+    color: #c084fc !important;
+  }
+  /* Primærknapper med hardkodet #2c5b8e → bruk dark-mode blå */
+  [data-theme="dark"] [style*="background:#2c5b8e"],
+  [data-theme="dark"] [style*="background: #2c5b8e"] {
+    background: var(--c-g) !important;
+  }
+  /* Border-left for røde bokser – gjør dem synlige i dark mode */
+  [data-theme="dark"] [style*="border-left:4px solid #c62828"],
+  [data-theme="dark"] [style*="border-left: 4px solid #c62828"] {
+    border-left-color: #ff9090 !important;
+  }
+  [data-theme="dark"] [style*="border-left:4px solid #c2185b"],
+  [data-theme="dark"] [style*="border-left: 4px solid #c2185b"] {
+    border-left-color: #f472b6 !important;
+  }
 
   /* RESPONSIVT LAYOUT */
   .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }
