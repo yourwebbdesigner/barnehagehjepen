@@ -1411,7 +1411,7 @@ export default function SamarbeidSide({ aktivBruker }) {
       )}
 
       {/* Info-boks */}
-      <div style={{ background:"linear-gradient(135deg,#e3f2fd,#e8f5e9)", borderRadius:12, padding:"14px 16px", marginTop:24, border:`1px solid ${C.mint}` }}>
+      <div style={{ background:C.lg2, borderRadius:12, padding:"14px 16px", marginTop:24, border:`1px solid ${C.mint}` }}>
         <div style={{ fontWeight:800, fontSize:12, color:C.g, marginBottom:6 }}>⚡ Slik fungerer sanntidssamarbeid</div>
         <div style={{ fontSize:12, color:C.gr, lineHeight:1.75 }}>
           <b>Hvem er inne:</b> Se profilbilder øverst når noen åpner samme plan.<br/>
