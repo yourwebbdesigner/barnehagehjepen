@@ -6889,7 +6889,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         <p style={{color:C.gr,fontSize:12,marginBottom:12}}>Barnehagens viktigste styringsverktøy</p>
         <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
           {seks.map(([v,ic,l])=>(
-            <button key={v} className="btn" onClick={()=>{setRammeSeksjon(v);setValgtFag(null);}} style={{padding:"6px 11px",fontSize:11,background:rammeSeksjon===v?C.g:"#e8f5e9",color:rammeSeksjon===v?"#fff":C.t}}>{ic} {l}</button>
+            <button key={v} className="btn" onClick={()=>{setRammeSeksjon(v);setValgtFag(null);}} style={{padding:"6px 11px",fontSize:11,background:rammeSeksjon===v?C.g:C.lg2,color:rammeSeksjon===v?"#fff":C.t}}>{ic} {l}</button>
           ))}
         </div>
 
@@ -8005,16 +8005,16 @@ ${innhold}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
         {[
-          {id:"ukeplan",ikon:"📅",tittel:"Ukeplan",farge:"#1565c0",bg:"linear-gradient(135deg,#e3f2fd,#bbdefb)",border:"#90caf9",desc:"Planlegg mandag–fredag med tema og aktiviteter"},
-          {id:"maanedsplan",ikon:"🗓️",tittel:"Månedsplan",farge:"#6a1b9a",bg:"linear-gradient(135deg,#f3e5f5,#e1bee7)",border:"#ce93d8",desc:"Oversikt over 4 uker med mål og fagområder"},
-          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",bg:"linear-gradient(135deg,#d8f3dc,#b7e4c7)",border:"#81c995",desc:"Skriv månedsbrev til foreldre med AI-hjelp"},
-          {id:"arsplan",ikon:"📆",tittel:"Årsplan",farge:"#c62828",bg:"linear-gradient(135deg,#ffebee,#ffcdd2)",border:"#ef9a9a",desc:"Årshjul med tema per måned og pedagogisk grunnsyn"},
-        ].map(({id,ikon,tittel,farge,bg,border,desc})=>(
+          {id:"ukeplan",  ikon:"📅",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Planlegg mandag–fredag med tema og aktiviteter"},
+          {id:"maanedsplan",ikon:"🗓️",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"Oversikt over 4 uker med mål og fagområder"},
+          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Skriv månedsbrev til foreldre med AI-hjelp"},
+          {id:"arsplan",  ikon:"📆",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul med tema per måned og pedagogisk grunnsyn"},
+        ].map(({id,ikon,tittel,farge,border,desc})=>(
           <div key={id} className="hover" onClick={()=>navigerTil(id)}
-            style={{background:bg,borderRadius:18,padding:"22px 16px",cursor:"pointer",boxShadow:`0 3px 16px ${farge}22`,border:`2px solid ${border}`,textAlign:"center"}}>
+            style={{background:C.w,borderRadius:18,padding:"22px 16px",cursor:"pointer",boxShadow:`0 3px 16px ${farge}22`,border:`2px solid ${border}`,textAlign:"center"}}>
             <div style={{fontSize:38,marginBottom:9}}>{ikon}</div>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:farge,marginBottom:5}}>{tittel}</div>
-            <div style={{fontSize:11,color:farge,lineHeight:1.5,opacity:0.85}}>{desc}</div>
+            <div style={{fontSize:11,color:C.gr,lineHeight:1.5}}>{desc}</div>
           </div>
         ))}
       </div>
