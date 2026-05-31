@@ -3697,13 +3697,13 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
             {valgt.tid&&<span className="tag" style={{background:"#e3f2fd",color:"#1565c0"}}>⏱ {valgt.tid}</span>}
             {valgt.gruppe&&<span className="tag" style={{background:"#f3e5f5",color:"#6a1b9a"}}>👥 {valgt.gruppe}</span>}
           </div>
-          {[["🎯 HVA – Beskrivelse",valgt.hva,"#fff9c4","#795548"],["⚙️ HVORDAN – Gjennomføring",valgt.hvordan,"#e8f5e9","#2e7d32"],["❓ HVORFOR – Pedagogisk begrunnelse",valgt.hvorfor,"#e3f2fd","#1565c0"]].map(([t,v,bg,tc])=>(
-            <div key={t} style={{background:bg,borderRadius:11,padding:"12px 14px",marginBottom:10}}>
-              <div style={{fontWeight:800,color:tc,marginBottom:4,fontSize:13}}>{t}</div>
+          {[["🎯 HVA – Beskrivelse",valgt.hva,"#f59e0b"],["⚙️ HVORDAN – Gjennomføring",valgt.hvordan,"#10b981"],["❓ HVORFOR – Pedagogisk begrunnelse",valgt.hvorfor,"#3b82f6"]].map(([t,v,ac])=>(
+            <div key={t} style={{background:C.lg2,borderRadius:11,padding:"12px 14px",marginBottom:10,borderLeft:`3px solid ${ac}`}}>
+              <div style={{fontWeight:800,color:ac,marginBottom:4,fontSize:13}}>{t}</div>
               <div style={{color:C.t,fontSize:13,lineHeight:1.7}}>{v}</div>
             </div>
           ))}
-          {valgt.materialer&&<div style={{background:"#fce4ec",borderRadius:11,padding:"12px 14px",marginBottom:10}}><div style={{fontWeight:800,color:"#c62828",marginBottom:4,fontSize:13}}>🧰 Materialer</div><div style={{color:C.t,fontSize:13}}>{valgt.materialer}</div></div>}
+          {valgt.materialer&&<div style={{background:C.lg2,borderRadius:11,padding:"12px 14px",marginBottom:10,borderLeft:"3px solid #e07b39"}}><div style={{fontWeight:800,color:"#e07b39",marginBottom:4,fontSize:13}}>🧰 Materialer</div><div style={{color:C.t,fontSize:13}}>{valgt.materialer}</div></div>}
           <div style={{fontSize:12,fontWeight:700,color:C.gr,marginBottom:7}}>Kobling til rammeplan:</div>
           <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{(valgt.rammeplan||[]).map(r=><FagTag key={r} rid={r}/>)}</div>
         </div>
@@ -4459,9 +4459,9 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
                       style={{
                         padding:"9px 12px",
                         fontSize:12,
-                        background:"#f5f9fd",
+                        background:C.lg2,
                         color:C.t,
-                        border:"1px solid #d8e6f5",
+                        border:`1px solid var(--c-divider)`,
                         borderRadius:9,
                         cursor:"pointer",
                         fontFamily:"'Nunito',sans-serif",
@@ -4674,7 +4674,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
               </div>
             ))}
           </div>
-          <div style={{background:"#fff8e1",borderRadius:10,padding:"10px 12px",fontSize:11,color:"#795548",borderLeft:"4px solid #6ba0d9"}}>
+          <div style={{background:C.lg2,borderRadius:10,padding:"10px 12px",fontSize:11,color:C.t,borderLeft:"4px solid var(--c-g)"}}>
             <strong>💡 Tips:</strong> AI-en bruker Rammeplan 2017 og tilpasser etter alder og fagområde. Hvis nettet er tregt, henter vi automatisk fra databasen så du alltid får et svar.
           </div>
         </>
@@ -8579,7 +8579,7 @@ ${innhold}
           </div>
         )}
 
-        <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
+        <div style={{background:C.lg2,borderRadius:10,padding:"11px 13px",fontSize:11,color:C.t,borderLeft:"3px solid var(--c-g)",marginTop:14,lineHeight:1.6}}>
           <strong>☁️ Lagring:</strong> Ukeplaner lagres automatisk i skyen og er tilgjengelige på alle enheter når du er innlogget. Bruk "💾 Last ned"-knappen for lokal backup.
         </div>
       </div>
@@ -9072,7 +9072,7 @@ ${innhold}
           </div>
         )}
 
-        <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
+        <div style={{background:C.lg2,borderRadius:10,padding:"11px 13px",fontSize:11,color:C.t,borderLeft:"3px solid var(--c-g)",marginTop:14,lineHeight:1.6}}>
           <strong>☁️ Lagring:</strong> Årsplaner lagres automatisk i skyen og er tilgjengelige på alle enheter når du er innlogget. Bruk "💾 Last ned"-knappen for lokal backup.
         </div>
       </div>
@@ -9497,7 +9497,7 @@ ${innhold}
           </div>
         )}
 
-        <div style={{background:"#fff8e1",borderRadius:10,padding:"11px 13px",fontSize:11,color:"#795548",borderLeft:"3px solid #f4a261",marginTop:14,lineHeight:1.6}}>
+        <div style={{background:C.lg2,borderRadius:10,padding:"11px 13px",fontSize:11,color:C.t,borderLeft:"3px solid var(--c-g)",marginTop:14,lineHeight:1.6}}>
           <strong>☁️ Lagring:</strong> Dokumentasjon lagres automatisk i skyen og er tilgjengelig på alle enheter når du er innlogget. Bruk "💾 Eksporter alle"-knappen for lokal backup.
         </div>
       </div>
