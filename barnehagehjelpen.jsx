@@ -6151,7 +6151,7 @@ function AdminPanel({ aktivBruker }) {
   useEffect(() => { last(); }, []);
 
   const slettBruker = async (id) => {
-    if (id === aktivBruker.id) { visM("⚠️ Kan ikke slette deg selv"); return; }
+    if (id === aktivBruker?.id) { visM("⚠️ Kan ikke slette deg selv"); return; }
     setBekreftSlett(id);
   };
 

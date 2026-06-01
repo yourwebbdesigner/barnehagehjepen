@@ -9,6 +9,29 @@ const C = {
   w:"#ffffff", t:"#1a2c45", gr:"#5d7390", lg2:"#e8eff8",
 };
 
+const SAM_CSS = `
+  .sam-presence { background:#e3f2fd; border:1px solid #90caf9; }
+  .sam-pres-usr { background:#fff; }
+  .sam-extern   { background:#fff3e0; border:1px solid #ffb74d; }
+  .sam-extern-txt { color:#e65100; }
+  .sam-btn-danger { background:#ffebee !important; color:#c62828 !important; }
+  .sam-btn-gray   { background:#e0e0e0 !important; color:#333 !important; }
+  .sam-error  { background:#ffebee; border:1px solid #ef9a9a; color:#c62828; }
+  .sam-invite { background:#fffde7; border:1px solid #ffe082; }
+  .sam-kort   { background:#fff; }
+  .sam-val-sel { background:#e3f2fd; }
+  [data-theme="dark"] .sam-presence { background:rgba(44,91,142,0.2); border-color:rgba(74,143,212,0.4); }
+  [data-theme="dark"] .sam-pres-usr { background:var(--c-card,#1e2a38); }
+  [data-theme="dark"] .sam-extern   { background:rgba(230,81,0,0.12); border-color:rgba(230,81,0,0.4); }
+  [data-theme="dark"] .sam-extern-txt { color:#ffb74d; }
+  [data-theme="dark"] .sam-btn-danger { background:rgba(198,40,40,0.18) !important; color:#ef9a9a !important; }
+  [data-theme="dark"] .sam-btn-gray   { background:var(--c-lg2,#2a3a4e) !important; color:var(--c-t,#c8d8f0) !important; }
+  [data-theme="dark"] .sam-error  { background:rgba(198,40,40,0.12); border-color:rgba(198,40,40,0.35); color:#ef9a9a; }
+  [data-theme="dark"] .sam-invite { background:rgba(255,248,196,0.07); border-color:rgba(255,224,130,0.25); }
+  [data-theme="dark"] .sam-kort   { background:var(--c-card,#1e2a38); }
+  [data-theme="dark"] .sam-val-sel { background:rgba(44,91,142,0.25); }
+`;
+
 const ROLLER = {
   eier:    { label:"Eier",          farge:"#1565c0", bg:"#e3f2fd", ikon:"👑" },
   rediger: { label:"Kan redigere",  farge:"#2e7d32", bg:"#e8f5e9", ikon:"✏️" },
@@ -325,10 +348,10 @@ function PresenceBar({ presence, aktivBrukerId }) {
   if (!andre.length) return null;
 
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 14px", background:"#e3f2fd", borderRadius:10, marginBottom:12, flexWrap:"wrap", border:"1px solid #90caf9" }}>
+    <div className="sam-presence" style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 14px", borderRadius:10, marginBottom:12, flexWrap:"wrap" }}>
       <span style={{ fontSize:13, color:C.g, fontWeight:700 }}>👥 Inne nå:</span>
       {andre.map((p, i) => (
-        <div key={i} style={{ display:"flex", alignItems:"center", gap:5, background:"#fff", borderRadius:20, padding:"3px 10px 3px 5px", boxShadow:"0 1px 4px rgba(44,91,142,0.10)" }}>
+        <div key={i} className="sam-pres-usr" style={{ display:"flex", alignItems:"center", gap:5, borderRadius:20, padding:"3px 10px 3px 5px", boxShadow:"0 1px 4px rgba(44,91,142,0.10)" }}>
           <span style={{ fontSize:16 }}>{p.avatar || "👤"}</span>
           <span style={{ fontSize:12, fontWeight:700, color:C.t }}>{p.visningsnavn || "Ukjent"}</span>
           {p.skriver_i && <span style={{ fontSize:10, color:C.gr, fontStyle:"italic" }}>skriver...</span>}
@@ -577,8 +600,10 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
   const [søkeForslag,   setSøkeForslag]   = useState([]);
   const [visForslag,    setVisForslag]    = useState(false);
   const [eksternVar,    setEksternVar]    = useState(null);
-  const [bekreftSlett,  setBekreftSlett]  = useState(false);
-  const [sletter,       setSletter]       = useState(false);
+  const [bekreftSlett,       setBekreftSlett]       = useState(false);
+  const [sletter,            setSletter]            = useState(false);
+  const [bekreftGjenopprett, setBekreftGjenopprett] = useState(null);
+  const [bekreftFjernBruker, setBekreftFjernBruker] = useState(null);
   const channelRef = useRef(null);
   const søkTimer    = useRef(null);
 
@@ -743,8 +768,13 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
     } catch (e) { setFeil("Kunne ikke endre rolle"); }
   };
 
-  const handleGjenopprett = async (snapshot) => {
-    if (!window.confirm("Gjenopprette denne versjonen? Gjeldende innhold lagres i historikken.")) return;
+  const handleGjenopprett = (snapshot) => {
+    setBekreftGjenopprett(snapshot);
+  };
+
+  const utforGjenopprett = async () => {
+    const snapshot = bekreftGjenopprett;
+    setBekreftGjenopprett(null);
     setLagrer(true);
     try {
       await oppdaterDelPlan(plan.id, snapshot.payload, aktivBruker.id, aktivBruker.visningsnavn || aktivBruker.brukernavn);
@@ -773,6 +803,7 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
 
   return (
     <div className="fade">
+      <style>{SAM_CSS}</style>
       {/* Toast */}
       {toast && (
         <div style={{ position:"fixed", top:70, right:20, zIndex:200, background:C.g, color:"#fff", borderRadius:9, padding:"10px 16px", fontWeight:700, fontSize:13, boxShadow:"0 4px 14px rgba(0,0,0,0.18)" }}>
@@ -782,8 +813,8 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
 
       {/* Ekstern oppdatering-banner */}
       {eksternVar && (
-        <div style={{ background:"#fff3e0", border:"1px solid #ffb74d", borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
-          <span style={{ fontSize:13, color:"#e65100", fontWeight:700 }}>
+        <div className="sam-extern" style={{ borderRadius:10, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
+          <span className="sam-extern-txt" style={{ fontSize:13, fontWeight:700 }}>
             ⚠️ En annen bruker har lagret endringer i denne planen
           </span>
           <div style={{ display:"flex", gap:8 }}>
@@ -818,8 +849,8 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
           </div>
         </div>
         {erEier && !bekreftSlett && (
-          <button className="btn" onClick={() => setBekreftSlett(true)}
-            style={{ background:"#ffebee", color:"#c62828", padding:"7px 12px", fontSize:12 }}>
+          <button className="btn sam-btn-danger" onClick={() => setBekreftSlett(true)}
+            style={{ padding:"7px 12px", fontSize:12 }}>
             🗑️ Slett
           </button>
         )}
@@ -829,8 +860,8 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
               style={{ background:"#c62828", color:"#fff", padding:"7px 12px", fontSize:12, opacity:sletter?0.7:1 }}>
               {sletter ? "Sletter..." : "Bekreft slett"}
             </button>
-            <button className="btn" onClick={() => setBekreftSlett(false)}
-              style={{ background:"#e0e0e0", color:C.t, padding:"7px 12px", fontSize:12 }}>
+            <button className="btn sam-btn-gray" onClick={() => setBekreftSlett(false)}
+              style={{ padding:"7px 12px", fontSize:12 }}>
               Avbryt
             </button>
           </div>
@@ -842,7 +873,7 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
 
       {/* Feil */}
       {feil && (
-        <div style={{ background:"#ffebee", border:"1px solid #ef9a9a", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#c62828", marginBottom:10 }}>
+        <div className="sam-error" style={{ borderRadius:8, padding:"8px 12px", fontSize:12, marginBottom:10 }}>
           {feil}
         </div>
       )}
@@ -969,13 +1000,19 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
                       <option value="rediger">✏️ Kan redigere</option>
                       <option value="lese">👁️ Kun lese</option>
                     </select>
-                    <button className="btn" onClick={() => {
-                        if (window.confirm(`Fjerne ${t.profil?.visningsnavn || t.profil?.brukernavn || "denne brukeren"} fra planen?`))
-                          handleFjernBruker(t.bruker_id);
-                      }}
-                      style={{ background:"#ffebee", color:"#c62828", padding:"5px 10px", fontSize:12 }}>
-                      Fjern
-                    </button>
+                    {bekreftFjernBruker?.bruker_id === t.bruker_id ? (
+                      <div style={{ display:"flex", gap:5 }}>
+                        <button className="btn" onClick={() => { handleFjernBruker(t.bruker_id); setBekreftFjernBruker(null); }}
+                          style={{ background:"#c62828", color:"#fff", padding:"5px 10px", fontSize:12 }}>Bekreft</button>
+                        <button className="btn sam-btn-gray" onClick={() => setBekreftFjernBruker(null)}
+                          style={{ padding:"5px 10px", fontSize:12 }}>Avbryt</button>
+                      </div>
+                    ) : (
+                      <button className="btn sam-btn-danger" onClick={() => setBekreftFjernBruker(t)}
+                        style={{ padding:"5px 10px", fontSize:12 }}>
+                        Fjern
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -988,7 +1025,7 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
                 Ventende e-postinvitasjoner ({invitasjoner.length})
               </div>
               {invitasjoner.map((inv) => (
-                <div key={inv.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", background:"#fffde7", borderRadius:9, marginBottom:6, border:"1px solid #ffe082" }}>
+                <div key={inv.id} className="sam-invite" style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", borderRadius:9, marginBottom:6 }}>
                   <span style={{ fontSize:16 }}>📧</span>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:13, fontWeight:700 }}>{inv.epost}</div>
@@ -1024,11 +1061,24 @@ function DeltPlanVisning({ plan, aktivBruker, minRolle, onTilbake, onOppdater, o
                   <div style={{ fontSize:11, color:C.gr }}>Lagret av: {h.bruker_navn || "Ukjent"}</div>
                 </div>
                 {kanRedigere && (
-                  <button className="btn" onClick={() => handleGjenopprett(h)}
-                    disabled={lagrer}
-                    style={{ background:C.lg2, color:C.g, padding:"6px 12px", fontSize:12, fontWeight:700, opacity:lagrer?0.5:1 }}>
-                    {lagrer ? "Gjenoppretter..." : "↩️ Gjenopprett"}
-                  </button>
+                  bekreftGjenopprett === h ? (
+                    <div style={{ display:"flex", gap:5 }}>
+                      <button className="btn" onClick={utforGjenopprett}
+                        style={{ background:"#2e7d32", color:"#fff", padding:"6px 12px", fontSize:12, fontWeight:700 }}>
+                        ✓ Bekreft
+                      </button>
+                      <button className="btn sam-btn-gray" onClick={() => setBekreftGjenopprett(null)}
+                        style={{ padding:"6px 12px", fontSize:12 }}>
+                        Avbryt
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="btn" onClick={() => handleGjenopprett(h)}
+                      disabled={lagrer}
+                      style={{ background:C.lg2, color:C.g, padding:"6px 12px", fontSize:12, fontWeight:700, opacity:lagrer?0.5:1 }}>
+                      {lagrer ? "Gjenoppretter..." : "↩️ Gjenopprett"}
+                    </button>
+                  )
                 )}
               </div>
             ))
@@ -1048,8 +1098,8 @@ function PlanKort({ plan, minRolle, eierProfil, onClick }) {
   const r        = ROLLER[minRolle] || ROLLER.lese;
 
   return (
-    <div className="hover" onClick={onClick}
-      style={{ background:"#fff", borderRadius:12, padding:"14px 16px", marginBottom:10, border:`1px solid ${C.mint}`, cursor:"pointer", boxShadow:"0 2px 8px rgba(44,91,142,0.06)" }}>
+    <div className="hover sam-kort" onClick={onClick}
+      style={{ borderRadius:12, padding:"14px 16px", marginBottom:10, border:`1px solid ${C.mint}`, cursor:"pointer", boxShadow:"0 2px 8px rgba(44,91,142,0.06)" }}>
       <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
         <span style={{ fontSize:22, lineHeight:1.2, flexShrink:0 }}>{planInfo.ikon}</span>
         <div style={{ flex:1, minWidth:0 }}>
@@ -1154,7 +1204,8 @@ function DelNyPlanModal({ aktivBruker, onOpprett, onLukk }) {
           <div style={{ maxHeight:200, overflowY:"auto", border:`1px solid ${C.mint}`, borderRadius:10 }}>
             {aktivListe.map((p, i) => (
               <div key={i} onClick={() => setValgtPlan(p)}
-                style={{ padding:"10px 12px", cursor:"pointer", background:valgtPlan===p?"#e3f2fd":"transparent", borderBottom:i<aktivListe.length-1?`1px solid ${C.lg2}`:"none", fontSize:13, fontWeight:valgtPlan===p?700:400, color:C.t, display:"flex", alignItems:"center", gap:8 }}>
+                className={valgtPlan===p?"sam-val-sel":""}
+                style={{ padding:"10px 12px", cursor:"pointer", borderBottom:i<aktivListe.length-1?`1px solid ${C.lg2}`:"none", fontSize:13, fontWeight:valgtPlan===p?700:400, color:C.t, display:"flex", alignItems:"center", gap:8 }}>
                 {valgtPlan === p && <span style={{ color:C.g }}>✓</span>}
                 {getPlanLabel(p)}
               </div>
@@ -1163,7 +1214,7 @@ function DelNyPlanModal({ aktivBruker, onOpprett, onLukk }) {
         )}
 
         {feil && (
-          <div style={{ background:"#ffebee", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#c62828", marginTop:10 }}>
+          <div className="sam-error" style={{ borderRadius:8, padding:"8px 12px", fontSize:12, marginTop:10 }}>
             {feil}
           </div>
         )}
@@ -1299,6 +1350,7 @@ export default function SamarbeidSide({ aktivBruker }) {
   // ── Listevisning ──
   return (
     <div className="fade">
+      <style>{SAM_CSS}</style>
       {toast && (
         <div style={{ position:"fixed", top:70, right:20, zIndex:200, background:C.g, color:"#fff", borderRadius:9, padding:"10px 16px", fontWeight:700, fontSize:13, boxShadow:"0 4px 14px rgba(0,0,0,0.18)" }}>
           {toast}
