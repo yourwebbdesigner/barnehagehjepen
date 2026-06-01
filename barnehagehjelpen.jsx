@@ -9159,7 +9159,7 @@ ${innhold}
       setAiAktiv({ seksjonId:"arshjul_alle", handling:"alle" });
       setAiLoading(true);
       const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${planTema}». La dette gjennomsyre årshjulet.`:""}`;
-      const prompt = `Du er en erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Svar kun med JSON – ingen annen tekst.\nLag et komplett årshjul for barnehageåret august–juni. Kontekst: ${ctx}\nFormat:\n{"august":{"tema":"...","aktiviteter":"...","notat":"..."},"september":{"tema":"...","aktiviteter":"...","notat":"..."},"oktober":{"tema":"...","aktiviteter":"...","notat":"..."},"november":{"tema":"...","aktiviteter":"...","notat":"..."},"desember":{"tema":"...","aktiviteter":"...","notat":"..."},"januar":{"tema":"...","aktiviteter":"...","notat":"..."},"februar":{"tema":"...","aktiviteter":"...","notat":"..."},"mars":{"tema":"...","aktiviteter":"...","notat":"..."},"april":{"tema":"...","aktiviteter":"...","notat":"..."},"mai":{"tema":"...","aktiviteter":"...","notat":"..."},"juni":{"tema":"...","aktiviteter":"...","notat":"..."}}\nTema skal reflektere årstid og pedagogiske prioriteter. Aktiviteter skal knyttes til rammeplanen.`;
+      const prompt = `Du er en erfaren norsk barnehagelærer. Svar kun med JSON – ingen annen tekst.\nLag et komplett årshjul for barnehageåret august–juni. Kontekst: ${ctx}\nKrav: tema maks 6 ord. aktiviteter: 2 aktiviteter på EN LINJE atskilt med " | ", med fagområde i parentes, f.eks. "Skogstur og naturobservasjon (Natur og miljø) | Samlingsstund om årstider (Kommunikasjon)". notat: 1 setning.\nFormat (alle 11 måneder):\n{"august":{"tema":"...","aktiviteter":"...","notat":"..."},"september":{"tema":"...","aktiviteter":"...","notat":"..."},"oktober":{"tema":"...","aktiviteter":"...","notat":"..."},"november":{"tema":"...","aktiviteter":"...","notat":"..."},"desember":{"tema":"...","aktiviteter":"...","notat":"..."},"januar":{"tema":"...","aktiviteter":"...","notat":"..."},"februar":{"tema":"...","aktiviteter":"...","notat":"..."},"mars":{"tema":"...","aktiviteter":"...","notat":"..."},"april":{"tema":"...","aktiviteter":"...","notat":"..."},"mai":{"tema":"...","aktiviteter":"...","notat":"..."},"juni":{"tema":"...","aktiviteter":"...","notat":"..."}}`;
       await kallAI(prompt, (tekst) => {
         setAiLoading(false);
         setAiAktiv(null);
@@ -9359,7 +9359,7 @@ ${innhold}
             {bekreftSletting
               ? <div style={{display:"flex",gap:6}}>
                   <button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft</button>
-                  <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#eee",color:C.t,padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+                  <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:C.lg2,color:C.t,padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
                 </div>
               : <button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
             }
@@ -9811,7 +9811,7 @@ ${innhold}
               {bekreftSletting
                 ? <div style={{display:"flex",gap:6}}>
                     <button onClick={()=>{setBekreftSletting(false);slettDokument(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft</button>
-                    <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#eee",color:C.t,padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+                    <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:C.lg2,color:C.t,padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
                   </div>
                 : <button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:13,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
               }
