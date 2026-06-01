@@ -409,8 +409,8 @@ export default function DokumentSkanner({ aktivBruker, onFerdig }) {
             .from("boker-filer")
             .upload(filnavn, pdfBlob, { contentType: "application/pdf" });
           if (upErr) throw upErr;
-          const { data } = supabase.storage.from("boker-filer").getPublicUrl(filnavn);
-          publicUrl = data?.publicUrl || null;
+          const { data: signedData, error: signErr } = await supabase.storage.from("boker-filer").createSignedUrl(filnavn, 31536000);
+          publicUrl = signErr ? null : (signedData?.signedUrl || null);
         } catch (upErr) {
           console.warn("[DokumentSkanner] Supabase-opplasting feilet, laster ned lokalt:", upErr);
         }

@@ -445,6 +445,15 @@ const CSS = `
   [data-theme="dark"] [style*="background: #2c5b8e"] {
     background: var(--c-g) !important;
   }
+  /* Primærblå tekstfarge → lysere i mørk modus */
+  [data-theme="dark"] [style*="color:#2c5b8e"],
+  [data-theme="dark"] [style*="color: #2c5b8e"] {
+    color: var(--c-g) !important;
+  }
+  [data-theme="dark"] [style*="border-left:3px solid #2c5b8e"],
+  [data-theme="dark"] [style*="border-left: 3px solid #2c5b8e"] {
+    border-left-color: var(--c-g) !important;
+  }
   /* Border-left for røde bokser – gjør dem synlige i dark mode */
   [data-theme="dark"] [style*="border-left:4px solid #c62828"],
   [data-theme="dark"] [style*="border-left: 4px solid #c62828"] {
@@ -6991,8 +7000,10 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
       try {
         const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
+        if (!r.ok) return;
         const d = await r.json();
-        const c = d.current;
+        const c = d?.current;
+        if (!c) return;
         setVær({ temp: Math.round(c.temperature_2m), kode: c.weather_code, vind: Math.round(c.wind_speed_10m) });
       } catch {}
     }, () => {});
@@ -8236,7 +8247,7 @@ ${innhold}
     const lagreEndring=async()=>{setBFeil("");if(!valgt)return;setBLoading(true);const ok=await lagre(brev.map(b=>b.id===valgt.id?{...b,tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen}:b));setBLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
     const genererAI=async()=>{setBAiLoading(true);const temaStr=planTema?` Månedstema: «${planTema}».`:"";const prompt=`Skriv et månedsbrev til foreldre fra norsk barnehage for ${MAANEDER[b_maaned-1]} ${b_aar}.${temaStr}\nBruk NØYAKTIG denne strukturen:\n\n## Hva vi har jobbet med\n• [punkt]\n• [punkt]\n• [punkt]\n\n## Kommende aktiviteter\n• [aktivitet/dato]\n• [aktivitet/dato]\n\n## Praktisk informasjon\n• [praktisk info]\n• [praktisk info]\n\nSkriv vennlig og engasjerende. Referer til Rammeplan 2017 og barnehagens pedagogiske arbeid.`;
     const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),90000);
-    try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1500}),signal:ctrl.signal});if(!r.ok)throw new Error();const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
+    try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1500}),signal:ctrl.signal});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
       const norm=(tekst.startsWith("##")?"\n":"")+tekst;
       const deler=norm.split(/\n##\s+/).slice(1);
       let sattNoe=false;
@@ -10492,6 +10503,12 @@ export default function App() {
       } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
         if (session?.user) {
           setAktivBruker(byggBruker(session.user, null));
+          hentProfil(session.user.id).then(p => {
+            setAktivBruker(byggBruker(session.user, p));
+          });
+        }
+      } else if (event === "USER_UPDATED") {
+        if (session?.user) {
           hentProfil(session.user.id).then(p => {
             setAktivBruker(byggBruker(session.user, p));
           });

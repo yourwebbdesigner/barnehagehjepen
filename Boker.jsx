@@ -155,6 +155,7 @@ async function toggleFavoritt(uid, bokId, erFav) {
 }
 
 async function lastOppFil(fil, userId) {
+  if (!userId) return { ok: false, feil: "Bruker-ID mangler – logg inn på nytt" };
   if (fil.type === "text/plain" || fil.name.endsWith(".txt")) {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -440,6 +441,7 @@ function AiFortellingView({ aktivBruker, onLagre, onAvbryt }) {
       const system = `Du er en kreativ forfatter av barnebøker for norske barnehager. Skriv en pedagogisk og engasjerende fortelling egnet for barn på ${form.aldersgruppe} år. Lengde: ${lengdeMap[form.lengde]}. Bruk varmt, enkelt bokmål. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:\n{"tittel":"...","beskrivelse":"En setning om hva fortellingen handler om","innhold":"Selve fortellingens tekst med avsnitt adskilt av \\n\\n"}`;
       const prompt = `Tema: ${form.tema}.${ekstra} Kategori: ${form.kategori}. Aldersgruppe: ${form.aldersgruppe} år.`;
       const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt, max_tokens:2048 }) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
       const d = await r.json();
       const jsonMatch = (d.text || "").match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Ugyldig svar fra AI");
