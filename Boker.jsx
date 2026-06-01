@@ -99,6 +99,7 @@ const CSS = `
     border-color: var(--c-input-border);
   }
   [data-theme="dark"] .bk-input:focus { background: var(--c-input-bg); border-color: var(--c-lg); }
+  [data-theme="dark"] .bk-tom { color: var(--c-gr); }
 `;
 
 const KATEGORIER = [
@@ -244,9 +245,11 @@ function BokKort({ bok, erFav, onFav, onAapne, kanRedigere, onRediger, onSlett }
 // ── DETALJ ─────────────────────────────────────────────────────────────────
 
 async function åpnePdf(sti) {
-  const { data, error } = await supabase.storage.from("boker-filer").createSignedUrl(sti, 300);
-  if (error || !data?.signedUrl) { alert("Kunne ikke åpne filen – prøv igjen"); return; }
-  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  try {
+    const { data, error } = await supabase.storage.from("boker-filer").createSignedUrl(sti, 300);
+    if (error || !data?.signedUrl) { alert("Kunne ikke åpne filen – prøv igjen"); return; }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  } catch { alert("Kunne ikke åpne filen – sjekk internettilkoblingen"); }
 }
 
 function BokDetalj({ bok, erFav, onFav, kanRedigere, onRediger, onSlett, onTilbake }) {
@@ -380,11 +383,11 @@ function BokForm({ bok, aktivBruker, onLagre, onAvbryt, laster }) {
           <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:2 }}>
             <input type="number" min={1} max={6} className="bk-input"
               style={{ width:60, marginBottom:0, textAlign:"center" }}
-              value={form.alder_fra} onChange={e => set("alder_fra", parseInt(e.target.value))} />
+              value={form.alder_fra} onChange={e => set("alder_fra", parseInt(e.target.value) || form.alder_fra)} />
             <span style={{ color:"#5d7390", fontSize:13, flexShrink:0 }}>–</span>
             <input type="number" min={1} max={6} className="bk-input"
               style={{ width:60, marginBottom:0, textAlign:"center" }}
-              value={form.alder_til} onChange={e => set("alder_til", parseInt(e.target.value))} />
+              value={form.alder_til} onChange={e => set("alder_til", parseInt(e.target.value) || form.alder_til)} />
           </div>
         </div>
       </div>

@@ -363,7 +363,9 @@ const CSS = `
   [data-theme="dark"] [style*="color:#33691e"],
   [data-theme="dark"] [style*="color: #33691e"],
   [data-theme="dark"] [style*="color:rgb(51, 105, 30)"],
-  [data-theme="dark"] [style*="color: rgb(51, 105, 30)"] { color: #6fcf97 !important; }
+  [data-theme="dark"] [style*="color: rgb(51, 105, 30)"],
+  [data-theme="dark"] [style*="color:#2d7d4f"],
+  [data-theme="dark"] [style*="color: #2d7d4f"] { color: #6fcf97 !important; }
   [data-theme="dark"] [style*="color:#795548"],
   [data-theme="dark"] [style*="color: #795548"],
   [data-theme="dark"] [style*="color:rgb(121, 85, 72)"],
@@ -403,7 +405,13 @@ const CSS = `
   [data-theme="dark"] [style*="color:#1a2a3a"],
   [data-theme="dark"] [style*="color: #1a2a3a"],
   [data-theme="dark"] [style*="color:rgb(26, 42, 58)"],
-  [data-theme="dark"] [style*="color: rgb(26, 42, 58)"] { color: var(--c-t) !important; }
+  [data-theme="dark"] [style*="color: rgb(26, 42, 58)"],
+  [data-theme="dark"] [style*="color:#2a3e58"],
+  [data-theme="dark"] [style*="color: #2a3e58"],
+  [data-theme="dark"] [style*="color:#2a3a4c"],
+  [data-theme="dark"] [style*="color: #2a3a4c"],
+  [data-theme="dark"] [style*="color:#3a4a5c"],
+  [data-theme="dark"] [style*="color: #3a4a5c"] { color: var(--c-t) !important; }
   [data-theme="dark"] [style*="color:#5d7390"],
   [data-theme="dark"] [style*="color: #5d7390"],
   [data-theme="dark"] [style*="color:rgb(93, 115, 144)"],
@@ -5085,7 +5093,8 @@ function skrivUtGenerell({ tittel, meta, seksjoner, logoTekst }) {
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;background:#f3f7fc;color:#1a2c45;padding:24px 20px;line-height:1.6}.topp{max-width:700px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{font-size:22px;color:#2c5b8e}.meta{font-size:12px;color:#5d7390;margin-top:4px}.innhold{max-width:700px;margin:0 auto}.knapp{padding:9px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.bunn{font-size:11px;color:#8a9bb0;text-align:center;margin-top:28px}@media print{@page{margin:12mm}.knapp{display:none}body{background:white;padding:0}}</style></head>
 <body><div class="topp"><div><h1>${esc(tittel)}</h1>${meta?`<div class="meta">${esc(meta)}</div>`:""}</div><button class="knapp" onclick="window.print()">🖨️ Skriv ut</button></div><div class="innhold">${seksHTML}</div><div class="bunn">${esc(logoTekst||"Barnehagehjelpen • Rammeplan 2017")}</div></body></html>`;
   const v=window.open("","_blank","width=820,height=720");
-  if(v){v.document.write(html);v.document.close();}
+  if(!v){alert("Popup ble blokkert. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut.");return;}
+  v.document.write(html);v.document.close();
 }
 
 async function registrerBruker({ brukernavn, epost, passord, telefon }) {
@@ -5408,7 +5417,8 @@ async function hentDokumentasjon(brukerId) {
 async function lagreDokumentasjon(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("dokumentasjon").delete().eq("user_id", brukerId);
+    const { error: delErr } = await supabase.from("dokumentasjon").delete().eq("user_id", brukerId);
+    if (delErr) throw delErr;
     if (liste.length > 0) await supabase.from("dokumentasjon").insert(liste.map(d => ({ user_id: brukerId, payload: d })));
     return true;
   } catch(e) { console.error("[Dokumentasjon] Lagring feilet:", e); return false; }
@@ -5425,7 +5435,8 @@ async function hentUkeplaner(brukerId) {
 async function lagreUkeplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("ukeplaner").delete().eq("user_id", brukerId);
+    const { error: delErr } = await supabase.from("ukeplaner").delete().eq("user_id", brukerId);
+    if (delErr) throw delErr;
     if (liste.length > 0) await supabase.from("ukeplaner").insert(liste.map(p => ({ user_id: brukerId, payload: p })));
     return true;
   } catch(e) { console.error("[Ukeplan] Lagring feilet:", e); return false; }
@@ -5442,8 +5453,9 @@ async function hentArsplaner(brukerId) {
 async function lagreArsplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("arsplaner").delete().eq("user_id", brukerId);
-    if (liste.length > 0) await supabase.from("arsplaner").insert(liste.map(p => ({ user_id: brukerId, tittel: p.tittel||"", aar: parseInt(p.aar)||2025, payload: p })));
+    const { error: delErr } = await supabase.from("arsplaner").delete().eq("user_id", brukerId);
+    if (delErr) throw delErr;
+    if (liste.length > 0) await supabase.from("arsplaner").insert(liste.map(p => ({ user_id: brukerId, tittel: p.tittel||"", aar: parseInt(p.aar)||new Date().getFullYear(), payload: p })));
     return true;
   } catch(e) { console.error("[Årsplan] Lagring feilet:", e); return false; }
 }
@@ -5463,7 +5475,8 @@ async function hentMaanedsplaner(brukerId) {
 async function lagreMaanedsplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("maanedsplaner").delete().eq("user_id", brukerId);
+    const { error: delErr } = await supabase.from("maanedsplaner").delete().eq("user_id", brukerId);
+    if (delErr) throw delErr;
     if (liste.length > 0) {
       await supabase.from("maanedsplaner").insert(liste.map(p => {
         const { id, tittel, aar, maaned, tema, fagomrader, opprettet, ...rest } = p;
@@ -5489,7 +5502,8 @@ async function hentMaanedsbrev(brukerId) {
 async function lagreMaanedsbrev(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    await supabase.from("maanedbrev").delete().eq("user_id", brukerId);
+    const { error: delErr } = await supabase.from("maanedbrev").delete().eq("user_id", brukerId);
+    if (delErr) throw delErr;
     if (liste.length > 0) {
       await supabase.from("maanedbrev").insert(liste.map(b => {
         const { id, tittel, aar, maaned, hilsen, opprettet, ...rest } = b;
@@ -6485,7 +6499,7 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
     try {
       const system = `Du er en pedagogisk assistent for norske barnehager. Lag et detaljert aktivitetskort. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:
 {"title":"...","description":"...","category":"Lek|Natur|Vann|Bevegelse|Kreativt|Språk|Antall|Musikk|Ute|Rolig|Eksperiment|Sosialt","age_group":"...","materials":"...","steps":"Steg 1: ...\\nSteg 2: ...\\nSteg 3: ...","curriculum_area":["kommunikasjon"],"learning_goal":"...","duration":"...","difficulty":"enkel|middels|avansert","indoor_outdoor":"inne|ute|begge","icon":"🎯","weather_tags":["sol","regn"]}`;
-      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt }) });
+      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt, max_tokens: 2500 }) });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const d = await r.json();
       const tekst = d.text || "";
@@ -6905,7 +6919,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     if (!aktivBruker?.id || !skjemaerLastet) return;
     (async () => {
       try {
-        await supabase.from("skjemaer").delete().eq("user_id", aktivBruker.id);
+        const { error: delErr } = await supabase.from("skjemaer").delete().eq("user_id", aktivBruker.id);
+        if (delErr) throw delErr;
         if (skjemaer.length > 0) await supabase.from("skjemaer").insert(skjemaer.map(s => ({ user_id: aktivBruker.id, skjema_id: s.id||"", payload: s })));
       } catch(e) { console.error("[Skjemaer] Kunne ikke lagre:", e); }
     })();
@@ -10505,13 +10520,13 @@ export default function App() {
           setAktivBruker(byggBruker(session.user, null));
           hentProfil(session.user.id).then(p => {
             setAktivBruker(byggBruker(session.user, p));
-          });
+          }).catch(console.error);
         }
       } else if (event === "USER_UPDATED") {
         if (session?.user) {
           hentProfil(session.user.id).then(p => {
             setAktivBruker(byggBruker(session.user, p));
-          });
+          }).catch(console.error);
         }
       } else if (event === "SIGNED_OUT") {
         setAktivBruker(null);
