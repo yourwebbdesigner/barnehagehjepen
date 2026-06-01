@@ -535,6 +535,19 @@ const CSS = `
   [data-theme="dark"] [style*="border: 2px dashed #d8f3dc"] {
     border-color: var(--c-divider) !important;
   }
+  /* Lysblå AI-panel (Månedsplan/Månedsbrev generer-boks) */
+  [data-theme="dark"] [style*="background:#f0f6ff"],
+  [data-theme="dark"] [style*="background: #f0f6ff"] {
+    background: var(--c-lg2) !important;
+  }
+  /* Lys grønn e-postbekreftelse + søkseksjon månedsbrev */
+  [data-theme="dark"] [style*="background:#f0faf2"],
+  [data-theme="dark"] [style*="background: #f0faf2"],
+  [data-theme="dark"] [style*="background:#f0faf4"],
+  [data-theme="dark"] [style*="background: #f0faf4"] {
+    background: #0a1e10 !important;
+    color: #6fcf97 !important;
+  }
 
   /* RESPONSIVT LAYOUT */
   .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }

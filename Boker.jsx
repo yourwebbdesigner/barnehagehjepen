@@ -100,6 +100,10 @@ const CSS = `
   }
   [data-theme="dark"] .bk-input:focus { background: var(--c-input-bg); border-color: var(--c-lg); }
   [data-theme="dark"] .bk-tom { color: var(--c-gr); }
+  [data-theme="dark"] [style*="background:linear-gradient(135deg,#f0f7ff"],
+  [data-theme="dark"] [style*="background: linear-gradient(135deg,#f0f7ff"] {
+    background: var(--c-lg2) !important;
+  }
 `;
 
 const KATEGORIER = [
