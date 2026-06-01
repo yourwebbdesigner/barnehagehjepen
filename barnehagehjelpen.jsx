@@ -535,6 +535,16 @@ const CSS = `
   [data-theme="dark"] [style*="border: 2px dashed #d8f3dc"] {
     border-color: var(--c-divider) !important;
   }
+  /* Deaktivert knapp (#ccc) – hvit tekst på lys grå er uleselig i mørk modus */
+  [data-theme="dark"] [style*="background:#ccc"],
+  [data-theme="dark"] [style*="background: #ccc"] {
+    background: #444 !important;
+  }
+  /* Vilkår-boks (uavmerket) og lignende nøytrale lyse bakgrunner */
+  [data-theme="dark"] [style*="background:#f8f9fc"],
+  [data-theme="dark"] [style*="background: #f8f9fc"] {
+    background: var(--c-lg2) !important;
+  }
   /* Lysblå AI-panel (Månedsplan/Månedsbrev generer-boks) */
   [data-theme="dark"] [style*="background:#f0f6ff"],
   [data-theme="dark"] [style*="background: #f0f6ff"] {
