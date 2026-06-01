@@ -3460,9 +3460,14 @@ function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}
-.print-btn{display:block;margin:0 auto 20px;padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
+.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}
+.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
+.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
 </style></head><body>
-<button class="print-btn no-print" onclick="window.print()">🖨️ Skriv ut</button>
+<div class="knapper no-print">
+  <button class="lukk-btn" onclick="window.close()">← Lukk</button>
+  <button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button>
+</div>
 ${html}
 </body></html>`);
   w.document.close();
@@ -5090,8 +5095,8 @@ function skrivUtGenerell({ tittel, meta, seksjoner, logoTekst }) {
       <div style="font-size:13px;color:#1a2c45;line-height:1.75;white-space:pre-wrap">${esc(s.tekst)}</div>
     </section>`).join("");
   const html=`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${esc(tittel)} – Barnehagehjelpen</title>
-<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;background:#f3f7fc;color:#1a2c45;padding:24px 20px;line-height:1.6}.topp{max-width:700px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{font-size:22px;color:#2c5b8e}.meta{font-size:12px;color:#5d7390;margin-top:4px}.innhold{max-width:700px;margin:0 auto}.knapp{padding:9px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.bunn{font-size:11px;color:#8a9bb0;text-align:center;margin-top:28px}@media print{@page{margin:12mm}.knapp{display:none}body{background:white;padding:0}}</style></head>
-<body><div class="topp"><div><h1>${esc(tittel)}</h1>${meta?`<div class="meta">${esc(meta)}</div>`:""}</div><button class="knapp" onclick="window.print()">🖨️ Skriv ut</button></div><div class="innhold">${seksHTML}</div><div class="bunn">${esc(logoTekst||"Barnehagehjelpen • Rammeplan 2017")}</div></body></html>`;
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;background:#f3f7fc;color:#1a2c45;padding:24px 20px;line-height:1.6}.topp{max-width:700px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{font-size:22px;color:#2c5b8e}.meta{font-size:12px;color:#5d7390;margin-top:4px}.innhold{max-width:700px;margin:0 auto}.knapper{display:flex;gap:8px}.knapp{padding:9px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.lukk{padding:9px 14px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.bunn{font-size:11px;color:#8a9bb0;text-align:center;margin-top:28px}@media print{@page{margin:12mm}.knapper{display:none}body{background:white;padding:0}}</style></head>
+<body><div class="topp"><div><h1>${esc(tittel)}</h1>${meta?`<div class="meta">${esc(meta)}</div>`:""}</div><div class="knapper"><button class="lukk" onclick="window.close()">← Lukk</button><button class="knapp" onclick="window.print()">🖨️ Skriv ut</button></div></div><div class="innhold">${seksHTML}</div><div class="bunn">${esc(logoTekst||"Barnehagehjelpen • Rammeplan 2017")}</div></body></html>`;
   const v=window.open("","_blank","width=820,height=720");
   if(!v){alert("Popup ble blokkert. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut.");return;}
   v.document.write(html);v.document.close();
