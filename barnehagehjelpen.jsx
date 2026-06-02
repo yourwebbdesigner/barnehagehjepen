@@ -8465,7 +8465,7 @@ ${innhold}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
         {[
           {id:"ukeplan",  ikon:"📅",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
-          {id:"maanedsplan",ikon:"📝",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
+          {id:"maanedsplan",ikon:"🗓️",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
           {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
           {id:"arsplan",  ikon:"📆",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
         ].map(({id,ikon,tittel,farge,border,desc})=>(
@@ -8482,9 +8482,9 @@ ${innhold}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {[
           {id:"ukeplan",   ikon:"📅",tittel:"Ukeplan",        farge:"#1565c0",bg:"#e3f2fd",desc:"Klassisk Man–Fre tavleplan"},
-          {id:"maanedskalender",ikon:"🗓",tittel:"Månedskalender",farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
+          {id:"maanedskalender",ikon:"🗓️",tittel:"Månedskalender",farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
           {id:"arsplan",   ikon:"📆",tittel:"Årshjul",         farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
-          {id:"maanedsbrev",ikon:"📨",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
+          {id:"ukeplan",   ikon:"🏫",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
         ].map(({id,ikon,tittel,farge,bg,desc})=>(
           <div key={id+"-mal"} className="hover" onClick={()=>navigerTil(id)}
             style={{background:bg,borderRadius:12,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,border:`1.5px solid ${farge}33`}}>
