@@ -3765,10 +3765,10 @@ function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
   );
 }
 
-function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
+function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang, preselectId, clearPreselect }) {
   const [sok, setSok] = useState("");
   const [filter, setFilter] = useState("alle");
-  const [valgt, setValgt] = useState(null);
+  const [valgt, setValgt] = useState(() => preselectId ? SANGER.find(s => s.id === preselectId) || null : null);
   const [visAiPanel, setVisAiPanel] = useState(false);
   const [userSanger, setUserSanger] = useState([]);
   const [lasterMine, setLasterMine] = useState(false);
@@ -3778,10 +3778,22 @@ function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang }) {
     if (!aktivBruker?.id) return;
     setLasterMine(true);
     hentUserSanger(aktivBruker.id)
-      .then(s => setUserSanger(s))
+      .then(s => {
+        setUserSanger(s);
+        // Prøv å åpne preselect i bruker-sanger (lastet asynkront)
+        if (preselectId && !valgt) {
+          const funnet = s.find(us => "user_"+us.id === preselectId);
+          if (funnet) setValgt({ id:"user_"+funnet.id, tittel:funnet.tittel, tekst:funnet.tekst, kategori:funnet.kategori, alder:funnet.alder, melodi:funnet.melodi, tips:funnet.tips, rammeplan:funnet.rammeplan||[], _dbId:funnet.id, _erMin:true });
+        }
+      })
       .catch(() => {})
       .finally(() => setLasterMine(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aktivBruker?.id]);
+
+  useEffect(() => {
+    if (preselectId && clearPreselect) clearPreselect();
+  }, [preselectId, clearPreselect]);
 
   const userSangerMapped = userSanger.map(s => ({ id:"user_"+s.id, tittel:s.tittel, tekst:s.tekst, kategori:s.kategori, alder:s.alder, melodi:s.melodi, tips:s.tips, rammeplan:s.rammeplan||[], _dbId:s.id, _erMin:true }));
   const alleData = [...userSangerMapped, ...SANGER];
@@ -3873,7 +3885,7 @@ const AKTIV_KATS = [["alle","Alle"],["kreativ","🎨 Kreativ"],["ute","🌳 Ute"
 
 // Standalone-komponent for søkeboks – holder fokus selv om parent re-rendrer.
 // Lokal state for input-verdien, kaller onChange-prop ved hver endring.
-function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, C }) {
+function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, C }) {
   return (
     <div style={{marginBottom:18}}>
       <div style={{position:"relative"}}>
@@ -3918,7 +3930,7 @@ function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, 
                 <div>
                   <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:C.g,background:"#f5f9fd",textTransform:"uppercase",letterSpacing:0.5}}>🎵 Sanger ({sokeResultat.sanger.length})</div>
                   {sokeResultat.sanger.slice(0,5).map(s=>(
-                    <div key={"s"+s.id} onClick={()=>{navigerTil("sanger");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">{s.tittel}</div>
+                    <div key={"s"+s.id} onClick={()=>aapneSang?.(s)} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">{s.tittel}</div>
                   ))}
                   {sokeResultat.sanger.length>5 && <div style={{padding:"6px 14px",fontSize:11,color:C.gr,fontStyle:"italic"}}>+{sokeResultat.sanger.length-5} flere – gå til Sanger</div>}
                 </div>
@@ -4534,7 +4546,7 @@ function renderInline(tekst) {
 function RenderTekst({ tekst }) {
   if (!tekst) return null;
   return (
-    <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#1a2c45"}}>
+    <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"var(--c-t, #1a2c45)"}}>
       {tekst.split("\n").map((l, i) => {
         const t = l.trim();
         if (!t) return <div key={i} style={{height:4}}/>;
@@ -4726,22 +4738,11 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
 
   const kopierResultat = async () => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(aiResultat);
-        visMelding("✅ Kopiert til utklippstavlen!");
-        return;
-      }
-    } catch (e) {}
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = aiResultat;
-      ta.style.position="fixed"; ta.style.left="-9999px";
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      visMelding(ok ? "✅ Kopiert til utklippstavlen!" : "❌ Kunne ikke kopiere");
-    } catch { visMelding("❌ Kunne ikke kopiere"); }
+      await navigator.clipboard.writeText(aiResultat);
+      visMelding("✅ Kopiert til utklippstavlen!");
+    } catch {
+      visMelding("❌ Kopiering støttes ikke i denne nettleseren");
+    }
   };
 
   const nullstill = () => { setAiResultat(""); setAiVisFilter(true); setLagringsTittel(""); };
@@ -6858,6 +6859,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [skjemaer, setSkjemaer] = useState([]);
   const [skjemaerLastet, setSkjemaerLastet] = useState(false);
   const [preselectAktiv, setPreselectAktiv] = useState(null);
+  const [preselectSang, setPreselectSang] = useState(null);
+  const [preselectTegneark, setPreselectTegneark] = useState(null);
   const [valgtFag, setValgtFag] = useState(null);
   const [rammeSeksjon, setRammeSeksjon] = useState("oversikt");
   const [valgtSkjema, setValgtSkjema] = useState(null);
@@ -6876,6 +6879,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [globalDokumentasjon, setGlobalDokumentasjon] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [globalSok, setGlobalSok] = useState("");
+  const [sokDebounced, setSokDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setSokDebounced(globalSok), 200);
+    return () => clearTimeout(t);
+  }, [globalSok]);
   const [planTema, setPlanTema] = useState(() => localStorage.getItem("bh_plan_tema") || "");
   useEffect(() => {
     if (planTema) localStorage.setItem("bh_plan_tema", planTema);
@@ -6886,7 +6894,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   // Global søk – leter på tvers av sanger, aktiviteter, tegneark, fagområder, rammeplan og brukerens planer
   const sokeResultat = (() => {
-    const q = globalSok.trim().toLowerCase();
+    const q = sokDebounced.trim().toLowerCase();
     if (q.length < 2) return null;
     const treff = { sanger:[], aktiviteter:[], tegneark:[], fagomrader:[], rammeplan:[], skjemaer:[], ukeplaner:[], maanedsplaner:[], maanedsbrev:[], arsplaner:[], boker:[], aktivitetskort:[], dokumentasjon:[] };
     const matcher = (txt) => (txt||"").toLowerCase().includes(q);
@@ -6948,7 +6956,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   })();
 
   // Hjelpere for å navigere fra søketreff
-  const aapneTegneark = (t) => { navigerTil("tegneark"); setGlobalSok(""); };
+  const aapneTegneark = (t) => { setPreselectTegneark(t?.id || null); navigerTil("tegneark"); setGlobalSok(""); };
+  const aapneSang = (s) => { setPreselectSang(s?.id || null); navigerTil("sanger"); setGlobalSok(""); };
   const aapneAktivitet = (a) => { setPreselectAktiv(a.id); navigerTil("aktiviteter"); setGlobalSok(""); };
   const aapneFagomrade = (f) => { setValgtFag(f); setRammeSeksjon("fagomrader"); navigerTil("rammeplan"); setGlobalSok(""); };
   const aapneRammeplan = (key) => { setRammeSeksjon(key); setValgtFag(null); navigerTil("rammeplan"); setGlobalSok(""); };
@@ -6988,16 +6997,33 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     return () => { avbrutt = true; };
   }, [aktivBruker?.id]);
 
-  // Lagre skjemaer til storage hver gang de endres (kun etter første lasting for å unngå å overskrive med tom liste)
+  // Lagre skjemaer – debounced 500ms + upsert-strategi for å unngå data-tap
   useEffect(() => {
     if (!aktivBruker?.id || !skjemaerLastet) return;
-    (async () => {
+    const userId = aktivBruker.id;
+    const snapshot = skjemaer; // frys referanse til dette renderet
+    let avbrutt = false;
+    const t = setTimeout(async () => {
+      if (avbrutt) return;
       try {
-        const { error: delErr } = await supabase.from("skjemaer").delete().eq("user_id", aktivBruker.id);
-        if (delErr) throw delErr;
-        if (skjemaer.length > 0) await supabase.from("skjemaer").insert(skjemaer.map(s => ({ user_id: aktivBruker.id, skjema_id: s.id||"", payload: s })));
+        if (snapshot.length === 0) {
+          // Tom liste: slett alt – ingen risiko for data-tap
+          await supabase.from("skjemaer").delete().eq("user_id", userId);
+        } else {
+          // Steg 1: upsert alle gjeldende (oppretter/oppdaterer, fjerner ikke)
+          const rader = snapshot.map(s => ({ user_id: userId, skjema_id: String(s.id||""), payload: s }));
+          const { error: upsertErr } = await supabase.from("skjemaer").upsert(rader, { onConflict: "skjema_id,user_id" });
+          if (upsertErr) throw upsertErr;
+          if (avbrutt) return;
+          // Steg 2: slett rader som ikke lenger er i listen (kun etter vellykket upsert)
+          const ids = snapshot.map(s => String(s.id||"")).filter(Boolean);
+          if (ids.length > 0) {
+            await supabase.from("skjemaer").delete().eq("user_id", userId).not("skjema_id", "in", `(${ids.map(id=>`'${id.replace(/'/g,"''")}'`).join(",")})`);
+          }
+        }
       } catch(e) { console.error("[Skjemaer] Kunne ikke lagre:", e); }
-    })();
+    }, 500);
+    return () => { avbrutt = true; clearTimeout(t); };
   }, [skjemaer, aktivBruker?.id, skjemaerLastet]);
 
   // Toggle favoritt og lagre umiddelbart med ordentlig feilhåndtering
@@ -7151,6 +7177,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         sokeResultat={sokeResultat}
         navigerTil={navigerTil}
         aapneAktivitet={aapneAktivitet}
+        aapneSang={aapneSang}
         aapneTegneark={aapneTegneark}
         aapneFagomrade={aapneFagomrade}
         aapneRammeplan={aapneRammeplan}
@@ -7204,11 +7231,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
         {[
           ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
-          ["📋","Månedsplan","Hele måneden strukturert","manedsplan","#6a1b9a"],
-          ["✉️","Månedsbrev","Brev til foreldre","manedsbrev","#e67e22"],
+          ["📋","Månedsplan","Hele måneden strukturert","maanedsplan","#6a1b9a"],
+          ["✉️","Månedsbrev","Brev til foreldre","maanedsbrev","#e67e22"],
           ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
-        ].map(([ic,t,u,typeId,fc])=>(
-          <div key={t} className="hover" onClick={()=>aapneAImedType(typeId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
+        ].map(([ic,t,u,sideId,fc])=>(
+          <div key={t} className="hover" onClick={()=>navigerTil(sideId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
               <span style={{fontSize:18}}>{ic}</span>
               <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t}</div>
@@ -7764,7 +7791,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   const TegnearkSide = ()=>{
     const [tkat, setTkat] = useState("alle");
-    const [valgtT, setValgtT] = useState(null);
+    const [valgtT, setValgtT] = useState(() => preselectTegneark ? TEGNEARK.find(t => t.id === preselectTegneark) || null : null);
     const [lokalToast, setLokalToast] = useState("");
     const [visAiPanel, setVisAiPanel] = useState(false);
     const [userTegneark, setUserTegneark] = useState([]);
@@ -7773,8 +7800,19 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
     useEffect(() => {
       if (!aktivBruker?.id) return;
-      hentUserTegneark(aktivBruker.id).then(setUserTegneark);
+      hentUserTegneark(aktivBruker.id).then(ut => {
+        setUserTegneark(ut);
+        if (preselectTegneark && !valgtT) {
+          const funnet = ut.find(t => "user_"+t.id === preselectTegneark);
+          if (funnet) setValgtT({ id:"user_"+funnet.id, tittel:funnet.tittel, ikon:funnet.ikon||"🖍️", kategori:funnet.kategori||"natur", alder:funnet.alder, rammeplan:funnet.rammeplan||[], svg:<SvgPlaceholder/>, oppgave:funnet.oppgave, samtale:funnet.samtale, mal:funnet.mal, _erMin:true, _dbId:funnet.id });
+        }
+      });
     }, [aktivBruker?.id]);
+
+    useEffect(() => {
+      if (preselectTegneark) setPreselectTegneark(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const userMapped = userTegneark.map(t => ({ id:"user_"+t.id, tittel:t.tittel, ikon:t.ikon||"🖍️", kategori:t.kategori||"natur", alder:t.alder, rammeplan:t.rammeplan||[], svg:<SvgPlaceholder/>, oppgave:t.oppgave, samtale:t.samtale, mal:t.mal, _erMin:true, _dbId:t.id }));
     const alleData = [...userMapped, ...TEGNEARK];
@@ -7980,30 +8018,10 @@ ${innhold}
     const kopier = async (ark) => {
       const text = `${ark.tittel}\n\n🖍️ Tegneoppgave:\n${ark.oppgave}\n\n💬 Samtale med barna:\n${ark.samtale}\n\n📖 Mål: ${ark.mal}\n\n👶 Alder: ${ark.alder}`;
       try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-          visLokal("✅ Kopiert til utklippstavlen!");
-          return;
-        }
-      } catch (e) { /* fall through to fallback */ }
-      
-      // Fallback: hidden textarea + execCommand
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.setAttribute("readonly", "");
-        ta.style.position = "fixed";
-        ta.style.left = "-9999px";
-        ta.style.top = "0";
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        ta.setSelectionRange(0, text.length);
-        const ok = document.execCommand("copy");
-        document.body.removeChild(ta);
-        visLokal(ok ? "✅ Kopiert til utklippstavlen!" : "❌ Kunne ikke kopiere");
-      } catch (e) {
-        visLokal("❌ Kunne ikke kopiere");
+        await navigator.clipboard.writeText(text);
+        visLokal("✅ Kopiert til utklippstavlen!");
+      } catch {
+        visLokal("❌ Kopiering støttes ikke i denne nettleseren");
       }
     };
     
@@ -8927,12 +8945,7 @@ Returner KUN gyldig JSON uten markdown:
         await navigator.clipboard.writeText(full);
         visLokal("✅ Kopiert");
       } catch {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = full; document.body.appendChild(ta); ta.select();
-          document.execCommand("copy"); document.body.removeChild(ta);
-          visLokal("✅ Kopiert");
-        } catch { visLokal("❌ Kopiering feilet"); }
+        visLokal("❌ Kopiering støttes ikke i denne nettleseren");
       }
     };
 
@@ -10765,7 +10778,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
           <div style={{background:C.w,borderRadius:14,padding:18,boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
             <Tilbake onClick={tilbake}/>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:8}}>📱 Telefonnummer</div>
-            <p style={{fontSize:12,color:C.gr,marginBottom:14,lineHeight:1.6}}>Valgfritt. Lagres kun lokalt på enheten din. Krever ikke passord å endre.</p>
+            <p style={{fontSize:12,color:C.gr,marginBottom:14,lineHeight:1.6}}>Valgfritt. Lagres sikkert i skyen og synkroniseres på tvers av enheter. Krever ikke passord å endre.</p>
             <div style={{background:"#e8eff8",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.telefon || "Ikke satt"}</strong></div>
             <label style={labelStil}>Telefonnummer (la stå tomt for å fjerne)</label>
             <input type="tel" inputMode="tel" value={tlf_nytt} onChange={e=>setTlfNytt(e.target.value)} placeholder="+47 123 45 678" style={iS} autoComplete="tel"/>
@@ -10841,7 +10854,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🎵 Sanger og rim <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favSanger.length}</span></div>
             <div style={{display:"grid",gap:8}}>
               {favSanger.map(s=>(
-                <div key={s.id} className="hover" onClick={()=>navigerTil("sanger")} style={{background:C.w,borderRadius:11,padding:"11px 13px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                <div key={s.id} className="hover" onClick={()=>aapneSang(s)} style={{background:C.w,borderRadius:11,padding:"11px 13px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:800,color:C.t,fontSize:13}}>{s.tittel}</div>
                     <div style={{fontSize:10,color:C.gr,marginTop:2}}>{s.kategori} • 👶 {s.alder}</div>
@@ -10873,7 +10886,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🖍️ Tegneark <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favTegn.length}</span></div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
               {favTegn.map(t=>(
-                <div key={t.id} className="hover" onClick={()=>navigerTil("tegneark")} style={{background:C.w,borderRadius:11,padding:"11px 9px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",textAlign:"center",position:"relative"}}>
+                <div key={t.id} className="hover" onClick={()=>aapneTegneark(t)} style={{background:C.w,borderRadius:11,padding:"11px 9px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",textAlign:"center",position:"relative"}}>
                   <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:4,right:4,fontSize:15}} aria-label="Fjern favoritt">⭐</button>
                   <div style={{maxWidth:90,margin:"0 auto",pointerEvents:"none"}}>{t.svg}</div>
                   <div style={{fontWeight:800,color:C.t,fontSize:11,marginTop:4}}>{t.ikon} {t.tittel}</div>
@@ -10910,7 +10923,9 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         {/* Mobil-header med hamburger */}
         <div className="bh-mobile-header">
           <button className="bh-hamburger" onClick={()=>setSidebarOpen(true)} aria-label="Åpne meny">☰</button>
-          <div className="bh-mobile-title">🌿 Barnehagehjelpen</div>
+          <div className="bh-mobile-title">
+            {(() => { const n = nav.find(x => x.id === side); return n ? `${n.i} ${n.n}` : "🌿 Barnehagehjelpen"; })()}
+          </div>
         </div>
         {/* Backdrop på mobil når sidebar er åpen */}
         <div className={`bh-backdrop ${sidebarOpen?"show":""}`} onClick={()=>setSidebarOpen(false)}/>
@@ -10974,7 +10989,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         </div>
         <main className="bh-main">
           {feedback && <div className="fade" style={{position:"fixed",top:70,right:20,zIndex:200,background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
-          {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])}/>
+          {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
            : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
            : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
            : (sider[side]||Hjem())
@@ -11148,5 +11163,5 @@ export default function App() {
     return <AuthScreen onLoginSuccess={setAktivBruker}/>;
   }
 
-  return <Barnehagehjelpen aktivBruker={aktivBruker} onLogout={handleLogout} onUserUpdate={handleUserUpdate} storageInfo={storageStatus}/>;
+  return <Barnehagehjelpen aktivBruker={aktivBruker} onLogout={handleLogout} onUserUpdate={handleUserUpdate}/>;
 }
