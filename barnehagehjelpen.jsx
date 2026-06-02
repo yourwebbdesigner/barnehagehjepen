@@ -9309,13 +9309,50 @@ Returner KUN gyldig JSON uten markdown:
     };
 
     const skrivUtKalender=(p)=>{
-      if(!document.getElementById("kalender-print-styles")){const s=document.createElement("style");s.id="kalender-print-styles";s.textContent=`#kalender-print-area{display:none}@media print{@page{margin:10mm;size:portrait}body>*:not(#kalender-print-area){display:none!important}#kalender-print-area{display:block!important;font-family:sans-serif}}`;document.head.appendChild(s);}
       const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
       const mNavn=MAANEDER_KAL[(p.maaned||1)-1];
-      let area=document.getElementById("kalender-print-area");
-      if(!area){area=document.createElement("div");area.id="kalender-print-area";document.body.appendChild(area);}
-      area.innerHTML=`<h2 style="color:#2c5b8e;margin:0 0 4px">📅 ${esc(p.tittel)}</h2><p style="font-size:12px;color:#666;margin:0 0 12px">${mNavn} ${p.aar}${p.tema?" • Tema: "+esc(p.tema):""}</p><p style="font-size:11px;color:#888">[Kalendervisning – åpne i appen for full kalender]</p>`;
-      setTimeout(()=>window.print(),100);
+      const forste=new Date(p.aar,p.maaned-1,1);
+      const antDager=new Date(p.aar,p.maaned,0).getDate();
+      const startUkedag=(forste.getDay()+6)%7;
+      const celler=[];
+      for(let i=0;i<startUkedag;i++)celler.push(null);
+      for(let d=1;d<=antDager;d++)celler.push(d);
+      while(celler.length%7!==0)celler.push(null);
+      const typeBg={aktivitet:"#dbeafe",tur:"#dcfce7",bursdag:"#f3e8ff",praktisk:"#fef9c3"};
+      const typeCol={aktivitet:"#1e40af",tur:"#166534",bursdag:"#7e22ce",praktisk:"#854d0e"};
+      const rader=[];
+      for(let r=0;r<celler.length/7;r++){
+        const cHtml=celler.slice(r*7,r*7+7).map(d=>{
+          if(!d)return`<td style="background:#f8f8f8;border:1px solid #e0e0e0;"></td>`;
+          const evts=(p.events||{})[String(d)]||[];
+          const eHtml=evts.map(e=>`<div style="background:${typeBg[e.type]||"#f0f0f0"};color:${typeCol[e.type]||"#333"};border-radius:3px;padding:1px 5px;font-size:8px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(e.ikon||"")} ${esc(e.tekst)}</div>`).join("");
+          return`<td style="border:1px solid #ccc;padding:4px;vertical-align:top;height:72px;"><div style="font-size:11px;font-weight:700;color:#1a2c45;margin-bottom:3px">${d}</div>${eHtml}</td>`;
+        }).join("");
+        rader.push(`<tr>${cHtml}</tr>`);
+      }
+      const html=`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${esc(p.tittel)} – Barnehagehjelpen</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;color:#1a2c45;background:#fff;padding:16px}
+.topp{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+h1{font-size:20px;color:#2c5b8e}p{font-size:12px;color:#5d7390;margin-top:3px}
+.knapper{display:flex;gap:8px}.knapp{padding:8px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px}
+.lukk{padding:8px 14px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11px;border:1px solid #1a4063}
+.legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+@media print{@page{margin:10mm;size:portrait}.knapper{display:none}body{padding:0}}</style>
+</head><body>
+<div class="topp"><div><h1>🗓 ${esc(p.tittel)}</h1><p>${mNavn} ${p.aar}${p.tema?" • Tema: "+esc(p.tema):""}</p></div>
+<div class="knapper"><button class="lukk" onclick="window.close()">← Lukk</button><button class="knapp" onclick="window.print()">🖨️ Skriv ut</button></div></div>
+<table><thead><tr>${["Man","Tir","Ons","Tor","Fre","Lør","Søn"].map(d=>`<th>${d}</th>`).join("")}</tr></thead>
+<tbody>${rader.join("")}</tbody></table>
+<div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#dbeafe"></div>Aktivitet</div><div class="leg-item"><div class="leg-dot" style="background:#dcfce7"></div>Tur</div><div class="leg-item"><div class="leg-dot" style="background:#f3e8ff"></div>Bursdag</div><div class="leg-item"><div class="leg-dot" style="background:#fef9c3"></div>Praktisk</div></div>
+</body></html>`;
+      const v=window.open("","_blank","width=900,height=720");
+      if(!v){visLokal("⚠️ Popup ble blokkert – tillat popup for å skrive ut");return;}
+      v.document.write(html);v.document.close();v.focus();
+      setTimeout(()=>v.print(),400);
     };
 
     if(!lastet)return<div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster...</div>;
