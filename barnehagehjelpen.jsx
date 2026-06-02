@@ -8173,7 +8173,7 @@ ${innhold}
       const deler=norm.split(/\n##\s+/).slice(1);
       const nyeUker=["","","",""].map((_,i)=>{if(!deler[i])return"";const nl=deler[i].indexOf("\n");return nl>=0?deler[i].slice(nl+1).trim():deler[i].trim();});
       setMUker(nyeUker);visLokal("✅ AI-innhold generert");
-    }}catch(e){visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setMAiLoading(false);};};
+    }}catch(e){console.error("[AI Månedsplan]",e);visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setMAiLoading(false);};};
     const toggleFag=(f)=>setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);
     const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
@@ -8317,7 +8317,7 @@ ${innhold}
       deler.forEach(del=>{const lnr=del.indexOf("\n");const overskrift=lnr>=0?del.slice(0,lnr).toLowerCase().trim():del.toLowerCase().trim();const innhold=lnr>=0?del.slice(lnr+1).trim():"";if(!innhold)return;if(overskrift.includes("jobbet")||overskrift.includes("gjort")){setBGjort(innhold);sattNoe=true;}else if(overskrift.includes("kommende")||overskrift.includes("aktivitet")){setBKommende(innhold);sattNoe=true;}else if(overskrift.includes("praktisk")){setBPraktisk(innhold);sattNoe=true;}});
       if(!sattNoe)setBGjort(tekst);
       visLokal("✅ AI-innhold generert");
-    }}catch(e){visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setBAiLoading(false);};};
+    }}catch(e){console.error("[AI Månedsbrev]",e);visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setBAiLoading(false);};};
     const kopierBrev=(b)=>{const tekst=`${b.tittel}\n\n${b.gjort?"Vi har jobbet med:\n"+b.gjort+"\n\n":""}${b.kommende?"Kommende:\n"+b.kommende+"\n\n":""}${b.praktisk?"Praktisk info:\n"+b.praktisk+"\n\n":""}${b.hilsen?"Hilsen,\n"+b.hilsen:""}`.trim();navigator.clipboard?.writeText(tekst).then(()=>visLokal("✅ Kopiert")).catch(()=>visLokal("ℹ️ Kopiering ikke støttet"));};
     const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
@@ -9191,14 +9191,16 @@ ${innhold}
         setAiAktiv(null);
         if (tekst) {
           try {
-            const d = JSON.parse(tekst.replace(/```json|```/g, "").trim());
+            const jsonMatch = tekst.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("Ingen JSON i svar");
+            const d = JSON.parse(jsonMatch[0]);
             if (d.tema || d.aktiviteter) {
               oppdaterArshjul(maaned, "tema", d.tema||"");
               oppdaterArshjul(maaned, "aktiviteter", d.aktiviteter||"");
               oppdaterArshjul(maaned, "notat", d.notat||"");
               visLokal("✨ Forslag lagt inn for " + m?.navn);
             } else { visLokal("ℹ️ AI ga uventet format"); }
-          } catch { visLokal("ℹ️ AI utilgjengelig"); }
+          } catch (e) { console.error("[AI Årshjul]", e); visLokal("ℹ️ AI utilgjengelig"); }
         } else { visLokal("ℹ️ AI utilgjengelig"); }
       });
     };
@@ -9213,7 +9215,9 @@ ${innhold}
         setAiAktiv(null);
         if (tekst) {
           try {
-            const d = JSON.parse(tekst.replace(/```json|```/g, "").trim());
+            const jsonMatch = tekst.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("Ingen JSON i svar");
+            const d = JSON.parse(jsonMatch[0]);
             setAp(prev => {
               const nyArshjul = { ...prev.arshjul };
               MANEDER.forEach(m => {
@@ -9222,7 +9226,7 @@ ${innhold}
               return { ...prev, arshjul: nyArshjul };
             });
             visLokal("✨ Komplett årshjul generert!");
-          } catch { visLokal("ℹ️ AI utilgjengelig"); }
+          } catch (e) { console.error("[AI Komplett årshjul]", e); visLokal("ℹ️ AI utilgjengelig"); }
         } else { visLokal("ℹ️ AI utilgjengelig"); }
       }, 4096);
     };
