@@ -8264,10 +8264,10 @@ ${innhold}
             <button key={f.id} onClick={()=>toggleFag(f.id)} style={{background:m_fag.includes(f.id)?f.lys:"#f5f7fa",color:m_fag.includes(f.id)?f.farge:C.gr,border:`2px solid ${m_fag.includes(f.id)?f.farge:"#e0e7ef"}`,borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:11,fontWeight:700}}>{f.ikon} {f.navn.split(",")[0]}</button>
           ))}</div>
         </div>
-        <div style={{marginBottom:12,background:"#f0f6ff",borderRadius:10,padding:"10px 12px"}}>
+        <div style={{marginBottom:12,background:C.lg2,borderRadius:10,padding:"10px 12px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Generer innhold med AI</div>
-            <button onClick={genererAI} disabled={m_aiLoading||!m_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:m_tema.trim()?1:0.5}}>{m_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
+            <div style={{fontWeight:800,fontSize:12,color:C.g}}>🤖 Generer innhold med AI</div>
+            <button onClick={genererAI} disabled={m_aiLoading||!m_tema.trim()} style={{background:C.g,color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:m_tema.trim()?1:0.5}}>{m_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
           </div>
           <div style={{fontSize:11,color:C.gr}}>{m_aiLoading?"Dette kan ta 10–25 sekunder – vennligst vent...":"Fyll ut tema og trykk Generer for å lage ukesinnhold automatisk"}</div>
         </div>
@@ -8401,10 +8401,10 @@ ${innhold}
             <button onClick={()=>setPlanTema("")} style={{background:"transparent",border:"1px solid #90caf9",color:"#1565c0",borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap"}}>✕ Fjern</button>
           </div>
         )}
-        <div style={{marginBottom:12,background:"#f0f6ff",borderRadius:10,padding:"10px 12px"}}>
+        <div style={{marginBottom:12,background:C.lg2,borderRadius:10,padding:"10px 12px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Generer brev med AI</div>
-            <button onClick={genererAI} disabled={b_aiLoading} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700}}>{b_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
+            <div style={{fontWeight:800,fontSize:12,color:C.g}}>🤖 Generer brev med AI</div>
+            <button onClick={genererAI} disabled={b_aiLoading} style={{background:C.g,color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700}}>{b_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
           </div>
           <div style={{fontSize:11,color:C.gr}}>Trykk Generer for å lage brevinnhold for {MAANEDER[b_maaned-1]}{planTema?` med tema «${planTema}»`:""}</div>
         </div>
@@ -8981,10 +8981,10 @@ Returner KUN gyldig JSON uten markdown:
             </div>
           </div>
 
-          <div style={{background:"#f0f6ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+          <div style={{background:C.lg2,borderRadius:10,padding:"10px 12px",marginBottom:12}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-              <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Fyll med AI</div>
-              <button onClick={fyllMedAI} disabled={u_aiLoading||!u_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:u_tema.trim()?1:0.5}}>{u_aiLoading?"⏳ Genererer...":"✨ Fyll alle dager"}</button>
+              <div style={{fontWeight:800,fontSize:12,color:C.g}}>🤖 Fyll med AI</div>
+              <button onClick={fyllMedAI} disabled={u_aiLoading||!u_tema.trim()} style={{background:C.g,color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:u_tema.trim()?1:0.5}}>{u_aiLoading?"⏳ Genererer...":"✨ Fyll alle dager"}</button>
             </div>
             <div style={{fontSize:11,color:C.gr}}>{u_aiLoading?"Henter aktiviteter fra AI – ca. 10 sek...":"Skriv tema og la AI fylle inn aktiviteter for hele uken"}</div>
           </div>
@@ -9402,10 +9402,10 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
             <input value={k_tema} onChange={e=>setKTema(e.target.value)} placeholder={planTema||"F.eks. Natur og årstider"} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
           </div>
 
-          <div style={{background:"#f0f6ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+          <div style={{background:C.lg2,borderRadius:10,padding:"10px 12px",marginBottom:12}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-              <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Fyll med AI</div>
-              <button onClick={genererAI} disabled={k_aiLoading||!k_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:k_tema.trim()?1:0.5}}>{k_aiLoading?"⏳ Genererer...":"✨ Generer hendelser"}</button>
+              <div style={{fontWeight:800,fontSize:12,color:C.g}}>🤖 Fyll med AI</div>
+              <button onClick={genererAI} disabled={k_aiLoading||!k_tema.trim()} style={{background:C.g,color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:k_tema.trim()?1:0.5}}>{k_aiLoading?"⏳ Genererer...":"✨ Generer hendelser"}</button>
             </div>
             <div style={{fontSize:11,color:C.gr}}>{k_aiLoading?"Henter hendelser fra AI – ca. 10 sek...":"Fyll ut tema og la AI foreslå aktiviteter, turer og hendelser"}</div>
           </div>
