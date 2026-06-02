@@ -9251,16 +9251,25 @@ Returner KUN gyldig JSON uten markdown:
       const mNavn=MAANEDER_KAL[k_maaned-1];
       const antallDager=new Date(k_aar,k_maaned,0).getDate();
       const prompt=`Du er pedagog i norsk barnehage. Lag en fullstendig månedsoversikt for ${mNavn} ${k_aar} (${antallDager} dager) med tema "${k_tema}".\nDekk ALLE hverdager (mandag–fredag) med minst én hendelse per dag – ca. 18–22 hendelser totalt.\nTyper: aktivitet (daglig pedagogisk aktivitet), tur (uteaktivitet/tur), bursdag (markering), praktisk (info til foreldre).\nReturner KUN gyldig JSON uten markdown, eksempel:\n{"events":{"1":[{"type":"aktivitet","tekst":"Samlingsstund: tema ${k_tema}","ikon":"🎨"}],"2":[{"type":"tur","tekst":"Skogstur","ikon":"🌲"}],"3":[{"type":"aktivitet","tekst":"Forming og kreativitet","ikon":"✂️"}]}}\nBruk dagtall som nøkler (1–${antallDager}). Hopp over lørdager og søndager. Varier aktivitetene gjennom måneden.`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),30000);
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),35000);
       try{
         const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1100}),signal:ctrl.signal});
         if(!r.ok){const d=await r.json().catch(()=>({}));setKFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}
         const d=await r.json();const raw=d.text||"";
-        const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error("Ingen JSON");
-        const parsed=JSON.parse(m[0]);
-        if(parsed.events){setKEvents(prev=>{const ny={...prev};Object.entries(parsed.events).forEach(([dag,evts])=>{ny[dag]=[...(ny[dag]||[]),...(evts||[]).map(e=>({...e,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)}))];});return ny;});visLokal("✨ AI la til hendelser i kalenderen");}
-      }catch(e){console.error("[AI Kalender]",e);setKFeil(e.name==="AbortError"?"⏱ Tidsavbrudd – prøv igjen.":"❌ AI utilgjengelig");}
-      finally{clearTimeout(tid);setKAiLoading(false);}
+        const m=raw.match(/\{[\s\S]*\}/);
+        if(!m){setKFeil("❌ AI svarte uten JSON – prøv igjen.");return;}
+        let parsed;try{parsed=JSON.parse(m[0]);}catch{setKFeil("❌ AI-svaret var ikke gyldig JSON – prøv igjen.");return;}
+        if(parsed.events&&Object.keys(parsed.events).length>0){
+          setKEvents(prev=>{const ny={...prev};Object.entries(parsed.events).forEach(([dag,evts])=>{ny[dag]=[...(ny[dag]||[]),...(evts||[]).map(e=>({...e,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)}))];});return ny;});
+          const antHend=Object.values(parsed.events).reduce((s,a)=>s+(a?.length||0),0);
+          visLokal(`✨ AI la til ${antHend} hendelser i kalenderen`);
+        }else{setKFeil("❌ AI fant ingen hendelser å legge til – prøv igjen.");}
+      }catch(e){
+        console.error("[AI Kalender]",e);
+        if(e.name==="AbortError")setKFeil("⏱ AI brukte for lang tid – prøv igjen.");
+        else if(e.name==="TypeError")setKFeil("❌ Nettverksfeil – sjekk internett og prøv igjen.");
+        else setKFeil("❌ "+e.message);
+      }finally{clearTimeout(tid);setKAiLoading(false);}
     };
 
     const kalenderGrid=(aar,maaned,events,redigerbar)=>{
