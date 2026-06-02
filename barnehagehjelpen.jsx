@@ -3538,16 +3538,21 @@ function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
     if (!form.tema.trim()) return;
     setGenererer(true); setFeil(null); setResultat(null);
     const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag et tegneark-opplegg for barn i alderen ${form.alder} år.\n\nTema: ${form.tema}${form.fagomrade?"\nFagområde: "+form.fagomrade:""}${form.vanskelighet?"\nVanskelighetsgrad: "+form.vanskelighet:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på tegnearket",\n  "ikon": "ett passende emoji",\n  "oppgave": "fire nummererte tegnetrinn (1. ... 2. ... 3. ... 4. ...)",\n  "samtale": "tre åpne samtalespørsmål separert med spørsmålstegn",\n  "mal": "rammeplanmål – én setning",\n  "kategori": "passende kategori (dyr/natur/mennesker/mat/sport/teknologi/romfart/musikk/festlig/folelser)",\n  "alder": "${form.alder} år",\n  "rammeplan": ["id-er fra: kropp, kunst, natur, antall, etikk, naermiljo, kommunikasjon"]\n}`;
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 30000);
     try {
-      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:800 }) });
+      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:800 }), signal: ctrl.signal });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       const raw = json.text || "";
-      const cleaned = raw.replace(/```json|```/g,"").trim();
-      setResultat(JSON.parse(cleaned));
-    } catch(e) { setFeil("Klarte ikke å generere tegneark. Prøv igjen."); }
-    finally { setGenererer(false); }
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Ugyldig svar fra AI");
+      setResultat(JSON.parse(jsonMatch[0]));
+    } catch(e) {
+      console.error("[AI Tegneark]", e);
+      setFeil(e.name === "AbortError" ? "AI brukte for lang tid – prøv igjen." : "Klarte ikke å generere tegneark. Prøv igjen.");
+    } finally { clearTimeout(tid); setGenererer(false); }
   };
   const lagre = async () => {
     if (!resultat || !aktivBruker?.id) return;
@@ -3654,16 +3659,21 @@ function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
     setGenererer(true); setFeil(null); setResultat(null);
     const sjangerTekst = {sang:"sang",rim:"rim",regle:"regle"}[form.sjanger]||"sang";
     const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag en original ${sjangerTekst} for barn i alderen ${form.aldersgruppe} år.\n\nTema: ${form.tema}\nAntall vers: ${form.antallVers}${form.melodi?"\nMelodi/toneleie: "+form.melodi:""}${form.fagomrade?"\nKobling til fagområde: "+form.fagomrade:""}${form.ekstra?"\nØnsker: "+form.ekstra:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på sangen",\n  "tekst": "hele teksten med vers og evt. refreng, formatert med linjeskift",\n  "kategori": "${form.sjanger}",\n  "alder": "${form.aldersgruppe} år",\n  "melodi": "eventuell melodi-anbefaling eller null",\n  "tips": "pedagogisk tips til pedagogen eller null",\n  "rammeplan": ["id-er fra: kropp_bevegelse, kunst_kultur, natur_miljo, antall_rom_form, etikk_religion, naerlighet_vennskap, kommunikasjon_sprak"]\n}`;
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 30000);
     try {
-      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer og forfatter av barnesanger. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:1200 }) });
+      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer og forfatter av barnesanger. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:1200 }), signal: ctrl.signal });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       const raw = json.text || "";
-      const cleaned = raw.replace(/```json|```/g,"").trim();
-      setResultat(JSON.parse(cleaned));
-    } catch(e) { setFeil("Klarte ikke å generere sang. Prøv igjen."); }
-    finally { setGenererer(false); }
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Ugyldig svar fra AI");
+      setResultat(JSON.parse(jsonMatch[0]));
+    } catch(e) {
+      console.error("[AI Sanger]", e);
+      setFeil(e.name === "AbortError" ? "AI brukte for lang tid – prøv igjen." : "Klarte ikke å generere sang. Prøv igjen.");
+    } finally { clearTimeout(tid); setGenererer(false); }
   };
   const lagre = async () => {
     if (!resultat || !aktivBruker?.id) return;
@@ -6528,27 +6538,33 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
   const genererMedAI = async () => {
     if (!aiPrompt.trim()) return;
     setAiLaster(true);
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 30000);
     try {
       const system = `Du er en pedagogisk assistent for norske barnehager. Lag et detaljert aktivitetskort. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:
 {"title":"...","description":"...","category":"Lek|Natur|Vann|Bevegelse|Kreativt|Språk|Antall|Musikk|Ute|Rolig|Eksperiment|Sosialt","age_group":"...","materials":"...","steps":"Steg 1: ...\\nSteg 2: ...\\nSteg 3: ...","curriculum_area":["kommunikasjon"],"learning_goal":"...","duration":"...","difficulty":"enkel|middels|avansert","indoor_outdoor":"inne|ute|begge","icon":"🎯","weather_tags":["sol","regn"]}`;
-      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt, max_tokens: 2500 }) });
+      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt, max_tokens: 2500 }), signal: ctrl.signal });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const d = await r.json();
       const tekst = d.text || "";
       const jsonMatch = tekst.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        setRedigererKort(parsed);
-        setModalAapen(true);
-        setAiPanelAapen(false);
-        setAiPrompt("");
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          setRedigererKort(parsed);
+          setModalAapen(true);
+          setAiPanelAapen(false);
+          setAiPrompt("");
+        } catch {
+          vis("⚠️ AI-svaret hadde ikke riktig format – prøv igjen");
+        }
       } else {
         vis("⚠️ AI-svaret hadde ikke riktig format");
       }
     } catch (e) {
-      console.error(e);
-      vis("❌ AI-generering feilet");
-    } finally { setAiLaster(false); }
+      console.error("[AI Aktivitetskort]", e);
+      vis(e.name === "AbortError" ? "⏱ AI brukte for lang tid – prøv igjen" : "❌ AI-generering feilet");
+    } finally { clearTimeout(tid); setAiLaster(false); }
   };
 
   // ── Detaljvisning ──
