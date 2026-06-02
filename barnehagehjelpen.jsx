@@ -3986,10 +3986,10 @@ function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, 
               )}
               {sokeResultat.maanedsplaner && sokeResultat.maanedsplaner.length > 0 && (
                 <div>
-                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#6a1b9a",background:"#f9f3fd",textTransform:"uppercase",letterSpacing:0.5}}>🗓️ Dine månedsplaner ({sokeResultat.maanedsplaner.length})</div>
+                  <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#6a1b9a",background:"#f9f3fd",textTransform:"uppercase",letterSpacing:0.5}}>📋 Dine planer ({sokeResultat.maanedsplaner.length})</div>
                   {sokeResultat.maanedsplaner.slice(0,5).map(p=>(
-                    <div key={"mp"+p.id} onClick={()=>{navigerTil("maanedsplan");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
-                      <div style={{fontWeight:700}}>{p.tittel}</div>
+                    <div key={"mp"+p.id} onClick={()=>{navigerTil(p.type==="kalender"?"maanedskalender":"maanedsplan");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid #f0f5fb",fontSize:13,color:C.t}} className="hover">
+                      <div style={{fontWeight:700}}>{p.type==="kalender"?"🗓️ ":"📋 "}{p.tittel}</div>
                       {p.tema&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{p.tema}</div>}
                     </div>
                   ))}
@@ -6918,7 +6918,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       if (samlet.toLowerCase().includes(q)) treff.ukeplaner.push(p);
     });
     globalMaanedsplaner.forEach(p => {
-      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.fagomrader||[]).join(" ");
+      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.fagomrader||[]).join(" ") +
+        (p.type==="kalender" ? " " + JSON.stringify(p.events||{}) : " " + (p.uke1||"") + " " + (p.uke2||"") + " " + (p.uke3||"") + " " + (p.uke4||""));
       if (samlet.toLowerCase().includes(q)) treff.maanedsplaner.push(p);
     });
     globalMaanedsbrev.forEach(b => {
