@@ -8486,7 +8486,7 @@ ${innhold}
           {id:"arsplan",   ikon:"📆",tittel:"Årshjul",         farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
           {id:"ukeplan",   ikon:"🏫",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
         ].map(({id,ikon,tittel,farge,bg,desc})=>(
-          <div key={id+"-mal"} className="hover" onClick={()=>navigerTil(id)}
+          <div key={tittel+"-mal"} className="hover" onClick={()=>navigerTil(id)}
             style={{background:bg,borderRadius:12,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,border:`1.5px solid ${farge}33`}}>
             <div style={{fontSize:26,flexShrink:0}}>{ikon}</div>
             <div>
@@ -8999,7 +8999,7 @@ Returner KUN gyldig JSON uten markdown:
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9,gap:8}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     <div style={{fontWeight:800,color:dagFarge,fontSize:14}}>{dagN}</div>
-                    <div style={{display:"flex",gap:4}}>{FARGEVALG.map(f=><button key={f||"ingen"} type="button" onClick={()=>oppdaterDag(d,"farge",f)} style={{width:14,height:14,borderRadius:"50%",border:dagFarge===(f||DAG_FARGER_DEF[d])?"2px solid #333":"1.5px solid #ccc",background:f||DAG_FARGER_DEF[d],cursor:"pointer",padding:0}}/>)}</div>
+                    <div style={{display:"flex",gap:4}}>{FARGEVALG.map(f=><button key={f||"ingen"} type="button" onClick={()=>oppdaterDag(d,"farge",f)} style={{width:14,height:14,borderRadius:"50%",border:(u_dager[d].farge||"")===f?"2px solid #333":"1.5px solid #ccc",background:f||DAG_FARGER_DEF[d],cursor:"pointer",padding:0}}/>)}</div>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     {dagBilde ? (<>
