@@ -8943,7 +8943,6 @@ Returner KUN gyldig JSON uten markdown:
 
     const iS = {width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:14,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
     const labelStil = {display:"block",fontWeight:700,color:C.t,fontSize:12,marginBottom:5};
-    const dagStil = (farge) => ({background:C.w,borderRadius:11,padding:13,marginBottom:10,boxShadow:"0 1px 5px rgba(44,91,142,0.06)",borderLeft:`3px solid ${farge}`});
 
     if (!lastet) return <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>;
 
@@ -8952,7 +8951,7 @@ Returner KUN gyldig JSON uten markdown:
       const erRediger = visning === "rediger";
       return (
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger ukeplan":"📅 Ny ukeplan"}</div>
 
           {lokalToast && <div className="fade" style={{background:"#e8f5e9",color:"#2e7d32",padding:"9px 13px",borderRadius:9,fontSize:12,marginBottom:10,fontWeight:700,textAlign:"center"}}>{lokalToast}</div>}
@@ -9089,7 +9088,7 @@ Returner KUN gyldig JSON uten markdown:
     if (visning === "les" && valgt) {
       return (
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{background:C.w,borderRadius:14,padding:16,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:6}}>📅 {valgt.tittel}</div>
             <div style={{fontSize:12,color:C.gr,marginBottom:0}}>
@@ -9234,7 +9233,7 @@ Returner KUN gyldig JSON uten markdown:
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
 
-    const lagre=async(liste)=>{const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}setPlaner(liste);return true;};
+    const lagre=async(liste)=>{const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}setPlaner(liste);hentMaanedsplaner(aktivBruker.id).then(setGlobalMaanedsplaner).catch(console.error);return true;};
 
     const nyPlan=()=>{setValgt(null);setKTittel("");setKAar(new Date().getFullYear());setKMaaned(new Date().getMonth()+1);setKTema(planTema);setKEvents({});setKFeil("");setVisning("ny");};
     const redigerPlan=p=>{setValgt(p);setKTittel(p.tittel||"");setKAar(p.aar);setKMaaned(p.maaned);setKTema(p.tema||"");setKEvents(p.events||{});setKFeil("");setVisning("rediger");};
@@ -10270,7 +10269,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
       const erRediger = visning === "rediger";
       return (
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger dokumentasjon":"📝 Ny dokumentasjon"}</div>
 
           {d_feil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 13px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {d_feil}</div>}
@@ -10344,7 +10343,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
     if (visning === "les" && valgt) {
       return (
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{background:C.w,borderRadius:14,padding:20,boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:6}}>{valgt.tittel}</div>
             <div style={{fontSize:12,color:C.gr,marginBottom:14,display:"flex",flexWrap:"wrap",gap:10}}>
