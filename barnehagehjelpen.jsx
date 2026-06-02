@@ -8167,7 +8167,7 @@ ${innhold}
     const lagreNy=async()=>{setMFeil("");if(!m_tema.trim()){setMFeil("Skriv et tema");return;}setMLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat,opprettet:new Date().toISOString()},...planer]);setMLoading(false);if(ok){visLokal("✅ Månedsplan lagret");setVisning("liste");}};
     const lagreEndring=async()=>{setMFeil("");if(!valgt)return;setMLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat}:p));setMLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
     const genererAI=async()=>{if(!m_tema.trim()){setMFeil("Skriv et tema først");return;}setMAiLoading(true);setMFeil("");const fagNavn=m_fag.map(f=>FAGOMRADER.find(x=>x.id===f)?.navn||f).join(", ")||"alle fagområder";const prompt=`Lag en månedsplan for norsk barnehage for ${MAANEDER[m_maaned-1]} ${m_aar} med tema "${m_tema}" (fagområder: ${fagNavn}).\nBruk NØYAKTIG denne strukturen:\n\n## Uke 1\n### Tema\n[undertema]\n### Aktiviteter\n• [aktivitet]\n• [aktivitet]\n### Mål\n• [mål]\n\n## Uke 2\n[samme]\n\n## Uke 3\n[samme]\n\n## Uke 4\n[samme]\n\nVær konkret og praktisk. Knyttet til Rammeplan 2017.`;
-    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),90000);
+    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),32000);
     try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:2500}),signal:ctrl.signal});
     if(!r.ok){let msg="Serverfeil "+r.status;try{const e=await r.json();if(e?.error)msg=e.error;}catch{}setMFeil("❌ "+msg);return;}
     const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
@@ -8243,7 +8243,7 @@ ${innhold}
             <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Generer innhold med AI</div>
             <button onClick={genererAI} disabled={m_aiLoading||!m_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:m_tema.trim()?1:0.5}}>{m_aiLoading?"⏳ Genererer...":"✨ Generer"}</button>
           </div>
-          <div style={{fontSize:11,color:C.gr}}>Fyll ut tema og trykk Generer for å lage ukesinnhold automatisk</div>
+          <div style={{fontSize:11,color:C.gr}}>{m_aiLoading?"Dette kan ta 10–25 sekunder – vennligst vent...":"Fyll ut tema og trykk Generer for å lage ukesinnhold automatisk"}</div>
         </div>
         {[0,1,2,3].map(i=>(
           <div key={i} style={{marginBottom:10}}>
