@@ -1,4 +1,7 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS as dndCSS } from "@dnd-kit/utilities";
 import DokumentSkanner from "./DokumentSkanner.jsx";
 import BokerSide from "./Boker.jsx";
 import Velkomst from "./Velkomst.jsx";
@@ -5556,6 +5559,28 @@ async function lagreMaanedsbrev(brukerId, liste) {
   } catch(e) { console.error("[Månedsbrev] Lagring feilet:", e); return false; }
 }
 
+// ── Månedskalender: egne Supabase-funksjoner (type:"kalender" i innhold-JSON) ──
+async function hentKalenderplaner(brukerId) {
+  if (!brukerId) return [];
+  try {
+    const { data } = await supabase.from("maanedsplaner").select("*").eq("user_id", brukerId).order("aar",{ascending:false}).order("maaned",{ascending:false});
+    return (data||[]).filter(r=>{ try{return JSON.parse(r.innhold||"{}").type==="kalender";}catch{return false;} }).map(r=>{
+      let extra={};try{extra=JSON.parse(r.innhold||"{}");}catch{}
+      return {id:r.id,tittel:r.tittel,aar:r.aar,maaned:r.maaned,tema:r.tema||"",events:extra.events||{},opprettet:r.created_at};
+    });
+  } catch { return []; }
+}
+async function lagreKalenderplaner(brukerId, liste) {
+  if (!brukerId) return false;
+  try {
+    const {data:eks}=await supabase.from("maanedsplaner").select("id,innhold").eq("user_id",brukerId);
+    const kIds=(eks||[]).filter(r=>{try{return JSON.parse(r.innhold||"{}").type==="kalender";}catch{return false;}}).map(r=>r.id);
+    if(kIds.length>0) await supabase.from("maanedsplaner").delete().in("id",kIds);
+    if(liste.length>0) await supabase.from("maanedsplaner").insert(liste.map(p=>({user_id:brukerId,tittel:p.tittel||"",aar:parseInt(p.aar)||new Date().getFullYear(),maaned:parseInt(p.maaned)||1,tema:p.tema||"",fagomrader:[],innhold:JSON.stringify({type:"kalender",events:p.events||{}})})));
+    return true;
+  } catch(e){console.error("[Kalender] Lagring feilet:",e);return false;}
+}
+
 // ── Aktivitetskort: Supabase CRUD ──
 async function hentAktivitetskort(userId) {
   if (!userId) return [];
@@ -8435,23 +8460,59 @@ ${innhold}
             : "Sett et felles tema som automatisk fylles inn i nye planer – du kan alltid endre det per plan."}
         </div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+
+      <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mine planer</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
         {[
-          {id:"ukeplan",  ikon:"📅",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Planlegg mandag–fredag med tema og aktiviteter"},
-          {id:"maanedsplan",ikon:"🗓️",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"Oversikt over 4 uker med mål og fagområder"},
-          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Skriv månedsbrev til foreldre med AI-hjelp"},
-          {id:"arsplan",  ikon:"📆",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul med tema per måned og pedagogisk grunnsyn"},
+          {id:"ukeplan",  ikon:"📅",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
+          {id:"maanedsplan",ikon:"📝",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
+          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
+          {id:"arsplan",  ikon:"📆",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
         ].map(({id,ikon,tittel,farge,border,desc})=>(
           <div key={id} className="hover" onClick={()=>navigerTil(id)}
-            style={{background:C.w,borderRadius:18,padding:"22px 16px",cursor:"pointer",boxShadow:`0 3px 16px ${farge}22`,border:`2px solid ${border}`,textAlign:"center"}}>
-            <div style={{fontSize:38,marginBottom:9}}>{ikon}</div>
-            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:farge,marginBottom:5}}>{tittel}</div>
-            <div style={{fontSize:11,color:C.gr,lineHeight:1.5}}>{desc}</div>
+            style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center"}}>
+            <div style={{fontSize:32,marginBottom:7}}>{ikon}</div>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:farge,marginBottom:4}}>{tittel}</div>
+            <div style={{fontSize:10,color:C.gr,lineHeight:1.4}}>{desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Planmaler</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {[
+          {id:"ukeplan",   ikon:"📅",tittel:"Ukeplan",        farge:"#1565c0",bg:"#e3f2fd",desc:"Klassisk Man–Fre tavleplan"},
+          {id:"maanedskalender",ikon:"🗓",tittel:"Månedskalender",farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
+          {id:"arsplan",   ikon:"📆",tittel:"Årshjul",         farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
+          {id:"maanedsbrev",ikon:"📨",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
+        ].map(({id,ikon,tittel,farge,bg,desc})=>(
+          <div key={id+"-mal"} className="hover" onClick={()=>navigerTil(id)}
+            style={{background:bg,borderRadius:12,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,border:`1.5px solid ${farge}33`}}>
+            <div style={{fontSize:26,flexShrink:0}}>{ikon}</div>
+            <div>
+              <div style={{fontWeight:800,fontSize:13,color:farge}}>{tittel}</div>
+              <div style={{fontSize:10,color:C.gr,marginTop:1}}>{desc}</div>
+            </div>
           </div>
         ))}
       </div>
     </div>
   );
+
+  // ─── Hjelpkomponent for sorterbar aktivitet i ukeplan (dnd-kit krever eget komponent) ───
+  function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
+    const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
+    return(
+      <div ref={setNodeRef} style={{transform:dndCSS.Transform.toString(transform),transition,opacity:isDragging?0.5:1,display:"flex",alignItems:"center",gap:5,background:tidBg,borderRadius:6,padding:"4px 7px",marginBottom:3}}>
+        <span {...attributes} {...listeners} style={{cursor:"grab",color:tidCol,fontSize:11,lineHeight:1,touchAction:"none"}}>⠿</span>
+        <span style={{flex:1,fontSize:11,color:"#1a2c45"}}>{a.tekst}</span>
+        <div style={{display:"flex",gap:2,flexShrink:0}}>
+          {dager.filter(x=>x!==dag).map(t2=><button key={t2} type="button" title={"Flytt til "+t2} onClick={()=>flyttFn(dag,a.id,t2)} style={{background:"none",border:"none",color:"#5d7390",cursor:"pointer",fontSize:9,padding:"0 2px",lineHeight:1}}>→{t2.slice(0,3)}</button>)}
+          <button type="button" onClick={()=>slettFn(dag,a.id)} style={{background:"none",border:"none",color:"#c62828",cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── UkeplanSide – Mandag til fredag med formiddag/ettermiddag/notat ───
   const UkeplanSide = ()=>{
@@ -8465,7 +8526,17 @@ ${innhold}
     const [bekreftSletting, setBekreftSletting] = useState(false);
 
     // Skjema-state
-    const tomDag = { formiddag:"", ettermiddag:"", notat:"", bilde:"" };
+    const tomDag = { bilde:"", farge:"", ansvarlig:"", maaltid:"", aktiviteter:[] };
+    const migrerDag = (dag) => {
+      if (!dag) return {...tomDag};
+      if (Array.isArray(dag.aktiviteter)) return { bilde:dag.bilde||"", farge:dag.farge||"", ansvarlig:dag.ansvarlig||"", maaltid:dag.maaltid||"", aktiviteter:dag.aktiviteter };
+      const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      const akt=[];
+      (dag.formiddag||"").split('\n').filter(Boolean).forEach(t=>akt.push({id:uid(),tid:"formiddag",tekst:t}));
+      (dag.ettermiddag||"").split('\n').filter(Boolean).forEach(t=>akt.push({id:uid(),tid:"ettermiddag",tekst:t}));
+      (dag.notat||"").split('\n').filter(Boolean).forEach(t=>akt.push({id:uid(),tid:"notat",tekst:t}));
+      return { bilde:dag.bilde||"", farge:dag.farge||"", ansvarlig:dag.ansvarlig||"", maaltid:dag.maaltid||"", aktiviteter:akt };
+    };
     const [u_tittel, setUTittel] = useState("");
     const [u_uke, setUUke] = useState("");
     const [u_tema, setUTema] = useState("");
@@ -8475,8 +8546,14 @@ ${innhold}
     });
     const [u_loading, setULoading] = useState(false);
     const [u_feil, setUFeil] = useState("");
+    const [u_aiLoading, setUAiLoading] = useState(false);
     const [bildevelgerForDag, setBildevelgerForDag] = useState(null);
     const [bildeOpplaster, setBildeOpplaster] = useState(false);
+    const [nyAktivitet, setNyAktivitet] = useState({});
+    const dndSensors = useSensors(useSensor(PointerSensor,{activationConstraint:{distance:6}}));
+    const DAG_FARGER_DEF = { mandag:"#1565c0",tirsdag:"#0277bd",onsdag:"#6a1b9a",torsdag:"#c62828",fredag:"#2d6a4f" };
+    const TID_FARGER = { formiddag:{label:"Formiddag",col:"#1565c0",bg:"#e3f2fd"}, ettermiddag:{label:"Ettermiddag",col:"#6a1b9a",bg:"#f3e5f5"}, notat:{label:"Notat",col:"#5d7390",bg:"#f5f9fd"} };
+    const FARGEVALG = ["","#1565c0","#6a1b9a","#2d6a4f","#c62828","#f57c00"];
 
     // Emoji-bibliotek for raske visuelle markeringer
     const EMOJI_BIBLIOTEK = [
@@ -8519,9 +8596,10 @@ ${innhold}
     const redigerPlan = (p) => {
       setValgt(p);
       setUTittel(p.tittel); setUUke(p.uke || ""); setUTema(p.tema || "");
-      setUDager(p.dager || {
-        mandag: {...tomDag}, tirsdag: {...tomDag}, onsdag: {...tomDag},
-        torsdag: {...tomDag}, fredag: {...tomDag}
+      const dg = p.dager || {};
+      setUDager({
+        mandag: migrerDag(dg.mandag), tirsdag: migrerDag(dg.tirsdag), onsdag: migrerDag(dg.onsdag),
+        torsdag: migrerDag(dg.torsdag), fredag: migrerDag(dg.fredag)
       });
       setUFeil(""); setVisning("rediger");
     };
@@ -8530,6 +8608,59 @@ ${innhold}
 
     const oppdaterDag = (dag, felt, verdi) => {
       setUDager(prev => ({ ...prev, [dag]: { ...prev[dag], [felt]: verdi } }));
+    };
+
+    const leggTilAktivitet = (dag, tid) => {
+      const tekst = (nyAktivitet[dag+tid]||"").trim();
+      if (!tekst) return;
+      const id = Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      setUDager(prev=>({...prev,[dag]:{...prev[dag],aktiviteter:[...(prev[dag].aktiviteter||[]),{id,tid,tekst}]}}));
+      setNyAktivitet(p=>({...p,[dag+tid]:""}));
+    };
+    const slettAktivitet = (dag, id) => {
+      setUDager(prev=>({...prev,[dag]:{...prev[dag],aktiviteter:(prev[dag].aktiviteter||[]).filter(a=>a.id!==id)}}));
+    };
+    const handleDagDragEnd = (dag, event) => {
+      const {active,over} = event;
+      if (!over||active.id===over.id) return;
+      setUDager(prev=>{
+        const akt=[...(prev[dag].aktiviteter||[])];
+        const oldIdx=akt.findIndex(a=>a.id===active.id);
+        const newIdx=akt.findIndex(a=>a.id===over.id);
+        if(oldIdx<0||newIdx<0)return prev;
+        return {...prev,[dag]:{...prev[dag],aktiviteter:arrayMove(akt,oldIdx,newIdx)}};
+      });
+    };
+    const flyttAktivitet = (fraDag, aktivitetId, tilDag) => {
+      setUDager(prev=>{
+        const akt=(prev[fraDag].aktiviteter||[]).find(a=>a.id===aktivitetId);
+        if(!akt)return prev;
+        return {...prev,
+          [fraDag]:{...prev[fraDag],aktiviteter:(prev[fraDag].aktiviteter||[]).filter(a=>a.id!==aktivitetId)},
+          [tilDag]:{...prev[tilDag],aktiviteter:[...(prev[tilDag].aktiviteter||[]),{...akt}]}
+        };
+      });
+    };
+
+    const fyllMedAI = async () => {
+      if(!u_tema.trim()){setUFeil("Skriv et tema først");return;}
+      setUAiLoading(true);setUFeil("");
+      const prompt=`Du er pedagog i norsk barnehage. Fyll en ukeplan med tema "${u_tema}" for uke ${u_uke||"?"}.
+Returner KUN gyldig JSON uten markdown:
+{"mandag":{"formiddag":"9:00 Samling","ettermiddag":"12:30 Utelek"},"tirsdag":{"formiddag":"...","ettermiddag":"...","maaltid":"Varm mat"},"onsdag":{"formiddag":"...","ettermiddag":"..."},"torsdag":{"formiddag":"...","ettermiddag":"..."},"fredag":{"formiddag":"...","ettermiddag":"...","notat":"Kortdag"}}`;
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),30000);
+      try{
+        const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:800}),signal:ctrl.signal});
+        if(!r.ok){const d=await r.json().catch(()=>({}));setUFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}
+        const d=await r.json();const raw=d.text||"";
+        const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error("Ingen JSON");
+        const parsed=JSON.parse(m[0]);
+        const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+        const dagNavn=["mandag","tirsdag","onsdag","torsdag","fredag"];
+        setUDager(prev=>{const ny={...prev};dagNavn.forEach(dag=>{if(!parsed[dag])return;const p=parsed[dag];const akt=[];if(p.formiddag)akt.push({id:uid(),tid:"formiddag",tekst:p.formiddag});if(p.ettermiddag)akt.push({id:uid(),tid:"ettermiddag",tekst:p.ettermiddag});if(p.notat)akt.push({id:uid(),tid:"notat",tekst:p.notat});ny[dag]={...ny[dag],aktiviteter:akt,maaltid:p.maaltid||ny[dag].maaltid||""};});return ny;});
+        visLokal("✨ AI fylte inn aktiviteter for alle dager");
+      }catch(e){console.error("[AI Ukeplan]",e);setUFeil(e.name==="AbortError"?"⏱ Tidsavbrudd – prøv igjen.":"❌ AI utilgjengelig");}
+      finally{clearTimeout(tid);setUAiLoading(false);}
     };
 
     const settBilde = (dag, bildeData) => {
@@ -8608,14 +8739,29 @@ ${innhold}
             ${bildeHTML}
           </th>`;
       }).join("");
+      const renderDagInnhold = (raw) => {
+        if (!raw) return "";
+        const data = Array.isArray(raw.aktiviteter) ? raw : (() => {
+          const akt=[];
+          if(raw.formiddag)(raw.formiddag).split('\n').filter(Boolean).forEach(t=>akt.push({tid:"formiddag",tekst:t}));
+          if(raw.ettermiddag)(raw.ettermiddag).split('\n').filter(Boolean).forEach(t=>akt.push({tid:"ettermiddag",tekst:t}));
+          if(raw.notat)(raw.notat).split('\n').filter(Boolean).forEach(t=>akt.push({tid:"notat",tekst:t}));
+          return {...raw, aktiviteter:akt};
+        })();
+        const TID_LABEL={formiddag:"Formiddag",ettermiddag:"Ettermiddag",notat:"Notat"};
+        const TID_COL={formiddag:"#1565c0",ettermiddag:"#6a1b9a",notat:"#5d7390"};
+        let html="";
+        if(data.ansvarlig||data.maaltid)html+=`<div class="meta">${data.ansvarlig?`👤 ${escapeHTML(data.ansvarlig)} `:""}${data.maaltid?`🍽 ${escapeHTML(data.maaltid)}`:""}</div>`;
+        ["formiddag","ettermiddag","notat"].forEach(tid=>{
+          const akt=(data.aktiviteter||[]).filter(a=>a.tid===tid);
+          if(!akt.length)return;
+          html+=`<div class="felt"><strong style="color:${TID_COL[tid]}">${TID_LABEL[tid]}:</strong><br>${akt.map(a=>`• ${escapeHTML(a.tekst)}`).join("<br>")}</div>`;
+        });
+        return html;
+      };
       const innholdHTML = ["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
         const data = p.dager?.[d] || {};
-        return `
-          <td>
-            ${data.formiddag ? `<div class="felt"><strong>Formiddag:</strong><br>${escapeHTML(data.formiddag).replace(/\n/g,"<br>")}</div>` : ""}
-            ${data.ettermiddag ? `<div class="felt"><strong>Ettermiddag:</strong><br>${escapeHTML(data.ettermiddag).replace(/\n/g,"<br>")}</div>` : ""}
-            ${data.notat ? `<div class="felt notat"><strong>Notat:</strong><br>${escapeHTML(data.notat).replace(/\n/g,"<br>")}</div>` : ""}
-          </td>`;
+        return `<td>${renderDagInnhold(data)}</td>`;
       }).join("");
       return `<!DOCTYPE html>
 <html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(p.tittel)} – Barnehagehjelpen</title>
@@ -8699,12 +8845,11 @@ ${innhold}
           return `<th><div>${dagNavn[d]}</div>${bildeHTML}</th>`;
         }).join("");
         const innholdHTML = ["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
-          const data = p.dager?.[d] || {};
-          return `<td>
-            ${data.formiddag ? `<div class="felt"><strong>Formiddag:</strong>${escapeHTML(data.formiddag).replace(/\n/g,"<br>")}</div>` : ""}
-            ${data.ettermiddag ? `<div class="felt"><strong>Ettermiddag:</strong>${escapeHTML(data.ettermiddag).replace(/\n/g,"<br>")}</div>` : ""}
-            ${data.notat ? `<div class="felt notat"><strong>Notat:</strong>${escapeHTML(data.notat).replace(/\n/g,"<br>")}</div>` : ""}
-          </td>`;
+          const raw = p.dager?.[d] || {};
+          const akt=Array.isArray(raw.aktiviteter)?raw.aktiviteter:(()=>{const a=[];if(raw.formiddag)(raw.formiddag).split('\n').filter(Boolean).forEach(t=>a.push({tid:"formiddag",tekst:t}));if(raw.ettermiddag)(raw.ettermiddag).split('\n').filter(Boolean).forEach(t=>a.push({tid:"ettermiddag",tekst:t}));if(raw.notat)(raw.notat).split('\n').filter(Boolean).forEach(t=>a.push({tid:"notat",tekst:t}));return a;})();
+          const meta=(raw.ansvarlig||raw.maaltid)?`<div class="felt meta">${raw.ansvarlig?`👤 ${escapeHTML(raw.ansvarlig)} `:""}${raw.maaltid?`🍽 ${escapeHTML(raw.maaltid)}`:""}</div>`:"";
+          const innhTids=["formiddag","ettermiddag","notat"].map(tid=>{const ts=akt.filter(a=>a.tid===tid);return ts.length?`<div class="felt"><strong>${tid.charAt(0).toUpperCase()+tid.slice(1)}:</strong>${ts.map(a=>`<br>• ${escapeHTML(a.tekst)}`).join("")}</div>`:""}).join("");
+          return `<td>${meta}${innhTids}</td>`;
         }).join("");
 
         let area = document.getElementById("ukeplan-print-area");
@@ -8799,7 +8944,6 @@ ${innhold}
     // VISNING: Ny / Rediger
     if (visning === "ny" || visning === "rediger") {
       const erRediger = visning === "rediger";
-      const dagFarger = { mandag:"#2c5b8e", tirsdag:"#1565c0", onsdag:"#6a1b9a", torsdag:"#c62828", fredag:"#2d6a4f" };
       return (
         <div className="fade">
           <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
@@ -8830,37 +8974,66 @@ ${innhold}
             </div>
           </div>
 
+          <div style={{background:"#f0f6ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Fyll med AI</div>
+              <button onClick={fyllMedAI} disabled={u_aiLoading||!u_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:u_tema.trim()?1:0.5}}>{u_aiLoading?"⏳ Genererer...":"✨ Fyll alle dager"}</button>
+            </div>
+            <div style={{fontSize:11,color:C.gr}}>{u_aiLoading?"Henter aktiviteter fra AI – ca. 10 sek...":"Skriv tema og la AI fylle inn aktiviteter for hele uken"}</div>
+          </div>
+
           {["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
             const dagN = d.charAt(0).toUpperCase() + d.slice(1);
             const dagBilde = u_dager[d].bilde;
+            const dagFarge = u_dager[d].farge || DAG_FARGER_DEF[d];
             const erEmoji = dagBilde && !dagBilde.startsWith("data:");
+            const dAgAkt = u_dager[d].aktiviteter || [];
             return (
-              <div key={d} style={dagStil(dagFarger[d])}>
+              <div key={d} style={{background:C.w,borderRadius:11,padding:13,marginBottom:10,boxShadow:"0 1px 5px rgba(44,91,142,0.06)",borderLeft:`3px solid ${dagFarge}`}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9,gap:8}}>
-                  <div style={{fontWeight:800,color:dagFarger[d],fontSize:14}}>{dagN}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontWeight:800,color:dagFarge,fontSize:14}}>{dagN}</div>
+                    <div style={{display:"flex",gap:4}}>{FARGEVALG.map(f=><button key={f||"ingen"} type="button" onClick={()=>oppdaterDag(d,"farge",f)} style={{width:14,height:14,borderRadius:"50%",border:dagFarge===(f||DAG_FARGER_DEF[d])?"2px solid #333":"1.5px solid #ccc",background:f||DAG_FARGER_DEF[d],cursor:"pointer",padding:0}}/>)}</div>
+                  </div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    {dagBilde ? (
-                      <>
-                        {erEmoji ? (
-                          <span style={{fontSize:22,lineHeight:1}}>{dagBilde}</span>
-                        ) : (
-                          <img src={dagBilde} alt="" style={{width:34,height:34,borderRadius:6,objectFit:"cover",border:"1px solid #d8e6f5"}}/>
-                        )}
-                        <button type="button" onClick={()=>oppdaterDag(d,"bilde","")} title="Fjern bilde"
-                          style={{background:"#fdecea",color:"#c62828",border:"none",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:13,padding:0,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-                      </>
-                    ) : (
-                      <button type="button" onClick={()=>setBildevelgerForDag(d)} title="Legg til bilde eller emoji"
-                        style={{background:"#e8eff8",color:dagFarger[d],border:"none",borderRadius:7,padding:"5px 10px",cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif"}}>📷 Legg til bilde</button>
+                    {dagBilde ? (<>
+                      {erEmoji?<span style={{fontSize:22,lineHeight:1}}>{dagBilde}</span>:<img src={dagBilde} alt="" style={{width:32,height:32,borderRadius:6,objectFit:"cover",border:"1px solid #d8e6f5"}}/>}
+                      <button type="button" onClick={()=>oppdaterDag(d,"bilde","")} style={{background:"#fdecea",color:"#c62828",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,padding:0}}>✕</button>
+                    </>) : (
+                      <button type="button" onClick={()=>setBildevelgerForDag(d)} style={{background:"#e8eff8",color:dagFarge,border:"none",borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"'Nunito',sans-serif"}}>📷 Bilde</button>
                     )}
                   </div>
                 </div>
-                <label style={{...labelStil,fontSize:10}}>Formiddag</label>
-                <textarea value={u_dager[d].formiddag} onChange={e=>oppdaterDag(d,"formiddag",e.target.value)} rows={2} style={{...iS,marginBottom:7,minHeight:50,resize:"vertical"}} placeholder="F.eks. 9:00 Samling, 9:30 utelek..."/>
-                <label style={{...labelStil,fontSize:10}}>Ettermiddag</label>
-                <textarea value={u_dager[d].ettermiddag} onChange={e=>oppdaterDag(d,"ettermiddag",e.target.value)} rows={2} style={{...iS,marginBottom:7,minHeight:50,resize:"vertical"}} placeholder="F.eks. 12:30 lunsj, 13:00 hvile..."/>
-                <label style={{...labelStil,fontSize:10}}>Notat (valgfritt)</label>
-                <textarea value={u_dager[d].notat} onChange={e=>oppdaterDag(d,"notat",e.target.value)} rows={1} style={{...iS,marginBottom:0,minHeight:36,resize:"vertical"}} placeholder="Møtedag, varm mat, etc."/>
+
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                  <div>
+                    <label style={{...labelStil,fontSize:10}}>Ansvarlig</label>
+                    <input value={u_dager[d].ansvarlig||""} onChange={e=>oppdaterDag(d,"ansvarlig",e.target.value)} placeholder="Navn..." style={{...iS,marginBottom:0,padding:"7px 10px",fontSize:12}}/>
+                  </div>
+                  <div>
+                    <label style={{...labelStil,fontSize:10}}>Måltid</label>
+                    <input value={u_dager[d].maaltid||""} onChange={e=>oppdaterDag(d,"maaltid",e.target.value)} placeholder="Frokost, lunsj..." style={{...iS,marginBottom:0,padding:"7px 10px",fontSize:12}}/>
+                  </div>
+                </div>
+
+                {["formiddag","ettermiddag","notat"].map(tid=>{
+                  const tidAkt=dAgAkt.filter(a=>a.tid===tid);
+                  const tidInfo=TID_FARGER[tid];
+                  return(
+                    <div key={tid} style={{marginBottom:8}}>
+                      <div style={{fontSize:9,fontWeight:800,color:tidInfo.col,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>{tidInfo.label}</div>
+                      <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={e=>handleDagDragEnd(d,e)}>
+                        <SortableContext items={tidAkt.map(a=>a.id)} strategy={verticalListSortingStrategy}>
+                          {tidAkt.map(a=><SortableAktivitetItem key={a.id} a={a} tidCol={tidInfo.col} tidBg={tidInfo.bg} dager={["mandag","tirsdag","onsdag","torsdag","fredag"]} dag={d} slettFn={slettAktivitet} flyttFn={flyttAktivitet}/>)}
+                        </SortableContext>
+                      </DndContext>
+                      <div style={{display:"flex",gap:5,marginTop:2}}>
+                        <input value={nyAktivitet[d+tid]||""} onChange={e=>setNyAktivitet(p=>({...p,[d+tid]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&leggTilAktivitet(d,tid)} placeholder={`+ Legg til ${tidInfo.label.toLowerCase()}...`} style={{flex:1,padding:"5px 8px",borderRadius:7,border:"1.5px dashed #d0dff0",fontSize:11,fontFamily:"'Nunito',sans-serif",background:tidInfo.bg,color:C.t,outline:"none"}}/>
+                        <button type="button" onClick={()=>leggTilAktivitet(d,tid)} style={{background:tidInfo.col,color:"#fff",border:"none",borderRadius:7,padding:"5px 10px",cursor:"pointer",fontSize:11,fontWeight:700}}>+</button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
@@ -8907,7 +9080,6 @@ ${innhold}
 
     // VISNING: Les enkelt-plan
     if (visning === "les" && valgt) {
-      const dagFarger = { mandag:"#2c5b8e", tirsdag:"#1565c0", onsdag:"#6a1b9a", torsdag:"#c62828", fredag:"#2d6a4f" };
       return (
         <div className="fade">
           <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
@@ -8928,35 +9100,37 @@ ${innhold}
           </div>
 
           {["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
-            const data = valgt.dager?.[d] || {};
+            const raw = valgt.dager?.[d] || {};
+            const data = migrerDag(raw);
             const dagN = d.charAt(0).toUpperCase() + d.slice(1);
-            const dagErTom = !data.formiddag && !data.ettermiddag && !data.notat && !data.bilde;
+            const dagFarge = data.farge || DAG_FARGER_DEF[d];
             const erEmoji = data.bilde && !data.bilde.startsWith("data:");
+            const harInnhold = data.aktiviteter?.length > 0 || data.ansvarlig || data.maaltid;
             return (
-              <div key={d} style={dagStil(dagFarger[d])}>
+              <div key={d} style={{background:C.w,borderRadius:11,padding:13,marginBottom:10,boxShadow:"0 1px 5px rgba(44,91,142,0.06)",borderLeft:`3px solid ${dagFarge}`}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <div style={{fontWeight:800,color:dagFarger[d],fontSize:14,flex:1}}>{dagN}</div>
-                  {data.bilde && (erEmoji
-                    ? <span style={{fontSize:24,lineHeight:1}}>{data.bilde}</span>
-                    : <img src={data.bilde} alt="" style={{width:44,height:44,borderRadius:7,objectFit:"cover",border:"1px solid #d8e6f5"}}/>
-                  )}
+                  <div style={{fontWeight:800,color:dagFarge,fontSize:14,flex:1}}>{dagN}</div>
+                  {data.ansvarlig&&<span style={{fontSize:10,color:C.gr,background:"#f5f9fd",borderRadius:6,padding:"2px 7px"}}>{data.ansvarlig}</span>}
+                  {data.maaltid&&<span style={{fontSize:10,color:"#f57c00",background:"#fff3e0",borderRadius:6,padding:"2px 7px"}}>🍽 {data.maaltid}</span>}
+                  {data.bilde && (erEmoji?<span style={{fontSize:24,lineHeight:1}}>{data.bilde}</span>:<img src={data.bilde} alt="" style={{width:38,height:38,borderRadius:7,objectFit:"cover",border:"1px solid #d8e6f5"}}/>)}
                 </div>
-                {dagErTom ? (
+                {!harInnhold ? (
                   <div style={{fontSize:12,color:C.gr,fontStyle:"italic"}}>– ingen plan –</div>
                 ) : (
                   <>
-                    {data.formiddag && <div style={{marginBottom:6}}>
-                      <div style={{fontSize:10,fontWeight:800,color:C.gr,textTransform:"uppercase",letterSpacing:0.4,marginBottom:2}}>Formiddag</div>
-                      <div style={{fontSize:13,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.5}}>{data.formiddag}</div>
-                    </div>}
-                    {data.ettermiddag && <div style={{marginBottom:6}}>
-                      <div style={{fontSize:10,fontWeight:800,color:C.gr,textTransform:"uppercase",letterSpacing:0.4,marginBottom:2}}>Ettermiddag</div>
-                      <div style={{fontSize:13,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.5}}>{data.ettermiddag}</div>
-                    </div>}
-                    {data.notat && <div>
-                      <div style={{fontSize:10,fontWeight:800,color:C.gr,textTransform:"uppercase",letterSpacing:0.4,marginBottom:2}}>Notat</div>
-                      <div style={{fontSize:12,color:C.gr,whiteSpace:"pre-wrap",lineHeight:1.5,fontStyle:"italic"}}>{data.notat}</div>
-                    </div>}
+                    {["formiddag","ettermiddag","notat"].map(tid=>{
+                      const tidAkt=(data.aktiviteter||[]).filter(a=>a.tid===tid);
+                      if(!tidAkt.length)return null;
+                      const ti=TID_FARGER[tid];
+                      return(
+                        <div key={tid} style={{marginBottom:8}}>
+                          <div style={{fontSize:9,fontWeight:800,color:ti.col,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>{ti.label}</div>
+                          {tidAkt.map(a=>(
+                            <div key={a.id} style={{background:ti.bg,borderRadius:6,padding:"4px 9px",marginBottom:3,fontSize:12,color:"#1a2c45"}}>{a.tekst}</div>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </>
                 )}
               </div>
@@ -9014,6 +9188,271 @@ ${innhold}
         <div style={{background:C.lg2,borderRadius:10,padding:"11px 13px",fontSize:11,color:C.t,borderLeft:"3px solid var(--c-g)",marginTop:14,lineHeight:1.6}}>
           <strong>☁️ Lagring:</strong> Ukeplaner lagres automatisk i skyen og er tilgjengelige på alle enheter når du er innlogget. Bruk "💾 Last ned"-knappen for lokal backup.
         </div>
+      </div>
+    );
+  };
+
+  // ─── MaanedskalenderSide – ekte månedkalender med hendelser per dag ───
+  const MaanedskalenderSide = () => {
+    const MAANEDER_KAL = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
+    const UKEDAGER = ["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
+    const EVENT_TYPER = {
+      aktivitet:{farge:"#1565c0",bg:"#e3f2fd",label:"Aktivitet",ikon:"🎨"},
+      tur:{farge:"#2e7d32",bg:"#e8f5e9",label:"Tur",ikon:"🌲"},
+      bursdag:{farge:"#6a1b9a",bg:"#f3e5f5",label:"Bursdag",ikon:"🎂"},
+      praktisk:{farge:"#f57c00",bg:"#fff3e0",label:"Praktisk",ikon:"📋"},
+    };
+    const [planer,setPlaner]=useState([]);
+    const [lastet,setLastet]=useState(false);
+    const [visning,setVisning]=useState("liste");
+    const [valgt,setValgt]=useState(null);
+    const [lokalToast,setLokalToast]=useState("");
+    const visLokal=m=>{setLokalToast(m);setTimeout(()=>setLokalToast(""),3000);};
+    const [bekreftSletting,setBekreftSletting]=useState(false);
+    const [printModus,setPrintModus]=useState(false);
+    const [k_tittel,setKTittel]=useState("");
+    const [k_aar,setKAar]=useState(new Date().getFullYear());
+    const [k_maaned,setKMaaned]=useState(new Date().getMonth()+1);
+    const [k_tema,setKTema]=useState("");
+    const [k_events,setKEvents]=useState({});
+    const [k_loading,setKLoading]=useState(false);
+    const [k_feil,setKFeil]=useState("");
+    const [k_aiLoading,setKAiLoading]=useState(false);
+    const [aktivDag,setAktivDag]=useState(null);
+    const [nyEvent,setNyEvent]=useState({type:"aktivitet",tekst:"",ikon:""});
+
+    useEffect(()=>{
+      let avbrutt=false;
+      (async()=>{if(!aktivBruker?.id){setLastet(true);return;}const liste=await hentKalenderplaner(aktivBruker.id);if(!avbrutt){setPlaner(liste);setLastet(true);}})();
+      return()=>{avbrutt=true;};
+    },[aktivBruker?.id]);
+
+    const lagre=async(liste)=>{const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}setPlaner(liste);return true;};
+
+    const nyPlan=()=>{setValgt(null);setKTittel("");setKAar(new Date().getFullYear());setKMaaned(new Date().getMonth()+1);setKTema(planTema);setKEvents({});setKFeil("");setVisning("ny");};
+    const redigerPlan=p=>{setValgt(p);setKTittel(p.tittel||"");setKAar(p.aar);setKMaaned(p.maaned);setKTema(p.tema||"");setKEvents(p.events||{});setKFeil("");setVisning("rediger");};
+
+    const leggTilEvent=()=>{
+      if(!nyEvent.tekst.trim())return;
+      const ikon=nyEvent.ikon||EVENT_TYPER[nyEvent.type]?.ikon||"📅";
+      const event={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),type:nyEvent.type,tekst:nyEvent.tekst.trim(),ikon};
+      setKEvents(prev=>({...prev,[aktivDag]:[...(prev[aktivDag]||[]),event]}));
+      setNyEvent({type:"aktivitet",tekst:"",ikon:""});
+    };
+    const slettEvent=(dag,id)=>setKEvents(prev=>({...prev,[dag]:(prev[dag]||[]).filter(e=>e.id!==id)}));
+
+    const lagreNy=async()=>{if(!k_tittel.trim()){setKFeil("Skriv en tittel");return;}setKLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:k_tittel.trim(),aar:k_aar,maaned:k_maaned,tema:k_tema.trim(),events:k_events,opprettet:new Date().toISOString()},...planer]);setKLoading(false);if(ok){visLokal("✅ Kalender lagret");setVisning("liste");}};
+    const lagreEndring=async()=>{if(!valgt)return;if(!k_tittel.trim()){setKFeil("Skriv en tittel");return;}setKLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:k_tittel.trim(),aar:k_aar,maaned:k_maaned,tema:k_tema.trim(),events:k_events}:p));setKLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
+    const slettPlan=async id=>{const ok=await lagre(planer.filter(p=>p.id!==id));if(ok){visLokal("🗑 Slettet");setVisning("liste");setValgt(null);}};
+
+    const genererAI=async()=>{
+      if(!k_tema.trim()){setKFeil("Skriv et tema først");return;}
+      setKAiLoading(true);setKFeil("");
+      const mNavn=MAANEDER_KAL[k_maaned-1];
+      const prompt=`Du er pedagog i norsk barnehage. Lag en månedsoversikt for ${mNavn} ${k_aar} med tema "${k_tema}". Returner KUN gyldig JSON uten markdown:\n{"events":{"1":[{"type":"aktivitet","tekst":"Samlingsstund om høst","ikon":"🍂"}],"15":[{"type":"tur","tekst":"Skogstur","ikon":"🌲"}]}}\nTyper: aktivitet, tur, bursdag, praktisk. Bruk 6-10 hendelser spredt gjennom måneden.`;
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),30000);
+      try{
+        const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:700}),signal:ctrl.signal});
+        if(!r.ok){const d=await r.json().catch(()=>({}));setKFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}
+        const d=await r.json();const raw=d.text||"";
+        const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error("Ingen JSON");
+        const parsed=JSON.parse(m[0]);
+        if(parsed.events){setKEvents(prev=>{const ny={...prev};Object.entries(parsed.events).forEach(([dag,evts])=>{ny[dag]=[...(ny[dag]||[]),...(evts||[]).map(e=>({...e,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)}))];});return ny;});visLokal("✨ AI la til hendelser i kalenderen");}
+      }catch(e){console.error("[AI Kalender]",e);setKFeil(e.name==="AbortError"?"⏱ Tidsavbrudd – prøv igjen.":"❌ AI utilgjengelig");}
+      finally{clearTimeout(tid);setKAiLoading(false);}
+    };
+
+    const kalenderGrid=(aar,maaned,events,redigerbar)=>{
+      const forste=new Date(aar,maaned-1,1);
+      const siste=new Date(aar,maaned,0);
+      const startUkedag=(forste.getDay()+6)%7;
+      const antallDager=siste.getDate();
+      const celler=[];
+      for(let i=0;i<startUkedag;i++)celler.push(null);
+      for(let d=1;d<=antallDager;d++)celler.push(d);
+      while(celler.length%7!==0)celler.push(null);
+      const iDag=new Date();const erIDag=(d)=>d&&aar===iDag.getFullYear()&&maaned===iDag.getMonth()+1&&d===iDag.getDate();
+      return(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
+            {UKEDAGER.map(u=><div key={u} style={{textAlign:"center",fontSize:10,fontWeight:800,color:C.gr,padding:"4px 0"}}>{u}</div>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+            {celler.map((d,i)=>{
+              const dagEvents=(events||{})[String(d)]||[];
+              return(
+                <div key={i} onClick={()=>{if(d&&redigerbar){setAktivDag(String(d));setNyEvent({type:"aktivitet",tekst:"",ikon:""});}}}
+                  style={{minHeight:printModus?54:64,borderRadius:7,border:erIDag(d)?"2px solid "+C.g:"1px solid #e8eff8",background:d?C.w:"#f8fafd",padding:"3px 4px",cursor:d&&redigerbar?"pointer":undefined,position:"relative",overflow:"hidden"}}>
+                  {d&&<div style={{fontSize:11,fontWeight:erIDag(d)?900:700,color:erIDag(d)?C.g:C.t,marginBottom:2}}>{d}</div>}
+                  {dagEvents.map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
+                    <div key={ev.id} style={{background:t.bg,color:t.farge,borderRadius:4,fontSize:9,padding:"1px 4px",marginBottom:1,display:"flex",alignItems:"center",gap:2,whiteSpace:"nowrap",overflow:"hidden"}}>
+                      <span>{ev.ikon||t.ikon}</span><span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{ev.tekst}</span>
+                      {redigerbar&&<button onClick={e=>{e.stopPropagation();slettEvent(String(d),ev.id);}} style={{marginLeft:"auto",background:"none",border:"none",color:t.farge,cursor:"pointer",fontSize:9,padding:0,flexShrink:0}}>✕</button>}
+                    </div>
+                  );})}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const skrivUtKalender=(p)=>{
+      if(!document.getElementById("kalender-print-styles")){const s=document.createElement("style");s.id="kalender-print-styles";s.textContent=`#kalender-print-area{display:none}@media print{@page{margin:10mm;size:portrait}body>*:not(#kalender-print-area){display:none!important}#kalender-print-area{display:block!important;font-family:sans-serif}}`;document.head.appendChild(s);}
+      const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+      const mNavn=MAANEDER_KAL[(p.maaned||1)-1];
+      let area=document.getElementById("kalender-print-area");
+      if(!area){area=document.createElement("div");area.id="kalender-print-area";document.body.appendChild(area);}
+      area.innerHTML=`<h2 style="color:#2c5b8e;margin:0 0 4px">📅 ${esc(p.tittel)}</h2><p style="font-size:12px;color:#666;margin:0 0 12px">${mNavn} ${p.aar}${p.tema?" • Tema: "+esc(p.tema):""}</p><p style="font-size:11px;color:#888">[Kalendervisning – åpne i appen for full kalender]</p>`;
+      setTimeout(()=>window.print(),100);
+    };
+
+    if(!lastet)return<div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster...</div>;
+
+    // VISNING: Ny / Rediger
+    if(visning==="ny"||visning==="rediger"){
+      const erRediger=visning==="rediger";
+      return(
+        <div className="fade">
+          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger kalender":"🗓 Ny månedskalender"}</div>
+          {k_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"9px 12px",fontSize:12,marginBottom:12}}>{k_feil}</div>}
+          <div style={{background:C.w,borderRadius:13,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
+            <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>TITTEL</label>
+            <input value={k_tittel} onChange={e=>setKTittel(e.target.value)} placeholder="F.eks. 'September – Blå avdeling'" style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10}}/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10,marginBottom:10}}>
+              <div>
+                <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>ÅR</label>
+                <input type="number" value={k_aar} onChange={e=>setKAar(parseInt(e.target.value)||new Date().getFullYear())} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
+              </div>
+              <div>
+                <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>MÅNED</label>
+                <select value={k_maaned} onChange={e=>setKMaaned(parseInt(e.target.value))} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}>
+                  {MAANEDER_KAL.map((n,i)=><option key={i+1} value={i+1}>{n}</option>)}
+                </select>
+              </div>
+            </div>
+            <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>TEMA</label>
+            <input value={k_tema} onChange={e=>setKTema(e.target.value)} placeholder={planTema||"F.eks. Natur og årstider"} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
+          </div>
+
+          <div style={{background:"#f0f6ff",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <div style={{fontWeight:800,fontSize:12,color:"#2c5b8e"}}>🤖 Fyll med AI</div>
+              <button onClick={genererAI} disabled={k_aiLoading||!k_tema.trim()} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:7,padding:"5px 12px",cursor:"pointer",fontSize:11,fontWeight:700,opacity:k_tema.trim()?1:0.5}}>{k_aiLoading?"⏳ Genererer...":"✨ Generer hendelser"}</button>
+            </div>
+            <div style={{fontSize:11,color:C.gr}}>{k_aiLoading?"Henter hendelser fra AI – ca. 10 sek...":"Fyll ut tema og la AI foreslå aktiviteter, turer og hendelser"}</div>
+          </div>
+
+          <div style={{background:C.w,borderRadius:13,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
+            <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>KALENDER — {MAANEDER_KAL[k_maaned-1]} {k_aar}</div>
+            <div style={{fontSize:11,color:C.gr,marginBottom:10}}>Klikk på en dag for å legge til hendelser</div>
+            {kalenderGrid(k_aar,k_maaned,k_events,true)}
+          </div>
+
+          {aktivDag&&(
+            <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setAktivDag(null)}>
+              <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:18,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+                <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.t,marginBottom:12}}>{MAANEDER_KAL[k_maaned-1]} {aktivDag}</div>
+                {(k_events[aktivDag]||[]).length>0&&(
+                  <div style={{marginBottom:12}}>
+                    {(k_events[aktivDag]||[]).map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
+                      <div key={ev.id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 8px",background:t.bg,borderRadius:7,marginBottom:4}}>
+                        <span>{ev.ikon||t.ikon}</span><span style={{flex:1,fontSize:12,color:t.farge}}>{ev.tekst}</span>
+                        <button onClick={()=>slettEvent(aktivDag,ev.id)} style={{background:"none",border:"none",color:"#999",cursor:"pointer",fontSize:12}}>✕</button>
+                      </div>
+                    );})}
+                  </div>
+                )}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+                  {Object.entries(EVENT_TYPER).map(([k,v])=><button key={k} onClick={()=>setNyEvent(p=>({...p,type:k}))} style={{padding:"5px 8px",borderRadius:7,border:nyEvent.type===k?"2px solid "+v.farge:"1.5px solid #e8eff8",background:nyEvent.type===k?v.bg:"#fff",color:v.farge,fontSize:11,fontWeight:700,cursor:"pointer"}}>{v.ikon} {v.label}</button>)}
+                </div>
+                <input value={nyEvent.tekst} onChange={e=>setNyEvent(p=>({...p,tekst:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&leggTilEvent()} placeholder="Beskriv hendelsen..." style={{width:"100%",padding:"8px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:8}}/>
+                <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:8}}>
+                  <button onClick={leggTilEvent} disabled={!nyEvent.tekst.trim()} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Legg til</button>
+                  <button onClick={()=>setAktivDag(null)} style={{background:"#e8eff8",color:C.t,border:"none",borderRadius:8,padding:"9px 14px",fontSize:13,cursor:"pointer"}}>Lukk</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button onClick={erRediger?lagreEndring:lagreNy} disabled={k_loading} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:800,background:k_loading?"#ccc":"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:11,cursor:k_loading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",marginTop:4}}>
+            {k_loading?"Lagrer...":"💾 Lagre kalender"}
+          </button>
+        </div>
+      );
+    }
+
+    // VISNING: Les enkelt-kalender
+    if(visning==="les"&&valgt){
+      const mNavn=MAANEDER_KAL[(valgt.maaned||1)-1];
+      const totalEvents=Object.values(valgt.events||{}).reduce((s,a)=>s+(a||[]).length,0);
+      return(
+        <div className="fade">
+          <button onClick={()=>{setVisning("liste");setPrintModus(false);}} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+            <div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>🗓 {valgt.tittel}</div>
+              <div style={{fontSize:12,color:C.gr,marginTop:2}}>{mNavn} {valgt.aar}{valgt.tema&&" • "+valgt.tema} • {totalEvents} hendelser</div>
+            </div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              <button onClick={()=>setPrintModus(p=>!p)} style={{background:printModus?"#1565c0":"#e8eff8",color:printModus?"#fff":C.t,border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{printModus?"📺 Skjermvisning":"🖨️ Utskriftsmodus"}</button>
+              <button onClick={()=>skrivUtKalender(valgt)} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>🖨️ Skriv ut</button>
+              <button onClick={()=>redigerPlan(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏️ Rediger</button>
+            </div>
+          </div>
+          {lokalToast&&<div className="fade" style={{background:"#e8f5e9",color:"#2e7d32",borderRadius:9,padding:"8px 14px",fontSize:12,fontWeight:700,marginBottom:10,textAlign:"center"}}>{lokalToast}</div>}
+          <div style={{background:C.w,borderRadius:13,padding:printModus?10:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
+            {printModus&&<div style={{textAlign:"center",marginBottom:8}}>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:"#2c5b8e"}}>{valgt.tittel}</div>
+              <div style={{fontSize:11,color:"#666"}}>{mNavn} {valgt.aar}{valgt.tema&&" • "+valgt.tema}</div>
+            </div>}
+            {!printModus&&<div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>{mNavn} {valgt.aar}</div>}
+            {kalenderGrid(valgt.aar,valgt.maaned,valgt.events,false)}
+          </div>
+          <div style={{background:C.lg2,borderRadius:10,padding:"10px 13px",marginBottom:12}}>
+            <div style={{fontWeight:800,fontSize:11,color:C.gr,marginBottom:6,textTransform:"uppercase"}}>Hendelser denne måneden</div>
+            {Object.entries(valgt.events||{}).sort((a,b)=>parseInt(a[0])-parseInt(b[0])).map(([dag,evts])=>evts.map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
+              <div key={ev.id} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderBottom:"1px solid #e8eff8"}}>
+                <span style={{fontSize:11,fontWeight:700,color:C.gr,minWidth:22,textAlign:"right"}}>{dag}.</span>
+                <span style={{background:t.bg,color:t.farge,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700}}>{ev.ikon||t.ikon} {ev.tekst}</span>
+              </div>
+            );}))}
+          </div>
+          {bekreftSletting
+            ?<div style={{display:"flex",gap:8}}><button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft sletting</button><button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button></div>
+            :<button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif",width:"100%"}}>🗑 Slett kalender</button>}
+        </div>
+      );
+    }
+
+    // VISNING: Liste
+    return(
+      <div className="fade">
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 8px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>🗓 Månedskalender</div>
+        <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Ekte kalendervisning med hendelser, turer og bursdager per dag</p>
+        <button onClick={nyPlan} style={{width:"100%",padding:"12px",background:"linear-gradient(135deg,#1565c0,#1976d2)",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif",boxShadow:"0 3px 9px rgba(21,101,192,0.3)",marginBottom:12}}>🗓 Lag ny kalender</button>
+        {lokalToast&&<div className="fade" style={{background:"#e8f5e9",color:"#2e7d32",borderRadius:9,padding:"8px 14px",fontSize:12,fontWeight:700,marginBottom:10,textAlign:"center"}}>{lokalToast}</div>}
+        {planer.length===0?<div style={{textAlign:"center",padding:34,background:C.w,borderRadius:12,boxShadow:"0 1px 5px rgba(44,91,142,0.07)"}}>
+          <div style={{fontSize:42,marginBottom:9}}>🗓</div>
+          <div style={{fontWeight:800,color:C.t,fontSize:15,marginBottom:6}}>Ingen kalendre ennå</div>
+          <div style={{fontSize:12,color:C.gr,lineHeight:1.6,maxWidth:280,margin:"0 auto"}}>Lag månedsoversikter med aktiviteter, turer og bursdager. AI kan hjelpe deg å fylle inn hendelser.</div>
+        </div>:(
+          <div style={{display:"grid",gap:9}}>
+            {planer.map(p=>{const mN=MAANEDER_KAL[(p.maaned||1)-1];const antall=Object.values(p.events||{}).reduce((s,a)=>s+(a||[]).length,0);return(
+              <div key={p.id} className="hover" onClick={()=>{setValgt(p);setVisning("les");}} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",borderLeft:"3px solid #1565c0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{p.tittel}</div>
+                  <span style={{fontSize:10,color:C.gr,background:"#e8eff8",padding:"2px 8px",borderRadius:7,fontWeight:700,flexShrink:0}}>{mN} {p.aar}</span>
+                </div>
+                {p.tema&&<div style={{fontSize:12,color:C.gr,marginTop:2}}>{p.tema}</div>}
+                <div style={{fontSize:11,color:C.gr,marginTop:4}}>{antall} hendelser</div>
+              </div>
+            );})}
+          </div>
+        )}
       </div>
     );
   };
@@ -10397,7 +10836,7 @@ ${innhold}
     navigerTil("ai");
   };
 
-  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,planlegging:<PlanleggingSide/>,maanedsplan:<MaanedsplanSide/>,maanedsbrev:<MaanedsbrevSide/>,ukeplan:<UkeplanSide/>,arsplan:<ArsplanSide/>,boker:<BokerSide aktivBruker={aktivBruker}/>,aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>};
+  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,planlegging:<PlanleggingSide/>,maanedsplan:<MaanedsplanSide/>,maanedsbrev:<MaanedsbrevSide/>,ukeplan:<UkeplanSide/>,maanedskalender:<MaanedskalenderSide/>,arsplan:<ArsplanSide/>,boker:<BokerSide aktivBruker={aktivBruker}/>,aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>};
 
   return (
     <>
