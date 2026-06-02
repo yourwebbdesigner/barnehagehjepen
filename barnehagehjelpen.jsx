@@ -8168,13 +8168,15 @@ ${innhold}
     const lagreEndring=async()=>{setMFeil("");if(!valgt)return;setMLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat}:p));setMLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
     const genererAI=async()=>{if(!m_tema.trim()){setMFeil("Skriv et tema først");return;}setMAiLoading(true);setMFeil("");const fagNavn=m_fag.map(f=>FAGOMRADER.find(x=>x.id===f)?.navn||f).join(", ")||"alle fagområder";const prompt=`Lag en månedsplan for norsk barnehage for ${MAANEDER[m_maaned-1]} ${m_aar} med tema "${m_tema}" (fagområder: ${fagNavn}).\nBruk NØYAKTIG denne strukturen:\n\n## Uke 1\n### Tema\n[undertema]\n### Aktiviteter\n• [aktivitet]\n• [aktivitet]\n### Mål\n• [mål]\n\n## Uke 2\n[samme]\n\n## Uke 3\n[samme]\n\n## Uke 4\n[samme]\n\nVær konkret og praktisk. Knyttet til Rammeplan 2017.`;
     const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),90000);
-    try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:2500}),signal:ctrl.signal});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
+    try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:2500}),signal:ctrl.signal});
+    if(!r.ok){let msg="Serverfeil "+r.status;try{const e=await r.json();if(e?.error)msg=e.error;}catch{}setMFeil("❌ "+msg);return;}
+    const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
       const norm=(tekst.startsWith("##")?"\n":"")+tekst;
       const deler=norm.split(/\n##\s+/).slice(1);
       const nyeUker=["","","",""].map((_,i)=>{if(!deler[i])return"";const nl=deler[i].indexOf("\n");return nl>=0?deler[i].slice(nl+1).trim():deler[i].trim();});
       if(nyeUker.some(u=>u.length>0)){setMUker(nyeUker);visLokal("✅ AI-innhold generert i ukefeltene");}
       else{setMFeil("AI returnerte innhold uten gjenkjennbar struktur – prøv igjen.");}
-    }else{setMFeil("AI ga for kort svar – prøv igjen.");}}catch(e){console.error("[AI Månedsplan]",e);setMFeil(e.name==="AbortError"?"⏱ AI brukte for lang tid – prøv igjen.":"❌ AI ikke tilgjengelig – prøv igjen.");}finally{clearTimeout(tid);setMAiLoading(false);};};
+    }else{setMFeil("AI ga for kort svar – prøv igjen.");}}catch(e){console.error("[AI Månedsplan]",e);setMFeil(e.name==="AbortError"?"⏱ AI brukte for lang tid – prøv igjen.":e.name==="TypeError"?"❌ Nettverksfeil – sjekk internett og prøv igjen.":"❌ "+e.message);}finally{clearTimeout(tid);setMAiLoading(false);};};
     const toggleFag=(f)=>setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);
     const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
