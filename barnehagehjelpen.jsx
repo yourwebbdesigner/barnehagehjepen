@@ -8464,10 +8464,10 @@ ${innhold}
       <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mine planer</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
         {[
-          {id:"ukeplan",  ikon:"📅",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
+          {id:"ukeplan",  ikon:"📋",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
           {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
           {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
-          {id:"arsplan",  ikon:"📆",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
+          {id:"arsplan",  ikon:"📋",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
         ].map(({id,ikon,tittel,farge,border,desc})=>(
           <div key={id} className="hover" onClick={()=>navigerTil(id)}
             style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center"}}>
