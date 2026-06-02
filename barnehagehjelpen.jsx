@@ -4189,7 +4189,7 @@ const INNHOLDSTYPER = [
   { id:"tegneark", navn:"Tegneark-idé", ikon:"🖍️", beskrivelse:"Tegneoppgave med samtaleforslag og rammeplan-mål" },
   { id:"prosjekt", navn:"Prosjektarbeid", ikon:"📚", beskrivelse:"Lengre prosjekt over 1-4 uker med flere faser" },
   { id:"ukeplan", navn:"Ukeplan", ikon:"📅", beskrivelse:"Mandag-fredag med tema, aktiviteter og fagområder" },
-  { id:"manedsplan", navn:"Månedsplan", ikon:"🗓️", beskrivelse:"En hel måned strukturert etter rammeplan og årstid" },
+  { id:"manedsplan", navn:"Månedsplan", ikon:"📋", beskrivelse:"En hel måned strukturert etter rammeplan og årstid" },
   { id:"arsplan", navn:"Årsplan", ikon:"📆", beskrivelse:"Årshjul med tema per måned, mål og pedagogisk grunnsyn" },
   { id:"manedsbrev", navn:"Månedsbrev", ikon:"✉️", beskrivelse:"Brev til foreldre om hva som skjedde og kommer" },
   { id:"samtale", navn:"Samtalespørsmål", ikon:"💬", beskrivelse:"Filosofiske og åpne spørsmål for refleksjon" },
@@ -4755,7 +4755,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
     { l:"Sang om dyr", icon:"🎵", v:{type:"sang",fagomrade:"natur",alder:"2-3",arstid:"ingen",vanskelighet:"enkel"} },
     { l:"Filosofisk samtale", icon:"💬", v:{type:"samtale",fagomrade:"etikk",alder:"5-6",arstid:"ingen",vanskelighet:"avansert"} },
     { l:"Tegneark om sommeren", icon:"🖍️", v:{type:"tegneark",fagomrade:"natur",alder:"3-4",arstid:"sommer",vanskelighet:"enkel"} },
-    { l:"Månedsplan for høsten", icon:"🗓️", v:{type:"manedsplan",fagomrade:"alle",alder:"alle",arstid:"host",vanskelighet:"middels"} },
+    { l:"Månedsplan for høsten", icon:"📋", v:{type:"manedsplan",fagomrade:"alle",alder:"alle",arstid:"host",vanskelighet:"middels"} },
   ];
   const brukPreset = (p) => {
     setType(p.v.type); setFagomrade([p.v.fagomrade]); setAlder(p.v.alder);
@@ -7035,7 +7035,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     {id:"rammeplan",i:"📖",n:"Rammeplan"},
     {id:"boker",i:"📚",n:"Bøker"},
     {id:"ai",i:"🤖",n:"AI-assistent"},
-    {id:"planlegging",i:"🗓️",n:"Planlegging"},
+    {id:"planlegging",i:"📋",n:"Planlegging"},
     {id:"samarbeid",i:"👥",n:"Samarbeid"},
     {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
     {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
@@ -7197,13 +7197,13 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
       {/* PLANLEGGING */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>🗓️ Planlegging</div>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>📋 Planlegging</div>
         <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
       </div>
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
         {[
           ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
-          ["🗓️","Månedsplan","Hele måneden strukturert","manedsplan","#6a1b9a"],
+          ["📋","Månedsplan","Hele måneden strukturert","manedsplan","#6a1b9a"],
           ["✉️","Månedsbrev","Brev til foreldre","manedsbrev","#e67e22"],
           ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
         ].map(([ic,t,u,typeId,fc])=>(
@@ -8465,7 +8465,7 @@ ${innhold}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
         {[
           {id:"ukeplan",  ikon:"📅",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
-          {id:"maanedsplan",ikon:"🗓️",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
+          {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
           {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
           {id:"arsplan",  ikon:"📆",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
         ].map(({id,ikon,tittel,farge,border,desc})=>(
