@@ -8656,8 +8656,9 @@ Returner KUN gyldig JSON uten markdown:
         const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error("Ingen JSON");
         const parsed=JSON.parse(m[0]);
         const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+        const str=v=>typeof v==="string"?v.trim():"";
         const dagNavn=["mandag","tirsdag","onsdag","torsdag","fredag"];
-        setUDager(prev=>{const ny={...prev};dagNavn.forEach(dag=>{if(!parsed[dag])return;const p=parsed[dag];const akt=[];if(p.formiddag)akt.push({id:uid(),tid:"formiddag",tekst:p.formiddag});if(p.ettermiddag)akt.push({id:uid(),tid:"ettermiddag",tekst:p.ettermiddag});if(p.notat)akt.push({id:uid(),tid:"notat",tekst:p.notat});ny[dag]={...ny[dag],aktiviteter:akt,maaltid:p.maaltid||ny[dag].maaltid||""};});return ny;});
+        setUDager(prev=>{const ny={...prev};dagNavn.forEach(dag=>{if(!parsed[dag])return;const p=parsed[dag];const akt=[];const fm=str(p.formiddag);const em=str(p.ettermiddag);const no=str(p.notat);if(fm)akt.push({id:uid(),tid:"formiddag",tekst:fm});if(em)akt.push({id:uid(),tid:"ettermiddag",tekst:em});if(no)akt.push({id:uid(),tid:"notat",tekst:no});ny[dag]={...ny[dag],aktiviteter:akt,maaltid:str(p.maaltid)||ny[dag].maaltid||""};});return ny;});
         visLokal("✨ AI fylte inn aktiviteter for alle dager");
       }catch(e){console.error("[AI Ukeplan]",e);setUFeil(e.name==="AbortError"?"⏱ Tidsavbrudd – prøv igjen.":"❌ AI utilgjengelig");}
       finally{clearTimeout(tid);setUAiLoading(false);}
@@ -9247,7 +9248,7 @@ Returner KUN gyldig JSON uten markdown:
     };
     const slettEvent=(dag,id)=>setKEvents(prev=>({...prev,[dag]:(prev[dag]||[]).filter(e=>e.id!==id)}));
 
-    const lagreNy=async()=>{if(!k_tittel.trim()){setKFeil("Skriv en tittel");return;}setKLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:k_tittel.trim(),aar:k_aar,maaned:k_maaned,tema:k_tema.trim(),events:k_events,opprettet:new Date().toISOString()},...planer]);setKLoading(false);if(ok){visLokal("✅ Kalender lagret");setVisning("liste");}};
+    const lagreNy=async()=>{if(!k_tittel.trim()){setKFeil("Skriv en tittel");return;}if(Object.keys(k_events).length===0){setKFeil("Kalenderen er tom – legg til minst én hendelse eller bruk AI-generering.");return;}setKLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:k_tittel.trim(),aar:k_aar,maaned:k_maaned,tema:k_tema.trim(),events:k_events,opprettet:new Date().toISOString()},...planer]);setKLoading(false);if(ok){visLokal("✅ Kalender lagret");setVisning("liste");}};
     const lagreEndring=async()=>{if(!valgt)return;if(!k_tittel.trim()){setKFeil("Skriv en tittel");return;}setKLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:k_tittel.trim(),aar:k_aar,maaned:k_maaned,tema:k_tema.trim(),events:k_events}:p));setKLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
     const slettPlan=async id=>{const ok=await lagre(planer.filter(p=>p.id!==id));if(ok){visLokal("🗑 Slettet");setVisning("liste");setValgt(null);}};
 
@@ -9356,7 +9357,18 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
 <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#dbeafe"></div>Aktivitet</div><div class="leg-item"><div class="leg-dot" style="background:#dcfce7"></div>Tur</div><div class="leg-item"><div class="leg-dot" style="background:#f3e8ff"></div>Bursdag</div><div class="leg-item"><div class="leg-dot" style="background:#fef9c3"></div>Praktisk</div></div>
 </body></html>`;
       const v=window.open("","_blank","width=900,height=720");
-      if(!v){visLokal("⚠️ Popup ble blokkert – tillat popup for å skrive ut");return;}
+      if(!v){
+        try{
+          const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement("a");
+          a.href=url;a.download=`kalender-${esc(p.tittel).replace(/[^a-zA-Z0-9æøåÆØÅ]/g,"-")}.html`;
+          document.body.appendChild(a);a.click();document.body.removeChild(a);
+          setTimeout(()=>URL.revokeObjectURL(url),1500);
+          visLokal("💾 Popup blokkert – kalender lastet ned som HTML");
+        }catch{visLokal("⚠️ Popup blokkert – tillat popup for å skrive ut");}
+        return;
+      }
       v.document.write(html);v.document.close();v.focus();
       setTimeout(()=>v.print(),400);
     };
