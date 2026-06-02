@@ -8526,9 +8526,9 @@ ${innhold}
     const [bekreftSletting, setBekreftSletting] = useState(false);
 
     // Skjema-state
-    const tomDag = { bilde:"", farge:"", ansvarlig:"", maaltid:"", aktiviteter:[] };
+    const tomDag = () => ({ bilde:"", farge:"", ansvarlig:"", maaltid:"", aktiviteter:[] });
     const migrerDag = (dag) => {
-      if (!dag) return {...tomDag};
+      if (!dag) return tomDag();
       if (Array.isArray(dag.aktiviteter)) return { bilde:dag.bilde||"", farge:dag.farge||"", ansvarlig:dag.ansvarlig||"", maaltid:dag.maaltid||"", aktiviteter:dag.aktiviteter };
       const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
       const akt=[];
@@ -8541,8 +8541,8 @@ ${innhold}
     const [u_uke, setUUke] = useState("");
     const [u_tema, setUTema] = useState("");
     const [u_dager, setUDager] = useState({
-      mandag: {...tomDag}, tirsdag: {...tomDag}, onsdag: {...tomDag},
-      torsdag: {...tomDag}, fredag: {...tomDag}
+      mandag: tomDag(), tirsdag: tomDag(), onsdag: tomDag(),
+      torsdag: tomDag(), fredag: tomDag()
     });
     const [u_loading, setULoading] = useState(false);
     const [u_feil, setUFeil] = useState("");
@@ -8906,13 +8906,18 @@ Returner KUN gyldig JSON uten markdown:
     const kopier = async (p) => {
       const erEmoji = (b) => b && !b.startsWith("data:");
       const tekst = ["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
-        const data = p.dager?.[d] || {};
+        const raw = p.dager?.[d] || {};
+        const data = migrerDag(raw);
         const dagN = d.charAt(0).toUpperCase() + d.slice(1);
         const emojiPrefix = erEmoji(data.bilde) ? data.bilde + " " : "";
         const linjer = [];
-        if (data.formiddag) linjer.push(`  Formiddag: ${data.formiddag}`);
-        if (data.ettermiddag) linjer.push(`  Ettermiddag: ${data.ettermiddag}`);
-        if (data.notat) linjer.push(`  Notat: ${data.notat}`);
+        const tidLabel = { formiddag:"Formiddag", ettermiddag:"Ettermiddag", notat:"Notat" };
+        ["formiddag","ettermiddag","notat"].forEach(tid => {
+          const akt = (data.aktiviteter||[]).filter(a=>a.tid===tid);
+          if (akt.length) linjer.push(`  ${tidLabel[tid]}: ${akt.map(a=>a.tekst).join(", ")}`);
+        });
+        if (data.ansvarlig) linjer.push(`  Ansvarlig: ${data.ansvarlig}`);
+        if (data.maaltid) linjer.push(`  Måltid: ${data.maaltid}`);
         return `${emojiPrefix}${dagN}:\n${linjer.length ? linjer.join("\n") : "  -"}`;
       }).join("\n\n");
       const full = `${p.tittel}\n${p.uke ? "Uke " + p.uke : ""}${p.tema ? "\nTema: " + p.tema : ""}\n\n${tekst}`;
@@ -8949,6 +8954,7 @@ Returner KUN gyldig JSON uten markdown:
           <button onClick={()=>setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger ukeplan":"📅 Ny ukeplan"}</div>
 
+          {lokalToast && <div className="fade" style={{background:"#e8f5e9",color:"#2e7d32",padding:"9px 13px",borderRadius:9,fontSize:12,marginBottom:10,fontWeight:700,textAlign:"center"}}>{lokalToast}</div>}
           {u_feil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 13px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {u_feil}</div>}
 
           <div style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
