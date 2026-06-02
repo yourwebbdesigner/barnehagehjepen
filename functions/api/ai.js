@@ -88,7 +88,7 @@ export async function onRequest(context) {
           "anthropic-beta": "prompt-caching-2024-07-31",
         },
         body: JSON.stringify(apiPayload),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(28000),
       });
     } catch (e) {
       if (e.name === "TimeoutError" || e.name === "AbortError") {
