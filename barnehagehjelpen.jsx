@@ -1745,7 +1745,7 @@ const SvgVaar = ()=>(
     <path d="M0 258 Q80 232 160 248 Q240 232 320 258 L320 280 L0 280Z" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
     {[[60,208,30],[112,215,26],[165,205,28],[218,210,26],[270,208,28]].map(([cx,cy,r],i)=>{
       const cols=["#ff9999","#ffdd88","#cc99ff","#ff88bb","#ffbb44"];
-      return (<g key={i}>
+      return (<g key={"f"+i}>
         {[0,72,144,216,288].map(a=>(<ellipse key={a} cx={cx+r*0.7*Math.cos(a*Math.PI/180)} cy={cy-22+r*0.55*Math.sin(a*Math.PI/180)} rx={r*0.52} ry={r*0.42} fill={cols[i]} stroke="none"/>))}
         <circle cx={cx} cy={cy-22} r={r*0.27} fill="#fff9c4" stroke="#6ba0d9" strokeWidth="1.5"/>
         <line x1={cx} y1={cy-10} x2={cx} y2={cy+32} stroke="#52b788" strokeWidth="2.5"/>
@@ -2035,8 +2035,8 @@ const SvgSykkel = ()=>(
     <line x1="60" y1="60" x2="100" y2="60" strokeWidth="4"/>
     <line x1="80" y1="60" x2="160" y2="100" strokeWidth="4"/>
     <ellipse cx="195" cy="60" rx="22" ry="8" fill="#c62828" stroke={S.s} strokeWidth="2"/>
-    {[0,72,144,216,288].map(a=>(<line key={a} x1="80" y1="170" x2={80+44*Math.cos(a*Math.PI/180)} y2={170+44*Math.sin(a*Math.PI/180)} strokeWidth="2"/>))}
-    {[0,72,144,216,288].map(a=>(<line key={a} x1="240" y1="170" x2={240+44*Math.cos(a*Math.PI/180)} y2={170+44*Math.sin(a*Math.PI/180)} strokeWidth="2"/>))}
+    {[0,72,144,216,288].map(a=>(<line key={"L"+a} x1="80" y1="170" x2={80+44*Math.cos(a*Math.PI/180)} y2={170+44*Math.sin(a*Math.PI/180)} strokeWidth="2"/>))}
+    {[0,72,144,216,288].map(a=>(<line key={"R"+a} x1="240" y1="170" x2={240+44*Math.cos(a*Math.PI/180)} y2={170+44*Math.sin(a*Math.PI/180)} strokeWidth="2"/>))}
   </svg>
 );
 const SvgEple = ()=>(
@@ -2197,7 +2197,7 @@ const SvgSolsikke = ()=>(
     {[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>(<ellipse key={a} cx={150+72*Math.cos(a*Math.PI/180)} cy={125+72*Math.sin(a*Math.PI/180)} rx="22" ry="38" transform={`rotate(${a},${150+72*Math.cos(a*Math.PI/180)},${125+72*Math.sin(a*Math.PI/180)})`} fill="#ffd700" stroke="#ff8c00" strokeWidth="2.5"/>))}
     <circle cx="150" cy="125" r="52" fill="#8B5E3C" stroke="#5a3e28" strokeWidth="3.5"/>
     <circle cx="150" cy="125" r="38" fill="#6b4423" stroke="none"/>
-    {[0,45,90,135,180,225,270,315].map(a=>(<circle key={a} cx={150+22*Math.cos(a*Math.PI/180)} cy={125+22*Math.sin(a*Math.PI/180)} r="5" fill="#8B5E3C" stroke="none"/>))}
+    {[0,45,90,135,180,225,270,315].map(a=>(<circle key={"c"+a} cx={150+22*Math.cos(a*Math.PI/180)} cy={125+22*Math.sin(a*Math.PI/180)} r="5" fill="#8B5E3C" stroke="none"/>))}
     <rect x="138" y="177" width="24" height="112" rx="10" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="3"/>
     <ellipse cx="100" cy="235" rx="42" ry="22" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="2.5" transform="rotate(-35,100,235)"/>
     <ellipse cx="200" cy="248" rx="42" ry="22" fill="#4a7c3f" stroke="#2d6a4f" strokeWidth="2.5" transform="rotate(35,200,248)"/>
