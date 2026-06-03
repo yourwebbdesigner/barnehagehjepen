@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
-
   .bk-fade { animation: bk-fadeIn 0.3s ease both; }
   @keyframes bk-fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 

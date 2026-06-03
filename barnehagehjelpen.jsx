@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect, useMemo } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as dndCSS } from "@dnd-kit/utilities";
@@ -9,8 +9,6 @@ import SamarbeidSide from "./Samarbeid.jsx";
 import { supabase } from "./supabase.js";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
-
   /* ── TEMA-VARIABLER ─────────────────────────────────────────── */
   :root {
     --c-g: #2c5b8e; --c-lg: #3a72b0; --c-mint: #d8e6f5;
@@ -6903,8 +6901,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),3000); };
 
-  // Global søk – leter på tvers av sanger, aktiviteter, tegneark, fagområder, rammeplan og brukerens planer
-  const sokeResultat = (() => {
+  // Global søk – memoised: kjøres kun når søketekst eller innholdsdata endres
+  const sokeResultat = useMemo(() => {
     const q = sokDebounced.trim().toLowerCase();
     if (q.length < 2) return null;
     const treff = { sanger:[], aktiviteter:[], tegneark:[], fagomrader:[], rammeplan:[], skjemaer:[], ukeplaner:[], maanedsplaner:[], maanedsbrev:[], arsplaner:[], boker:[], aktivitetskort:[], dokumentasjon:[] };
@@ -6964,7 +6962,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
     const total = treff.sanger.length + treff.aktiviteter.length + treff.tegneark.length + treff.fagomrader.length + treff.rammeplan.length + treff.skjemaer.length + treff.ukeplaner.length + treff.maanedsplaner.length + treff.maanedsbrev.length + treff.arsplaner.length + treff.boker.length + treff.aktivitetskort.length + treff.dokumentasjon.length;
     return { total, ...treff, q };
-  })();
+  }, [sokDebounced, skjemaer, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner, globalBoker, globalUserTegneark, globalUserSanger, globalAktivitetskort, globalDokumentasjon]);
 
   // Hjelpere for å navigere fra søketreff
   const aapneTegneark = (t) => { setPreselectTegneark(t?.id || null); navigerTil("tegneark"); setGlobalSok(""); };
@@ -6976,18 +6974,33 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const aapneDokumentasjon = () => { navigerTil("dokumentasjon"); setGlobalSok(""); };
 
 
-  // Last favoritter når bruker logger inn
+  // Last alle brukerdata ved innlogging – én samlet Promise.all for færre round-trips
   useEffect(() => {
-    if (aktivBruker?.id) hentFavoritter(aktivBruker.id).then(setFavoritter).catch(console.error);
-    if (aktivBruker?.id) hentUkeplaner(aktivBruker.id).then(setGlobalUkeplaner).catch(console.error);
-    if (aktivBruker?.id) hentMaanedsplaner(aktivBruker.id).then(setGlobalMaanedsplaner).catch(console.error);
-    if (aktivBruker?.id) hentMaanedsbrev(aktivBruker.id).then(setGlobalMaanedsbrev).catch(console.error);
-    if (aktivBruker?.id) hentArsplaner(aktivBruker.id).then(setGlobalArsplaner).catch(console.error);
-    if (aktivBruker?.id) supabase.from("boker").select("id,tittel,forfatter,beskrivelse,kategori").then(({data})=>setGlobalBoker(data||[])).catch(console.error);
-    if (aktivBruker?.id) hentUserTegneark(aktivBruker.id).then(setGlobalUserTegneark).catch(console.error);
-    if (aktivBruker?.id) hentUserSanger(aktivBruker.id).then(setGlobalUserSanger).catch(console.error);
-    if (aktivBruker?.id) hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error);
-    if (aktivBruker?.id) hentDokumentasjon(aktivBruker.id).then(setGlobalDokumentasjon).catch(console.error);
+    const uid = aktivBruker?.id;
+    if (!uid) return;
+    Promise.all([
+      hentFavoritter(uid).catch(() => ({ sanger:[], aktiviteter:[], tegneark:[] })),
+      hentUkeplaner(uid).catch(() => []),
+      hentMaanedsplaner(uid).catch(() => []),
+      hentMaanedsbrev(uid).catch(() => []),
+      hentArsplaner(uid).catch(() => []),
+      supabase.from("boker").select("id,tittel,forfatter,beskrivelse,kategori").then(({data})=>data||[]).catch(()=>[]),
+      hentUserTegneark(uid).catch(() => []),
+      hentUserSanger(uid).catch(() => []),
+      hentAktivitetskort(uid).catch(() => []),
+      hentDokumentasjon(uid).catch(() => []),
+    ]).then(([fav, ukeplaner, maanedsplaner, maanedsbrev, arsplaner, boker, tegneark, sanger, aktivitetskort, dokumentasjon]) => {
+      setFavoritter(fav);
+      setGlobalUkeplaner(ukeplaner);
+      setGlobalMaanedsplaner(maanedsplaner);
+      setGlobalMaanedsbrev(maanedsbrev);
+      setGlobalArsplaner(arsplaner);
+      setGlobalBoker(boker);
+      setGlobalUserTegneark(tegneark);
+      setGlobalUserSanger(sanger);
+      setGlobalAktivitetskort(aktivitetskort);
+      setGlobalDokumentasjon(dokumentasjon);
+    }).catch(console.error);
   }, [aktivBruker?.id]);
 
   // Last skjemaer fra storage når bruker logger inn

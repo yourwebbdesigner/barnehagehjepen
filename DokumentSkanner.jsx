@@ -113,8 +113,6 @@ function lastBildeCanvas(src, maxDim = 1800) {
 // ═══════════════════════════════════════════
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
-
   .ds-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 14px 20px; border-radius: 12px; border: none;
