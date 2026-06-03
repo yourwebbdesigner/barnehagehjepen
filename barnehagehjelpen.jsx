@@ -7023,542 +7023,11 @@ function FavoritterSide({ favoritter, favTotal, aapneSang, aapneTegneark, toggle
   );
 }
 
-function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
-  const [tema, setTema] = useState(() => {
-    const lagret = localStorage.getItem("bh_tema");
-    if (lagret === "dark" || lagret === "light") return lagret;
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+// ── Ytterligere modul-nivå Side-komponenter (stabile referanser) ──
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", tema);
-    localStorage.setItem("bh_tema", tema);
-  }, [tema]);
+function RammeplanSide({ ctx }) {
+  const { rammeSeksjon, setRammeSeksjon, valgtFag, setValgtFag, setPreselectAktiv, setSide } = ctx;
 
-  const [side, setSide] = useState("hjem");
-  const [skjemaer, setSkjemaer] = useState([]);
-  const [skjemaerLastet, setSkjemaerLastet] = useState(false);
-  const [preselectAktiv, setPreselectAktiv] = useState(null);
-  const [preselectSang, setPreselectSang] = useState(null);
-  const [preselectTegneark, setPreselectTegneark] = useState(null);
-  const [valgtFag, setValgtFag] = useState(null);
-  const [rammeSeksjon, setRammeSeksjon] = useState("oversikt");
-  const [valgtSkjema, setValgtSkjema] = useState(null);
-  const [redigerSkjemaTittel, setRedigerSkjemaTittel] = useState(null);
-  const [bekreftSlettSkjema, setBekreftSlettSkjema] = useState(null);
-  const [feedback, setFeedback] = useState("");
-  const [favoritter, setFavoritter] = useState({ sanger: [], aktiviteter: [], tegneark: [] });
-  const [globalUkeplaner, setGlobalUkeplaner] = useState([]);
-  const [globalMaanedsplaner, setGlobalMaanedsplaner] = useState([]);
-  const [globalMaanedsbrev, setGlobalMaanedsbrev] = useState([]);
-  const [globalArsplaner, setGlobalArsplaner] = useState([]);
-  const [globalBoker, setGlobalBoker] = useState([]);
-  const [globalUserSanger, setGlobalUserSanger] = useState([]);
-  const [globalUserTegneark, setGlobalUserTegneark] = useState([]);
-  const [globalAktivitetskort, setGlobalAktivitetskort] = useState([]);
-  const [globalDokumentasjon, setGlobalDokumentasjon] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [globalSok, setGlobalSok] = useState("");
-  const [sokDebounced, setSokDebounced] = useState("");
-  useEffect(() => {
-    const t = setTimeout(() => setSokDebounced(globalSok), 200);
-    return () => clearTimeout(t);
-  }, [globalSok]);
-  const [planTema, setPlanTema] = useState(() => localStorage.getItem("bh_plan_tema") || "");
-  useEffect(() => {
-    if (planTema) localStorage.setItem("bh_plan_tema", planTema);
-    else localStorage.removeItem("bh_plan_tema");
-  }, [planTema]);
-
-  const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),3000); };
-
-  // Global søk – memoised: kjøres kun når søketekst eller innholdsdata endres
-  const sokeResultat = useMemo(() => {
-    const q = sokDebounced.trim().toLowerCase();
-    if (q.length < 2) return null;
-    const treff = { sanger:[], aktiviteter:[], tegneark:[], fagomrader:[], rammeplan:[], skjemaer:[], ukeplaner:[], maanedsplaner:[], maanedsbrev:[], arsplaner:[], boker:[], aktivitetskort:[], dokumentasjon:[] };
-    const matcher = (txt) => (txt||"").toLowerCase().includes(q);
-
-    SANGER.forEach(s => {
-      if (matcher(s.tittel) || matcher(s.tekst) || matcher(s.melodi)) treff.sanger.push(s);
-    });
-    AKTIVITETER.forEach(a => {
-      if (matcher(a.tittel) || matcher(a.hva) || matcher(a.hvordan) || matcher(a.hvorfor)) treff.aktiviteter.push(a);
-    });
-    TEGNEARK.forEach(t => {
-      if (matcher(t.tittel) || matcher(t.oppgave) || matcher(t.samtale) || matcher(t.mal)) treff.tegneark.push(t);
-    });
-    globalUserTegneark.forEach(t => {
-      if (matcher(t.tittel) || matcher(t.oppgave) || matcher(t.samtale) || matcher(t.mal)) treff.tegneark.push({ ...t, id:"user_"+t.id, svg:<SvgPlaceholder/>, _erMin:true, _dbId:t.id });
-    });
-    globalUserSanger.forEach(s => {
-      if (matcher(s.tittel) || matcher(s.tekst) || matcher(s.melodi)) treff.sanger.push({ ...s, id:"user_"+s.id, _erMin:true, _dbId:s.id });
-    });
-    FAGOMRADER.forEach(f => {
-      if (matcher(f.navn) || matcher(f.kortbeskrivelse) || matcher(f.innhold)) treff.fagomrader.push(f);
-    });
-    Object.entries(RE).forEach(([key, val]) => {
-      const samletTekst = JSON.stringify(val).toLowerCase();
-      if (samletTekst.includes(q)) treff.rammeplan.push({ key, tittel: val.tittel });
-    });
-    globalUkeplaner.forEach(p => {
-      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.uke||"") + " " + JSON.stringify(p.dager||{});
-      if (samlet.toLowerCase().includes(q)) treff.ukeplaner.push(p);
-    });
-    globalMaanedsplaner.forEach(p => {
-      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.fagomrader||[]).join(" ") +
-        (p.type==="kalender" ? " " + JSON.stringify(p.events||{}) : " " + (p.uke1||"") + " " + (p.uke2||"") + " " + (p.uke3||"") + " " + (p.uke4||""));
-      if (samlet.toLowerCase().includes(q)) treff.maanedsplaner.push(p);
-    });
-    globalMaanedsbrev.forEach(b => {
-      const samlet = (b.tittel||"") + " " + (b.gjort||"") + " " + (b.kommende||"");
-      if (samlet.toLowerCase().includes(q)) treff.maanedsbrev.push(b);
-    });
-    skjemaer.forEach(s => {
-      if (matcher(s.tittel) || matcher(s.hva) || matcher(s.hvordan) || matcher(s.hvorfor) || matcher(s.type)) treff.skjemaer.push(s);
-    });
-    globalArsplaner.forEach(p => {
-      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.aar||"");
-      if (samlet.toLowerCase().includes(q)) treff.arsplaner.push(p);
-    });
-    globalBoker.forEach(b => {
-      if (matcher(b.tittel) || matcher(b.forfatter) || matcher(b.beskrivelse) || matcher(b.kategori)) treff.boker.push(b);
-    });
-    globalAktivitetskort.forEach(k => {
-      if (matcher(k.title) || matcher(k.description) || matcher(k.steps) || matcher(k.learning_goal) || matcher(k.materials) || matcher(k.category) || matcher(k.age_group)) treff.aktivitetskort.push(k);
-    });
-    globalDokumentasjon.forEach(d => {
-      if (matcher(d.tittel) || matcher(d.fortelling) || matcher(d.refleksjon)) treff.dokumentasjon.push(d);
-    });
-
-    const total = treff.sanger.length + treff.aktiviteter.length + treff.tegneark.length + treff.fagomrader.length + treff.rammeplan.length + treff.skjemaer.length + treff.ukeplaner.length + treff.maanedsplaner.length + treff.maanedsbrev.length + treff.arsplaner.length + treff.boker.length + treff.aktivitetskort.length + treff.dokumentasjon.length;
-    return { total, ...treff, q };
-  }, [sokDebounced, skjemaer, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner, globalBoker, globalUserTegneark, globalUserSanger, globalAktivitetskort, globalDokumentasjon]);
-
-  // Hjelpere for å navigere fra søketreff
-  const aapneTegneark = (t) => { setPreselectTegneark(t?.id || null); navigerTil("tegneark"); setGlobalSok(""); };
-  const aapneSang = (s) => { setPreselectSang(s?.id || null); navigerTil("sanger"); setGlobalSok(""); };
-  const aapneAktivitet = (a) => { setPreselectAktiv(a.id); navigerTil("aktiviteter"); setGlobalSok(""); };
-  const aapneFagomrade = (f) => { setValgtFag(f); setRammeSeksjon("fagomrader"); navigerTil("rammeplan"); setGlobalSok(""); };
-  const aapneRammeplan = (key) => { setRammeSeksjon(key); setValgtFag(null); navigerTil("rammeplan"); setGlobalSok(""); };
-  const aapneAktivitetskort = () => { navigerTil("aktivitetskort"); setGlobalSok(""); };
-  const aapneDokumentasjon = () => { navigerTil("dokumentasjon"); setGlobalSok(""); };
-
-
-  // Last alle brukerdata ved innlogging – én samlet Promise.all for færre round-trips
-  useEffect(() => {
-    const uid = aktivBruker?.id;
-    if (!uid) return;
-    Promise.all([
-      hentFavoritter(uid).catch(() => ({ sanger:[], aktiviteter:[], tegneark:[] })),
-      hentUkeplaner(uid).catch(() => []),
-      hentMaanedsplaner(uid).catch(() => []),
-      hentMaanedsbrev(uid).catch(() => []),
-      hentArsplaner(uid).catch(() => []),
-      supabase.from("boker").select("id,tittel,forfatter,beskrivelse,kategori").then(({data})=>data||[]).catch(()=>[]),
-      hentUserTegneark(uid).catch(() => []),
-      hentUserSanger(uid).catch(() => []),
-      hentAktivitetskort(uid).catch(() => []),
-      hentDokumentasjon(uid).catch(() => []),
-    ]).then(([fav, ukeplaner, maanedsplaner, maanedsbrev, arsplaner, boker, tegneark, sanger, aktivitetskort, dokumentasjon]) => {
-      setFavoritter(fav);
-      setGlobalUkeplaner(ukeplaner);
-      setGlobalMaanedsplaner(maanedsplaner);
-      setGlobalMaanedsbrev(maanedsbrev);
-      setGlobalArsplaner(arsplaner);
-      setGlobalBoker(boker);
-      setGlobalUserTegneark(tegneark);
-      setGlobalUserSanger(sanger);
-      setGlobalAktivitetskort(aktivitetskort);
-      setGlobalDokumentasjon(dokumentasjon);
-    }).catch(console.error);
-  }, [aktivBruker?.id]);
-
-  // Last skjemaer fra storage når bruker logger inn
-  useEffect(() => {
-    let avbrutt = false;
-    (async () => {
-      if (!aktivBruker?.id) { setSkjemaer([]); setSkjemaerLastet(true); return; }
-      try {
-        const { data } = await supabase.from("skjemaer").select("skjema_id,payload").eq("user_id", aktivBruker.id).order("created_at", { ascending: false });
-        if (avbrutt) return;
-        setSkjemaer((data||[]).map(r => r.payload).filter(Boolean));
-      } catch (e) {
-        console.error("[Skjemaer] Kunne ikke laste:", e);
-        if (!avbrutt) setSkjemaer([]);
-      }
-      if (!avbrutt) setSkjemaerLastet(true);
-    })();
-    return () => { avbrutt = true; };
-  }, [aktivBruker?.id]);
-
-  // Lagre skjemaer – debounced 500ms + upsert-strategi for å unngå data-tap
-  useEffect(() => {
-    if (!aktivBruker?.id || !skjemaerLastet) return;
-    const userId = aktivBruker.id;
-    const snapshot = skjemaer; // frys referanse til dette renderet
-    let avbrutt = false;
-    const t = setTimeout(async () => {
-      if (avbrutt) return;
-      try {
-        if (snapshot.length === 0) {
-          // Tom liste: slett alt – ingen risiko for data-tap
-          await supabase.from("skjemaer").delete().eq("user_id", userId);
-        } else {
-          // Steg 1: upsert alle gjeldende (oppretter/oppdaterer, fjerner ikke)
-          const rader = snapshot.map(s => ({ user_id: userId, skjema_id: String(s.id||""), payload: s }));
-          const { error: upsertErr } = await supabase.from("skjemaer").upsert(rader, { onConflict: "skjema_id,user_id" });
-          if (upsertErr) throw upsertErr;
-          if (avbrutt) return;
-          // Steg 2: slett rader som ikke lenger er i listen (kun etter vellykket upsert)
-          const ids = snapshot.map(s => String(s.id||"")).filter(Boolean);
-          if (ids.length > 0) {
-            await supabase.from("skjemaer").delete().eq("user_id", userId).not("skjema_id", "in", `(${ids.join(",")})`);
-          }
-        }
-      } catch(e) { console.error("[Skjemaer] Kunne ikke lagre:", e); }
-    }, 500);
-    return () => { avbrutt = true; clearTimeout(t); };
-  }, [skjemaer, aktivBruker?.id, skjemaerLastet]);
-
-  // Toggle favoritt og lagre umiddelbart med ordentlig feilhåndtering
-  const toggleFav = async (type, id) => {
-    const liste = favoritter[type] || [];
-    const finnes = liste.includes(id);
-    const ny = finnes ? liste.filter(x=>x!==id) : [...liste, id];
-    const oppdatert = { ...favoritter, [type]: ny };
-    setFavoritter(oppdatert);
-    if (aktivBruker?.id) {
-      try {
-        await lagreFavoritter(aktivBruker.id, oppdatert);
-        vis(finnes ? "Fjernet fra favoritter" : "⭐ Lagt til i favoritter");
-      } catch (e) {
-        console.error("[Favoritter] Lagring feilet:", e);
-        // Rull tilbake state-endringen
-        setFavoritter(favoritter);
-        vis("❌ Kunne ikke lagre favoritter");
-      }
-    }
-  };
-
-  // Navigasjon: lukk sidebar etter valg på mobil
-  const navigerTil = (s) => { setSide(s); setSidebarOpen(false); };
-
-  const favTotal = (favoritter.sanger?.length||0) + (favoritter.aktiviteter?.length||0) + (favoritter.tegneark?.length||0);
-
-  const nav = [
-    {id:"hjem",i:"🏠",n:"Hjem"},
-    {id:"sanger",i:"🎵",n:"Sanger & Rim"},
-    {id:"aktiviteter",i:"🏃",n:"Aktiviteter"},
-    {id:"tegneark",i:"🖍️",n:"Tegneark"},
-    {id:"favoritter",i:"⭐",n:"Favoritter",badge:favTotal},
-    {id:"skjema-ny",i:"✏️",n:"Nytt skjema"},
-    {id:"skjemaer",i:"📋",n:"Mine skjemaer",badge:skjemaer.length},
-    {id:"rammeplan",i:"📖",n:"Rammeplan"},
-    {id:"boker",i:"📚",n:"Bøker"},
-    {id:"ai",i:"🤖",n:"AI-assistent"},
-    {id:"planlegging",i:"📅",n:"Planlegging"},
-    {id:"samarbeid",i:"👥",n:"Samarbeid"},
-    {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
-    {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
-    {id:"support",i:"❓",n:"Hjelp & FAQ"},
-    ...(aktivBruker?.admin?[{id:"admin",i:"👑",n:"Admin-panel"}]:[])
-  ];
-
-  const hilsen = () => {
-    const h = new Date().getHours();
-    if (h < 10) return ["God morgen","☀️","Klar for en ny dag i barnehagen?"];
-    if (h < 12) return ["God formiddag","🌤️","Hva skal barna oppdage i dag?"];
-    if (h < 17) return ["God ettermiddag","🌈","Midttimen er full av muligheter!"];
-    return ["God kveld","🌙","Planlegger du morgendagen?"];
-  };
-  const [hils, hikon, hsub] = hilsen();
-  const dagensTips = [
-    {t:"Filosofisk samtale",t2:"Still spørsmålet: 'Hva er en god venn?' – og lytt til svarene!",f:"etikk"},
-    {t:"Tall i hverdagen",t2:"Tell trapper, stoler og vinduer på morgenturen!",f:"antall"},
-    {t:"Sansetur",t2:"Gå barbeint i gress – snakk om hva dere kjenner under føttene",f:"kropp"},
-    {t:"Fargebrev",t2:"La barna farge et brev til noen de er glad i",f:"kunst"},
-    {t:"Naturobservasjon",t2:"Ta med lupe ut og utforsk hva som lever i gresset",f:"natur"},
-    {t:"Rim og regler",t2:"Start samlingsstunden med Ole Dole Doff – barna velger aktivitet",f:"kommunikasjon"},
-    {t:"Følelseskort",t2:"La hvert barn velge et følelseskort som beskriver dagen deres",f:"etikk"},
-    {t:"Måling med kropp",t2:"Mål rommet i barneskritt – sammenlign hvem som tok flest",f:"antall"},
-    {t:"Skyformer",t2:"Legg dere på ryggen ute og se på skyene – hva ligner de på?",f:"natur"},
-    {t:"Naturlig fargepalett",t2:"Samle blader, blomster og steiner – sorter etter farge sammen",f:"kunst"},
-    {t:"Mage-pust",t2:"Legg en bok på magen – pust så boka går opp og ned. Beroliger gruppa",f:"kropp"},
-    {t:"Historiefortelling",t2:"Start med 'Det var en gang...' og la hvert barn legge til én setning",f:"kommunikasjon"},
-    {t:"Min nabo",t2:"Snakk om hvem som bor i nabolaget – hvem hjelper hverandre?",f:"naermiljo"},
-    {t:"Sortering",t2:"La barna sortere klosser etter form, farge og størrelse – diskuter valgene",f:"antall"},
-    {t:"Lyttesirkel",t2:"Sitt stille i 1 minutt – fortell etterpå hva dere hørte",f:"kommunikasjon"},
-    {t:"Småkrypjakt",t2:"Finn 5 ulike småkryp ute med lupe – tegn det dere fant",f:"natur"},
-    {t:"Bevegelseslek",t2:"Etterlign dyr: hopp som kanin, kryp som slange, fly som fugl",f:"kropp"},
-    {t:"Takknemlighet",t2:"Hvert barn nevner én ting de er glad for fra i dag",f:"etikk"},
-    {t:"Bygg sammen",t2:"Lag en stor borg med klosser – alle må bidra på sin måte",f:"kunst"},
-    {t:"Kart over rommet",t2:"Tegn et kart over barnehagen sett ovenfra – diskuter avstander",f:"naermiljo"},
-  ];
-  // Stabilt valg per dag: bruk dato (år+måned+dag) som seed istedenfor bare ukedag
-  const idag = new Date();
-  const datoFroe = idag.getFullYear() * 10000 + (idag.getMonth()+1) * 100 + idag.getDate();
-  const [tipsOffset, setTipsOffset] = useState(0);
-  const tipsIndex = (datoFroe + tipsOffset) % dagensTips.length;
-  const tips = dagensTips[tipsIndex];
-  const tipsFag = FAGOMRADER.find(f=>f.id===tips.f);
-  const nesteTips = () => setTipsOffset(o => o + 1);
-
-  const [vær, setVær] = useState(null);
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-      try {
-        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
-        if (!r.ok) return;
-        const d = await r.json();
-        const c = d?.current;
-        if (!c) return;
-        setVær({ temp: Math.round(c.temperature_2m), kode: c.weather_code, vind: Math.round(c.wind_speed_10m) });
-      } catch {}
-    }, () => {});
-  }, []);
-
-  const værInfo = (kode) => {
-    if (kode === 0) return ["☀️","Klarvær"];
-    if (kode <= 2) return ["🌤️","Lettskyet"];
-    if (kode === 3) return ["☁️","Overskyet"];
-    if (kode <= 48) return ["🌫️","Tåke"];
-    if (kode <= 55) return ["🌦️","Yr"];
-    if (kode <= 65) return ["🌧️","Regn"];
-    if (kode <= 67) return ["🌨️","Sludd"];
-    if (kode <= 77) return ["❄️","Snø"];
-    if (kode <= 82) return ["🌧️","Regnbyger"];
-    if (kode <= 86) return ["❄️","Snøbyger"];
-    return ["⛈️","Torden"];
-  };
-
-  const [værIkon, værTekst] = vær ? værInfo(vær.kode) : [null, null];
-
-  const Hjem = ()=>(
-    <div className="fade">
-      {/* HERO */}
-      <div style={{background:`linear-gradient(135deg, #2c5b8e 0%, #4178bd 50%, #6ba0d9 100%)`, borderRadius:22, padding:"28px 22px 24px", color:"#fff", marginBottom:20, position:"relative", overflow:"hidden"}}>
-        <div style={{position:"absolute", top:-20, right:-20, fontSize:90, opacity:.15, transform:"rotate(15deg)", pointerEvents:"none"}}>🌟</div>
-        <div style={{position:"absolute", bottom:-15, left:10, fontSize:70, opacity:.12, transform:"rotate(-10deg)", pointerEvents:"none"}}>🎨</div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <div style={{fontSize:28}}>{hikon}</div>
-          {vær && (
-            <div style={{background:"rgba(255,255,255,0.18)",borderRadius:12,padding:"8px 13px",textAlign:"center",backdropFilter:"blur(4px)",minWidth:90}}>
-              <div style={{fontSize:22,lineHeight:1}}>{værIkon}</div>
-              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,lineHeight:1.1,marginTop:2}}>{vær.temp}°</div>
-              <div style={{fontSize:10,opacity:.9,marginTop:1}}>{værTekst}</div>
-              <div style={{fontSize:10,opacity:.75,marginTop:1}}>💨 {vær.vind} m/s</div>
-            </div>
-          )}
-        </div>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:26, marginTop:4}}>{hils}!</div>
-        <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
-        <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
-          {[[SANGER.length+"","🎵","Sanger"],[AKTIVITETER.length+"","🏃","Aktiviteter"],[skjemaer.length+"","📋","Skjemaer"],[FAGOMRADER.length+"","📖","Fagområder"]].map(([n,ic,l])=>(
-            <div key={l} style={{background:"rgba(255,255,255,0.22)", borderRadius:12, padding:"11px 6px", textAlign:"center", backdropFilter:"blur(4px)"}}>
-              <div style={{fontSize:18}}>{ic}</div>
-              <div style={{fontFamily:"'Fredoka One',cursive", fontSize:20, lineHeight:1}}>{n}</div>
-              <div style={{fontSize:10, opacity:.85, marginTop:2}}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* GLOBAL SØK */}
-      <GlobalSok
-        verdi={globalSok}
-        setVerdi={setGlobalSok}
-        sokeResultat={sokeResultat}
-        navigerTil={navigerTil}
-        aapneAktivitet={aapneAktivitet}
-        aapneSang={aapneSang}
-        aapneTegneark={aapneTegneark}
-        aapneFagomrade={aapneFagomrade}
-        aapneRammeplan={aapneRammeplan}
-        aapneAktivitetskort={aapneAktivitetskort}
-        aapneDokumentasjon={aapneDokumentasjon}
-        C={C}
-      />
-
-      {/* DAGENS TIPS */}
-      <div style={{background:C.w, borderRadius:16, padding:"15px 18px", marginBottom:18, boxShadow:"0 2px 14px rgba(44,91,142,0.10)", borderLeft:`4px solid ${tipsFag?.farge||C.g}`}}>
-        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, marginBottom:5}}>
-          <div style={{display:"flex", alignItems:"center", gap:8}}>
-            <span style={{fontSize:20}}>{tipsFag?.ikon||"💡"}</span>
-            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>Dagens pedagogiske tips</div>
-          </div>
-          <button onClick={nesteTips} title="Vis neste tips" aria-label="Vis neste tips"
-            style={{background:"transparent", border:"1.5px solid #d8e6f5", color:C.g, width:32, height:32, borderRadius:8, cursor:"pointer", fontSize:14, fontFamily:"'Nunito',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-            🔄
-          </button>
-        </div>
-        <div style={{fontWeight:800, color:tipsFag?.farge||C.g, fontSize:13, marginBottom:3}}>{tips.t}</div>
-        <div style={{fontSize:13, color:C.gr, lineHeight:1.6}}>{tips.t2}</div>
-      </div>
-
-      {/* HURTIGTILGANG */}
-      <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>🚀 Hurtigtilgang</div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:20}}>
-        {[
-          ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","sanger"],
-          ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","aktiviteter"],
-          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","boker"],
-          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","aktivitetskort"],
-          ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","skjema-ny"],
-          ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","tegneark"],
-          ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","rammeplan"],
-          ["🤖","AI-assistent","Lag sanger, planer og mer","#37474f","ai"],
-        ].map(([ic,t,u,fc,sid])=>(
-          <div key={t} className="hover fade" onClick={()=>setSide(sid)} style={{background:C.w, borderRadius:14, padding:"16px 14px", cursor:"pointer", boxShadow:`0 2px 10px ${fc}22`, borderLeft:`4px solid ${fc}`}}>
-            <div style={{fontSize:26, marginBottom:4}}>{ic}</div>
-            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>{t}</div>
-            <div style={{fontSize:11, color:C.gr, marginTop:2}}>{u}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* PLANLEGGING */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>📋 Planlegging</div>
-        <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
-      </div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
-        {[
-          ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
-          ["📋","Månedsplan","Hele måneden strukturert","maanedsplan","#6a1b9a"],
-          ["✉️","Månedsbrev","Brev til foreldre","maanedsbrev","#e67e22"],
-          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
-        ].map(([ic,t,u,sideId,fc])=>(
-          <div key={t} className="hover" onClick={()=>navigerTil(sideId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-              <span style={{fontSize:18}}>{ic}</span>
-              <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t}</div>
-            </div>
-            <div style={{fontSize:11, color:C.gr, lineHeight:1.4}}>{u}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* FAGOMRÅDER */}
-      <div style={{background:C.w, borderRadius:16, padding:"16px 18px", boxShadow:"0 2px 10px rgba(44,91,142,0.08)", marginBottom:14}}>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>📖 De 7 fagområdene – klikk for å utforske</div>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
-          {FAGOMRADER.map(f=>(
-            <div key={f.id} className="hover" onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");setSide("rammeplan");}}
-              style={{background:C.lg2, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s", borderLeft:`3px solid ${f.farge}`}}>
-              <span style={{fontSize:20}}>{f.ikon}</span>
-              <div>
-                <div data-fag-color={f.id} style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
-                <div style={{fontSize:9, color:C.gr, marginTop:1}}>{f.kortbeskrivelse}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{background:C.lg2, borderRadius:13, padding:"13px 15px", borderLeft:`4px solid ${C.g}`}}>
-        <div style={{fontWeight:800, color:C.g, fontSize:12, marginBottom:4}}>🌿 Om Barnehagehjelpen</div>
-        <div style={{fontSize:12, color:C.t, lineHeight:1.7}}>Alt innhold er koblet til Rammeplan 2017. Bruk AI-assistenten til å generere sanger, aktiviteter og pedagogiske planer tilpasset din barnegruppe.</div>
-      </div>
-    </div>
-  );
-
-  // NyttSkjemaForm is rendered directly in JSX (not via sider object) to keep component type stable
-
-  const MineSkjemaer = ()=>(
-    <div className="fade">
-      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📋 Mine skjemaer</div>
-      <p style={{color:C.gr,fontSize:12,marginBottom:12}}>{skjemaer.length} skjema{skjemaer.length!==1?"er":""} lagret</p>
-      {feedback&&<div className="fade" style={{marginBottom:12,background:C.mint,borderRadius:8,padding:"9px 13px",color:C.g,fontWeight:700}}>{feedback}</div>}
-      {skjemaer.length===0?(
-        <div style={{background:C.w,borderRadius:16,padding:28,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.07)"}}>
-          <div style={{fontSize:40,marginBottom:8}}>📝</div>
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,color:C.t}}>Ingen skjemaer ennå</div>
-          <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema!</div>
-          <button className="btn" onClick={()=>setSide("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
-        </div>
-      ):valgtSkjema?(
-        <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
-          <Tilbake onClick={()=>{setValgtSkjema(null);setRedigerSkjemaTittel(null);}} />
-          {redigerSkjemaTittel !== null ? (
-            <div style={{marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:800,color:C.g,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:5}}>Endre navn</div>
-              <div style={{display:"flex",gap:8}}>
-                <input autoFocus type="text" value={redigerSkjemaTittel} onChange={e=>setRedigerSkjemaTittel(e.target.value)}
-                  onKeyDown={e=>{
-                    if(e.key==="Enter"&&redigerSkjemaTittel.trim()){
-                      const nyTittel=redigerSkjemaTittel.trim();
-                      setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
-                      setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
-                      setRedigerSkjemaTittel(null);
-                      vis("✅ Navn oppdatert");
-                    }
-                    if(e.key==="Escape") setRedigerSkjemaTittel(null);
-                  }}
-                  style={{flex:1,padding:"9px 12px",border:`2px solid ${C.g}`,borderRadius:9,fontSize:14,fontFamily:"'Nunito',sans-serif",fontWeight:700,color:C.t}} />
-                <button className="btn" onClick={()=>{
-                  const nyTittel=redigerSkjemaTittel.trim();
-                  if(!nyTittel) return;
-                  setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
-                  setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
-                  setRedigerSkjemaTittel(null);
-                  vis("✅ Navn oppdatert");
-                }} style={{background:C.g,color:"#fff",padding:"9px 16px",fontSize:13}}>Lagre</button>
-                <button className="btn" onClick={()=>setRedigerSkjemaTittel(null)} style={{background:C.lg2,color:C.g,padding:"9px 12px",fontSize:13}}>Avbryt</button>
-              </div>
-            </div>
-          ) : (
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:C.t,flex:1}}>{valgtSkjema.tittel}</div>
-              <button className="btn" onClick={()=>setRedigerSkjemaTittel(valgtSkjema.tittel)}
-                style={{background:C.lg2,color:C.g,padding:"5px 10px",fontSize:12,flexShrink:0}}>✏️ Endre navn</button>
-            </div>
-          )}
-          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-            {valgtSkjema.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtSkjema.alder}</span>}
-            {valgtSkjema.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{valgtSkjema.kategori}</span>}
-            {valgtSkjema.rammeplan?.map(r=><FagTag key={r} rid={r}/>)}
-          </div>
-          {[
-            {felt:valgtSkjema.hva, label:"🎯 HVA", bg:"#fff9c4", col:"#795548"},
-            {felt:valgtSkjema.materialer, label:"📦 MATERIALER", bg:"#fce4ec", col:"#c62828"},
-            {felt:valgtSkjema.hvordan, label:"⚙️ HVORDAN", bg:"#e8f5e9", col:"#2e7d32"},
-            {felt:valgtSkjema.hvorfor, label:"❓ HVORFOR", bg:"#e3f2fd", col:"#1565c0"},
-          ].filter(s=>s.felt).map(({felt,label,bg,col})=>(
-            <div key={label} style={{background:bg,borderRadius:10,padding:"11px 13px",marginBottom:10}}>
-              <div style={{fontWeight:800,color:col,fontSize:12,marginBottom:7}}>{label}</div>
-              <RenderTekst tekst={felt} />
-            </div>
-          ))}
-          <div style={{display:"flex",gap:8,marginTop:4}}>
-            <button onClick={()=>skrivUtGenerell({tittel:valgtSkjema.tittel,meta:[valgtSkjema.alder,valgtSkjema.kategori].filter(Boolean).join(" • "),seksjoner:[{label:"🎯 Hva",tekst:valgtSkjema.hva,farge:"#795548",bg:"#fff9c4"},{label:"📦 Materialer",tekst:valgtSkjema.materialer,farge:"#c62828",bg:"#fce4ec"},{label:"⚙️ Hvordan",tekst:valgtSkjema.hvordan,farge:"#2e7d32",bg:"#e8f5e9"},{label:"❓ Hvorfor",tekst:valgtSkjema.hvorfor,farge:"#1565c0",bg:"#e3f2fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"8px 16px",fontSize:12,border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
-            <button className="btn" onClick={()=>setBekreftSlettSkjema(valgtSkjema)} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
-          </div>
-        </div>
-      ):(
-        <div style={{display:"grid",gap:9}}>
-          {skjemaer.map(s=>(
-            <div key={s.id} className="hover" onClick={()=>setValgtSkjema(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}</div>
-                  {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
-                  <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
-                    {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
-                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
-                  </div>
-                </div>
-                <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const RammeplanSide = ()=>{
     const seks=[["oversikt","📋","Oversikt"],["formal","🏛️","Formål"],["verdigrunnlag","💎","Verdigrunnlag"],["lek","🎭","Lek og læring"],["danning","💝","Omsorg og vennskap"],["medvirkning","🗣️","Medvirkning"],["fagomrader","📚","Fagområder"],["livsmestring","🌱","Livsmestring"],["pedagogisk","📋","Pedagogisk arbeid"],["samarbeid","👨‍👩‍👧","Samarbeid"],["overgang","🎒","Overgang"],["barnehageloven","⚖️","Barnehageloven"],["roller","👤","Roller"],["inkludering","♿","Inkludering"]];
     return (
       <div className="fade">
@@ -7982,9 +7451,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         )}
       </div>
     );
-  };
+  }
 
-  const TegnearkSide = ()=>{
+function TegnearkSide({ ctx }) {
+  const { aktivBruker, vis, preselectTegneark, favoritter, toggleFav, setGlobalUserTegneark } = ctx;
+
     const [tkat, setTkat] = useState("alle");
     const [valgtT, setValgtT] = useState(() => preselectTegneark ? TEGNEARK.find(t => t.id === preselectTegneark) || null : null);
     const [lokalToast, setLokalToast] = useState("");
@@ -8332,14 +7803,11 @@ ${innhold}
         )}
       </div>
     );
-  };
+  }
 
-  // SupportSide er definert på modul-nivå (se over Barnehagehjelpen)
+function MaanedsplanSide({ ctx }) {
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsplaner } = ctx;
 
-
-  // ─── MaanedsplanSide ───
-  const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
-  const MaanedsplanSide = () => {
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
     const [visning, setVisning] = useState("liste");
@@ -8481,10 +7949,11 @@ ${innhold}
         ))}</div>}
       </div>
     );
-  };
+  }
 
-  // ─── MaanedsbrevSide ───
-  const MaanedsbrevSide = () => {
+function MaanedsbrevSide({ ctx }) {
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsbrev } = ctx;
+
     const [brev, setBrev] = useState([]);
     const [lastet, setLastet] = useState(false);
     const [visning, setVisning] = useState("liste");
@@ -8615,27 +8084,11 @@ ${innhold}
         ))}</div>}
       </div>
     );
-  };
-
-  // PlanleggingSide er definert på modul-nivå (se over Barnehagehjelpen)
-
-  // ─── Hjelpkomponent for sorterbar aktivitet i ukeplan (dnd-kit krever eget komponent) ───
-  function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
-    const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
-    return(
-      <div ref={setNodeRef} style={{transform:dndCSS.Transform.toString(transform),transition,opacity:isDragging?0.5:1,display:"flex",alignItems:"center",gap:5,background:tidBg,borderRadius:6,padding:"4px 7px",marginBottom:3}}>
-        <span {...attributes} {...listeners} style={{cursor:"grab",color:tidCol,fontSize:11,lineHeight:1,touchAction:"none"}}>⠿</span>
-        <span style={{flex:1,fontSize:11,color:"#1a2c45"}}>{a.tekst}</span>
-        <div style={{display:"flex",gap:2,flexShrink:0}}>
-          {dager.filter(x=>x!==dag).map(t2=><button key={t2} type="button" title={"Flytt til "+t2} onClick={()=>flyttFn(dag,a.id,t2)} style={{background:"none",border:"none",color:"#5d7390",cursor:"pointer",fontSize:9,padding:"0 2px",lineHeight:1}}>→{t2.slice(0,3)}</button>)}
-          <button type="button" onClick={()=>slettFn(dag,a.id)} style={{background:"none",border:"none",color:"#c62828",cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
-        </div>
-      </div>
-    );
   }
 
-  // ─── UkeplanSide – Mandag til fredag med formiddag/ettermiddag/notat ───
-  const UkeplanSide = ()=>{
+function UkeplanSide({ ctx }) {
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalUkeplaner } = ctx;
+
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
     const [visning, setVisning] = useState("liste"); // liste | ny | rediger | les
@@ -9311,10 +8764,11 @@ Returner KUN gyldig JSON uten markdown:
         </div>
       </div>
     );
-  };
+  }
 
-  // ─── MaanedskalenderSide – ekte månedkalender med hendelser per dag ───
-  const MaanedskalenderSide = () => {
+function MaanedskalenderSide({ ctx }) {
+  const { aktivBruker, navigerTil, planTema, setGlobalMaanedsplaner } = ctx;
+
     const MAANEDER_KAL = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
     const UKEDAGER = ["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
     const EVENT_TYPER = {
@@ -9634,10 +9088,11 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         )}
       </div>
     );
-  };
+  }
 
-  // ─── ArsplanSide – avansert årsplanbygger med AI-assistanse ───
-  const ArsplanSide = () => {
+function ArsplanSide({ ctx }) {
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema } = ctx;
+
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
     const [visning, setVisning] = useState("liste"); // liste | ny | rediger | les
@@ -10131,10 +9586,11 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         </div>
       </div>
     );
-  };
+  }
 
-  // ─── DokumentasjonSide – praksisfortellinger og refleksjoner ───
-  const DokumentasjonSide = ()=>{
+function DokumentasjonSide({ ctx }) {
+  const { aktivBruker, vis, setGlobalDokumentasjon } = ctx;
+
     const [dok, setDok] = useState([]);
     const [lastet, setLastet] = useState(false);
     const [visning, setVisning] = useState("liste"); // liste | ny | rediger | les
@@ -10556,9 +10012,11 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         </div>
       </div>
     );
-  };
+  }
 
-  const ProfilSide = ()=>{
+function ProfilSide({ ctx }) {
+  const { aktivBruker, onUserUpdate, onLogout } = ctx;
+
     const [seksjon, setSeksjon] = useState("oversikt"); // oversikt | navn | brukernavn | epost | passord | avatar
     const [pf_loading, setPfLoading] = useState(false);
     const [pf_feil, setPfFeil] = useState("");
@@ -10932,7 +10390,592 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         )}
       </div>
     );
+  }
+
+
+function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
+  const [tema, setTema] = useState(() => {
+    const lagret = localStorage.getItem("bh_tema");
+    if (lagret === "dark" || lagret === "light") return lagret;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", tema);
+    localStorage.setItem("bh_tema", tema);
+  }, [tema]);
+
+  const [side, setSide] = useState("hjem");
+  const [skjemaer, setSkjemaer] = useState([]);
+  const [skjemaerLastet, setSkjemaerLastet] = useState(false);
+  const [preselectAktiv, setPreselectAktiv] = useState(null);
+  const [preselectSang, setPreselectSang] = useState(null);
+  const [preselectTegneark, setPreselectTegneark] = useState(null);
+  const [valgtFag, setValgtFag] = useState(null);
+  const [rammeSeksjon, setRammeSeksjon] = useState("oversikt");
+  const [valgtSkjema, setValgtSkjema] = useState(null);
+  const [redigerSkjemaTittel, setRedigerSkjemaTittel] = useState(null);
+  const [bekreftSlettSkjema, setBekreftSlettSkjema] = useState(null);
+  const [feedback, setFeedback] = useState("");
+  const [favoritter, setFavoritter] = useState({ sanger: [], aktiviteter: [], tegneark: [] });
+  const [globalUkeplaner, setGlobalUkeplaner] = useState([]);
+  const [globalMaanedsplaner, setGlobalMaanedsplaner] = useState([]);
+  const [globalMaanedsbrev, setGlobalMaanedsbrev] = useState([]);
+  const [globalArsplaner, setGlobalArsplaner] = useState([]);
+  const [globalBoker, setGlobalBoker] = useState([]);
+  const [globalUserSanger, setGlobalUserSanger] = useState([]);
+  const [globalUserTegneark, setGlobalUserTegneark] = useState([]);
+  const [globalAktivitetskort, setGlobalAktivitetskort] = useState([]);
+  const [globalDokumentasjon, setGlobalDokumentasjon] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [globalSok, setGlobalSok] = useState("");
+  const [sokDebounced, setSokDebounced] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setSokDebounced(globalSok), 200);
+    return () => clearTimeout(t);
+  }, [globalSok]);
+  const [planTema, setPlanTema] = useState(() => localStorage.getItem("bh_plan_tema") || "");
+  useEffect(() => {
+    if (planTema) localStorage.setItem("bh_plan_tema", planTema);
+    else localStorage.removeItem("bh_plan_tema");
+  }, [planTema]);
+
+  const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),3000); };
+
+  // Global søk – memoised: kjøres kun når søketekst eller innholdsdata endres
+  const sokeResultat = useMemo(() => {
+    const q = sokDebounced.trim().toLowerCase();
+    if (q.length < 2) return null;
+    const treff = { sanger:[], aktiviteter:[], tegneark:[], fagomrader:[], rammeplan:[], skjemaer:[], ukeplaner:[], maanedsplaner:[], maanedsbrev:[], arsplaner:[], boker:[], aktivitetskort:[], dokumentasjon:[] };
+    const matcher = (txt) => (txt||"").toLowerCase().includes(q);
+
+    SANGER.forEach(s => {
+      if (matcher(s.tittel) || matcher(s.tekst) || matcher(s.melodi)) treff.sanger.push(s);
+    });
+    AKTIVITETER.forEach(a => {
+      if (matcher(a.tittel) || matcher(a.hva) || matcher(a.hvordan) || matcher(a.hvorfor)) treff.aktiviteter.push(a);
+    });
+    TEGNEARK.forEach(t => {
+      if (matcher(t.tittel) || matcher(t.oppgave) || matcher(t.samtale) || matcher(t.mal)) treff.tegneark.push(t);
+    });
+    globalUserTegneark.forEach(t => {
+      if (matcher(t.tittel) || matcher(t.oppgave) || matcher(t.samtale) || matcher(t.mal)) treff.tegneark.push({ ...t, id:"user_"+t.id, svg:<SvgPlaceholder/>, _erMin:true, _dbId:t.id });
+    });
+    globalUserSanger.forEach(s => {
+      if (matcher(s.tittel) || matcher(s.tekst) || matcher(s.melodi)) treff.sanger.push({ ...s, id:"user_"+s.id, _erMin:true, _dbId:s.id });
+    });
+    FAGOMRADER.forEach(f => {
+      if (matcher(f.navn) || matcher(f.kortbeskrivelse) || matcher(f.innhold)) treff.fagomrader.push(f);
+    });
+    Object.entries(RE).forEach(([key, val]) => {
+      const samletTekst = JSON.stringify(val).toLowerCase();
+      if (samletTekst.includes(q)) treff.rammeplan.push({ key, tittel: val.tittel });
+    });
+    globalUkeplaner.forEach(p => {
+      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.uke||"") + " " + JSON.stringify(p.dager||{});
+      if (samlet.toLowerCase().includes(q)) treff.ukeplaner.push(p);
+    });
+    globalMaanedsplaner.forEach(p => {
+      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.fagomrader||[]).join(" ") +
+        (p.type==="kalender" ? " " + JSON.stringify(p.events||{}) : " " + (p.uke1||"") + " " + (p.uke2||"") + " " + (p.uke3||"") + " " + (p.uke4||""));
+      if (samlet.toLowerCase().includes(q)) treff.maanedsplaner.push(p);
+    });
+    globalMaanedsbrev.forEach(b => {
+      const samlet = (b.tittel||"") + " " + (b.gjort||"") + " " + (b.kommende||"");
+      if (samlet.toLowerCase().includes(q)) treff.maanedsbrev.push(b);
+    });
+    skjemaer.forEach(s => {
+      if (matcher(s.tittel) || matcher(s.hva) || matcher(s.hvordan) || matcher(s.hvorfor) || matcher(s.type)) treff.skjemaer.push(s);
+    });
+    globalArsplaner.forEach(p => {
+      const samlet = (p.tittel||"") + " " + (p.tema||"") + " " + (p.aar||"");
+      if (samlet.toLowerCase().includes(q)) treff.arsplaner.push(p);
+    });
+    globalBoker.forEach(b => {
+      if (matcher(b.tittel) || matcher(b.forfatter) || matcher(b.beskrivelse) || matcher(b.kategori)) treff.boker.push(b);
+    });
+    globalAktivitetskort.forEach(k => {
+      if (matcher(k.title) || matcher(k.description) || matcher(k.steps) || matcher(k.learning_goal) || matcher(k.materials) || matcher(k.category) || matcher(k.age_group)) treff.aktivitetskort.push(k);
+    });
+    globalDokumentasjon.forEach(d => {
+      if (matcher(d.tittel) || matcher(d.fortelling) || matcher(d.refleksjon)) treff.dokumentasjon.push(d);
+    });
+
+    const total = treff.sanger.length + treff.aktiviteter.length + treff.tegneark.length + treff.fagomrader.length + treff.rammeplan.length + treff.skjemaer.length + treff.ukeplaner.length + treff.maanedsplaner.length + treff.maanedsbrev.length + treff.arsplaner.length + treff.boker.length + treff.aktivitetskort.length + treff.dokumentasjon.length;
+    return { total, ...treff, q };
+  }, [sokDebounced, skjemaer, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner, globalBoker, globalUserTegneark, globalUserSanger, globalAktivitetskort, globalDokumentasjon]);
+
+  // Hjelpere for å navigere fra søketreff
+  const aapneTegneark = (t) => { setPreselectTegneark(t?.id || null); navigerTil("tegneark"); setGlobalSok(""); };
+  const aapneSang = (s) => { setPreselectSang(s?.id || null); navigerTil("sanger"); setGlobalSok(""); };
+  const aapneAktivitet = (a) => { setPreselectAktiv(a.id); navigerTil("aktiviteter"); setGlobalSok(""); };
+  const aapneFagomrade = (f) => { setValgtFag(f); setRammeSeksjon("fagomrader"); navigerTil("rammeplan"); setGlobalSok(""); };
+  const aapneRammeplan = (key) => { setRammeSeksjon(key); setValgtFag(null); navigerTil("rammeplan"); setGlobalSok(""); };
+  const aapneAktivitetskort = () => { navigerTil("aktivitetskort"); setGlobalSok(""); };
+  const aapneDokumentasjon = () => { navigerTil("dokumentasjon"); setGlobalSok(""); };
+
+
+  // Last alle brukerdata ved innlogging – én samlet Promise.all for færre round-trips
+  useEffect(() => {
+    const uid = aktivBruker?.id;
+    if (!uid) return;
+    Promise.all([
+      hentFavoritter(uid).catch(() => ({ sanger:[], aktiviteter:[], tegneark:[] })),
+      hentUkeplaner(uid).catch(() => []),
+      hentMaanedsplaner(uid).catch(() => []),
+      hentMaanedsbrev(uid).catch(() => []),
+      hentArsplaner(uid).catch(() => []),
+      supabase.from("boker").select("id,tittel,forfatter,beskrivelse,kategori").then(({data})=>data||[]).catch(()=>[]),
+      hentUserTegneark(uid).catch(() => []),
+      hentUserSanger(uid).catch(() => []),
+      hentAktivitetskort(uid).catch(() => []),
+      hentDokumentasjon(uid).catch(() => []),
+    ]).then(([fav, ukeplaner, maanedsplaner, maanedsbrev, arsplaner, boker, tegneark, sanger, aktivitetskort, dokumentasjon]) => {
+      setFavoritter(fav);
+      setGlobalUkeplaner(ukeplaner);
+      setGlobalMaanedsplaner(maanedsplaner);
+      setGlobalMaanedsbrev(maanedsbrev);
+      setGlobalArsplaner(arsplaner);
+      setGlobalBoker(boker);
+      setGlobalUserTegneark(tegneark);
+      setGlobalUserSanger(sanger);
+      setGlobalAktivitetskort(aktivitetskort);
+      setGlobalDokumentasjon(dokumentasjon);
+    }).catch(console.error);
+  }, [aktivBruker?.id]);
+
+  // Last skjemaer fra storage når bruker logger inn
+  useEffect(() => {
+    let avbrutt = false;
+    (async () => {
+      if (!aktivBruker?.id) { setSkjemaer([]); setSkjemaerLastet(true); return; }
+      try {
+        const { data } = await supabase.from("skjemaer").select("skjema_id,payload").eq("user_id", aktivBruker.id).order("created_at", { ascending: false });
+        if (avbrutt) return;
+        setSkjemaer((data||[]).map(r => r.payload).filter(Boolean));
+      } catch (e) {
+        console.error("[Skjemaer] Kunne ikke laste:", e);
+        if (!avbrutt) setSkjemaer([]);
+      }
+      if (!avbrutt) setSkjemaerLastet(true);
+    })();
+    return () => { avbrutt = true; };
+  }, [aktivBruker?.id]);
+
+  // Lagre skjemaer – debounced 500ms + upsert-strategi for å unngå data-tap
+  useEffect(() => {
+    if (!aktivBruker?.id || !skjemaerLastet) return;
+    const userId = aktivBruker.id;
+    const snapshot = skjemaer; // frys referanse til dette renderet
+    let avbrutt = false;
+    const t = setTimeout(async () => {
+      if (avbrutt) return;
+      try {
+        if (snapshot.length === 0) {
+          // Tom liste: slett alt – ingen risiko for data-tap
+          await supabase.from("skjemaer").delete().eq("user_id", userId);
+        } else {
+          // Steg 1: upsert alle gjeldende (oppretter/oppdaterer, fjerner ikke)
+          const rader = snapshot.map(s => ({ user_id: userId, skjema_id: String(s.id||""), payload: s }));
+          const { error: upsertErr } = await supabase.from("skjemaer").upsert(rader, { onConflict: "skjema_id,user_id" });
+          if (upsertErr) throw upsertErr;
+          if (avbrutt) return;
+          // Steg 2: slett rader som ikke lenger er i listen (kun etter vellykket upsert)
+          const ids = snapshot.map(s => String(s.id||"")).filter(Boolean);
+          if (ids.length > 0) {
+            await supabase.from("skjemaer").delete().eq("user_id", userId).not("skjema_id", "in", `(${ids.join(",")})`);
+          }
+        }
+      } catch(e) { console.error("[Skjemaer] Kunne ikke lagre:", e); }
+    }, 500);
+    return () => { avbrutt = true; clearTimeout(t); };
+  }, [skjemaer, aktivBruker?.id, skjemaerLastet]);
+
+  // Toggle favoritt og lagre umiddelbart med ordentlig feilhåndtering
+  const toggleFav = async (type, id) => {
+    const liste = favoritter[type] || [];
+    const finnes = liste.includes(id);
+    const ny = finnes ? liste.filter(x=>x!==id) : [...liste, id];
+    const oppdatert = { ...favoritter, [type]: ny };
+    setFavoritter(oppdatert);
+    if (aktivBruker?.id) {
+      try {
+        await lagreFavoritter(aktivBruker.id, oppdatert);
+        vis(finnes ? "Fjernet fra favoritter" : "⭐ Lagt til i favoritter");
+      } catch (e) {
+        console.error("[Favoritter] Lagring feilet:", e);
+        // Rull tilbake state-endringen
+        setFavoritter(favoritter);
+        vis("❌ Kunne ikke lagre favoritter");
+      }
+    }
   };
+
+  // Navigasjon: lukk sidebar etter valg på mobil
+  const navigerTil = (s) => { setSide(s); setSidebarOpen(false); };
+
+  const favTotal = (favoritter.sanger?.length||0) + (favoritter.aktiviteter?.length||0) + (favoritter.tegneark?.length||0);
+
+  const nav = [
+    {id:"hjem",i:"🏠",n:"Hjem"},
+    {id:"sanger",i:"🎵",n:"Sanger & Rim"},
+    {id:"aktiviteter",i:"🏃",n:"Aktiviteter"},
+    {id:"tegneark",i:"🖍️",n:"Tegneark"},
+    {id:"favoritter",i:"⭐",n:"Favoritter",badge:favTotal},
+    {id:"skjema-ny",i:"✏️",n:"Nytt skjema"},
+    {id:"skjemaer",i:"📋",n:"Mine skjemaer",badge:skjemaer.length},
+    {id:"rammeplan",i:"📖",n:"Rammeplan"},
+    {id:"boker",i:"📚",n:"Bøker"},
+    {id:"ai",i:"🤖",n:"AI-assistent"},
+    {id:"planlegging",i:"📅",n:"Planlegging"},
+    {id:"samarbeid",i:"👥",n:"Samarbeid"},
+    {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
+    {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
+    {id:"support",i:"❓",n:"Hjelp & FAQ"},
+    ...(aktivBruker?.admin?[{id:"admin",i:"👑",n:"Admin-panel"}]:[])
+  ];
+
+  const hilsen = () => {
+    const h = new Date().getHours();
+    if (h < 10) return ["God morgen","☀️","Klar for en ny dag i barnehagen?"];
+    if (h < 12) return ["God formiddag","🌤️","Hva skal barna oppdage i dag?"];
+    if (h < 17) return ["God ettermiddag","🌈","Midttimen er full av muligheter!"];
+    return ["God kveld","🌙","Planlegger du morgendagen?"];
+  };
+  const [hils, hikon, hsub] = hilsen();
+  const dagensTips = [
+    {t:"Filosofisk samtale",t2:"Still spørsmålet: 'Hva er en god venn?' – og lytt til svarene!",f:"etikk"},
+    {t:"Tall i hverdagen",t2:"Tell trapper, stoler og vinduer på morgenturen!",f:"antall"},
+    {t:"Sansetur",t2:"Gå barbeint i gress – snakk om hva dere kjenner under føttene",f:"kropp"},
+    {t:"Fargebrev",t2:"La barna farge et brev til noen de er glad i",f:"kunst"},
+    {t:"Naturobservasjon",t2:"Ta med lupe ut og utforsk hva som lever i gresset",f:"natur"},
+    {t:"Rim og regler",t2:"Start samlingsstunden med Ole Dole Doff – barna velger aktivitet",f:"kommunikasjon"},
+    {t:"Følelseskort",t2:"La hvert barn velge et følelseskort som beskriver dagen deres",f:"etikk"},
+    {t:"Måling med kropp",t2:"Mål rommet i barneskritt – sammenlign hvem som tok flest",f:"antall"},
+    {t:"Skyformer",t2:"Legg dere på ryggen ute og se på skyene – hva ligner de på?",f:"natur"},
+    {t:"Naturlig fargepalett",t2:"Samle blader, blomster og steiner – sorter etter farge sammen",f:"kunst"},
+    {t:"Mage-pust",t2:"Legg en bok på magen – pust så boka går opp og ned. Beroliger gruppa",f:"kropp"},
+    {t:"Historiefortelling",t2:"Start med 'Det var en gang...' og la hvert barn legge til én setning",f:"kommunikasjon"},
+    {t:"Min nabo",t2:"Snakk om hvem som bor i nabolaget – hvem hjelper hverandre?",f:"naermiljo"},
+    {t:"Sortering",t2:"La barna sortere klosser etter form, farge og størrelse – diskuter valgene",f:"antall"},
+    {t:"Lyttesirkel",t2:"Sitt stille i 1 minutt – fortell etterpå hva dere hørte",f:"kommunikasjon"},
+    {t:"Småkrypjakt",t2:"Finn 5 ulike småkryp ute med lupe – tegn det dere fant",f:"natur"},
+    {t:"Bevegelseslek",t2:"Etterlign dyr: hopp som kanin, kryp som slange, fly som fugl",f:"kropp"},
+    {t:"Takknemlighet",t2:"Hvert barn nevner én ting de er glad for fra i dag",f:"etikk"},
+    {t:"Bygg sammen",t2:"Lag en stor borg med klosser – alle må bidra på sin måte",f:"kunst"},
+    {t:"Kart over rommet",t2:"Tegn et kart over barnehagen sett ovenfra – diskuter avstander",f:"naermiljo"},
+  ];
+  // Stabilt valg per dag: bruk dato (år+måned+dag) som seed istedenfor bare ukedag
+  const idag = new Date();
+  const datoFroe = idag.getFullYear() * 10000 + (idag.getMonth()+1) * 100 + idag.getDate();
+  const [tipsOffset, setTipsOffset] = useState(0);
+  const tipsIndex = (datoFroe + tipsOffset) % dagensTips.length;
+  const tips = dagensTips[tipsIndex];
+  const tipsFag = FAGOMRADER.find(f=>f.id===tips.f);
+  const nesteTips = () => setTipsOffset(o => o + 1);
+
+  const [vær, setVær] = useState(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
+        if (!r.ok) return;
+        const d = await r.json();
+        const c = d?.current;
+        if (!c) return;
+        setVær({ temp: Math.round(c.temperature_2m), kode: c.weather_code, vind: Math.round(c.wind_speed_10m) });
+      } catch {}
+    }, () => {});
+  }, []);
+
+  const værInfo = (kode) => {
+    if (kode === 0) return ["☀️","Klarvær"];
+    if (kode <= 2) return ["🌤️","Lettskyet"];
+    if (kode === 3) return ["☁️","Overskyet"];
+    if (kode <= 48) return ["🌫️","Tåke"];
+    if (kode <= 55) return ["🌦️","Yr"];
+    if (kode <= 65) return ["🌧️","Regn"];
+    if (kode <= 67) return ["🌨️","Sludd"];
+    if (kode <= 77) return ["❄️","Snø"];
+    if (kode <= 82) return ["🌧️","Regnbyger"];
+    if (kode <= 86) return ["❄️","Snøbyger"];
+    return ["⛈️","Torden"];
+  };
+
+  const [værIkon, værTekst] = vær ? værInfo(vær.kode) : [null, null];
+
+  const Hjem = ()=>(
+    <div className="fade">
+      {/* HERO */}
+      <div style={{background:`linear-gradient(135deg, #2c5b8e 0%, #4178bd 50%, #6ba0d9 100%)`, borderRadius:22, padding:"28px 22px 24px", color:"#fff", marginBottom:20, position:"relative", overflow:"hidden"}}>
+        <div style={{position:"absolute", top:-20, right:-20, fontSize:90, opacity:.15, transform:"rotate(15deg)", pointerEvents:"none"}}>🌟</div>
+        <div style={{position:"absolute", bottom:-15, left:10, fontSize:70, opacity:.12, transform:"rotate(-10deg)", pointerEvents:"none"}}>🎨</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{fontSize:28}}>{hikon}</div>
+          {vær && (
+            <div style={{background:"rgba(255,255,255,0.18)",borderRadius:12,padding:"8px 13px",textAlign:"center",backdropFilter:"blur(4px)",minWidth:90}}>
+              <div style={{fontSize:22,lineHeight:1}}>{værIkon}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,lineHeight:1.1,marginTop:2}}>{vær.temp}°</div>
+              <div style={{fontSize:10,opacity:.9,marginTop:1}}>{værTekst}</div>
+              <div style={{fontSize:10,opacity:.75,marginTop:1}}>💨 {vær.vind} m/s</div>
+            </div>
+          )}
+        </div>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:26, marginTop:4}}>{hils}!</div>
+        <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
+          {[[SANGER.length+"","🎵","Sanger"],[AKTIVITETER.length+"","🏃","Aktiviteter"],[skjemaer.length+"","📋","Skjemaer"],[FAGOMRADER.length+"","📖","Fagområder"]].map(([n,ic,l])=>(
+            <div key={l} style={{background:"rgba(255,255,255,0.22)", borderRadius:12, padding:"11px 6px", textAlign:"center", backdropFilter:"blur(4px)"}}>
+              <div style={{fontSize:18}}>{ic}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive", fontSize:20, lineHeight:1}}>{n}</div>
+              <div style={{fontSize:10, opacity:.85, marginTop:2}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* GLOBAL SØK */}
+      <GlobalSok
+        verdi={globalSok}
+        setVerdi={setGlobalSok}
+        sokeResultat={sokeResultat}
+        navigerTil={navigerTil}
+        aapneAktivitet={aapneAktivitet}
+        aapneSang={aapneSang}
+        aapneTegneark={aapneTegneark}
+        aapneFagomrade={aapneFagomrade}
+        aapneRammeplan={aapneRammeplan}
+        aapneAktivitetskort={aapneAktivitetskort}
+        aapneDokumentasjon={aapneDokumentasjon}
+        C={C}
+      />
+
+      {/* DAGENS TIPS */}
+      <div style={{background:C.w, borderRadius:16, padding:"15px 18px", marginBottom:18, boxShadow:"0 2px 14px rgba(44,91,142,0.10)", borderLeft:`4px solid ${tipsFag?.farge||C.g}`}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, marginBottom:5}}>
+          <div style={{display:"flex", alignItems:"center", gap:8}}>
+            <span style={{fontSize:20}}>{tipsFag?.ikon||"💡"}</span>
+            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>Dagens pedagogiske tips</div>
+          </div>
+          <button onClick={nesteTips} title="Vis neste tips" aria-label="Vis neste tips"
+            style={{background:"transparent", border:"1.5px solid #d8e6f5", color:C.g, width:32, height:32, borderRadius:8, cursor:"pointer", fontSize:14, fontFamily:"'Nunito',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+            🔄
+          </button>
+        </div>
+        <div style={{fontWeight:800, color:tipsFag?.farge||C.g, fontSize:13, marginBottom:3}}>{tips.t}</div>
+        <div style={{fontSize:13, color:C.gr, lineHeight:1.6}}>{tips.t2}</div>
+      </div>
+
+      {/* HURTIGTILGANG */}
+      <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>🚀 Hurtigtilgang</div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:20}}>
+        {[
+          ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","sanger"],
+          ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","aktiviteter"],
+          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","boker"],
+          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","aktivitetskort"],
+          ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","skjema-ny"],
+          ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","tegneark"],
+          ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","rammeplan"],
+          ["🤖","AI-assistent","Lag sanger, planer og mer","#37474f","ai"],
+        ].map(([ic,t,u,fc,sid])=>(
+          <div key={t} className="hover fade" onClick={()=>setSide(sid)} style={{background:C.w, borderRadius:14, padding:"16px 14px", cursor:"pointer", boxShadow:`0 2px 10px ${fc}22`, borderLeft:`4px solid ${fc}`}}>
+            <div style={{fontSize:26, marginBottom:4}}>{ic}</div>
+            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>{t}</div>
+            <div style={{fontSize:11, color:C.gr, marginTop:2}}>{u}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* PLANLEGGING */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>📋 Planlegging</div>
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
+        {[
+          ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
+          ["📋","Månedsplan","Hele måneden strukturert","maanedsplan","#6a1b9a"],
+          ["✉️","Månedsbrev","Brev til foreldre","maanedsbrev","#e67e22"],
+          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
+        ].map(([ic,t,u,sideId,fc])=>(
+          <div key={t} className="hover" onClick={()=>navigerTil(sideId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+              <span style={{fontSize:18}}>{ic}</span>
+              <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t}</div>
+            </div>
+            <div style={{fontSize:11, color:C.gr, lineHeight:1.4}}>{u}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* FAGOMRÅDER */}
+      <div style={{background:C.w, borderRadius:16, padding:"16px 18px", boxShadow:"0 2px 10px rgba(44,91,142,0.08)", marginBottom:14}}>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>📖 De 7 fagområdene – klikk for å utforske</div>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
+          {FAGOMRADER.map(f=>(
+            <div key={f.id} className="hover" onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");setSide("rammeplan");}}
+              style={{background:C.lg2, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s", borderLeft:`3px solid ${f.farge}`}}>
+              <span style={{fontSize:20}}>{f.ikon}</span>
+              <div>
+                <div data-fag-color={f.id} style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
+                <div style={{fontSize:9, color:C.gr, marginTop:1}}>{f.kortbeskrivelse}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:C.lg2, borderRadius:13, padding:"13px 15px", borderLeft:`4px solid ${C.g}`}}>
+        <div style={{fontWeight:800, color:C.g, fontSize:12, marginBottom:4}}>🌿 Om Barnehagehjelpen</div>
+        <div style={{fontSize:12, color:C.t, lineHeight:1.7}}>Alt innhold er koblet til Rammeplan 2017. Bruk AI-assistenten til å generere sanger, aktiviteter og pedagogiske planer tilpasset din barnegruppe.</div>
+      </div>
+    </div>
+  );
+
+  // NyttSkjemaForm is rendered directly in JSX (not via sider object) to keep component type stable
+
+  const MineSkjemaer = ()=>(
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📋 Mine skjemaer</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:12}}>{skjemaer.length} skjema{skjemaer.length!==1?"er":""} lagret</p>
+      {feedback&&<div className="fade" style={{marginBottom:12,background:C.mint,borderRadius:8,padding:"9px 13px",color:C.g,fontWeight:700}}>{feedback}</div>}
+      {skjemaer.length===0?(
+        <div style={{background:C.w,borderRadius:16,padding:28,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.07)"}}>
+          <div style={{fontSize:40,marginBottom:8}}>📝</div>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,color:C.t}}>Ingen skjemaer ennå</div>
+          <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema!</div>
+          <button className="btn" onClick={()=>setSide("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
+        </div>
+      ):valgtSkjema?(
+        <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
+          <Tilbake onClick={()=>{setValgtSkjema(null);setRedigerSkjemaTittel(null);}} />
+          {redigerSkjemaTittel !== null ? (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:800,color:C.g,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:5}}>Endre navn</div>
+              <div style={{display:"flex",gap:8}}>
+                <input autoFocus type="text" value={redigerSkjemaTittel} onChange={e=>setRedigerSkjemaTittel(e.target.value)}
+                  onKeyDown={e=>{
+                    if(e.key==="Enter"&&redigerSkjemaTittel.trim()){
+                      const nyTittel=redigerSkjemaTittel.trim();
+                      setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
+                      setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
+                      setRedigerSkjemaTittel(null);
+                      vis("✅ Navn oppdatert");
+                    }
+                    if(e.key==="Escape") setRedigerSkjemaTittel(null);
+                  }}
+                  style={{flex:1,padding:"9px 12px",border:`2px solid ${C.g}`,borderRadius:9,fontSize:14,fontFamily:"'Nunito',sans-serif",fontWeight:700,color:C.t}} />
+                <button className="btn" onClick={()=>{
+                  const nyTittel=redigerSkjemaTittel.trim();
+                  if(!nyTittel) return;
+                  setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
+                  setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
+                  setRedigerSkjemaTittel(null);
+                  vis("✅ Navn oppdatert");
+                }} style={{background:C.g,color:"#fff",padding:"9px 16px",fontSize:13}}>Lagre</button>
+                <button className="btn" onClick={()=>setRedigerSkjemaTittel(null)} style={{background:C.lg2,color:C.g,padding:"9px 12px",fontSize:13}}>Avbryt</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:C.t,flex:1}}>{valgtSkjema.tittel}</div>
+              <button className="btn" onClick={()=>setRedigerSkjemaTittel(valgtSkjema.tittel)}
+                style={{background:C.lg2,color:C.g,padding:"5px 10px",fontSize:12,flexShrink:0}}>✏️ Endre navn</button>
+            </div>
+          )}
+          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+            {valgtSkjema.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtSkjema.alder}</span>}
+            {valgtSkjema.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{valgtSkjema.kategori}</span>}
+            {valgtSkjema.rammeplan?.map(r=><FagTag key={r} rid={r}/>)}
+          </div>
+          {[
+            {felt:valgtSkjema.hva, label:"🎯 HVA", bg:"#fff9c4", col:"#795548"},
+            {felt:valgtSkjema.materialer, label:"📦 MATERIALER", bg:"#fce4ec", col:"#c62828"},
+            {felt:valgtSkjema.hvordan, label:"⚙️ HVORDAN", bg:"#e8f5e9", col:"#2e7d32"},
+            {felt:valgtSkjema.hvorfor, label:"❓ HVORFOR", bg:"#e3f2fd", col:"#1565c0"},
+          ].filter(s=>s.felt).map(({felt,label,bg,col})=>(
+            <div key={label} style={{background:bg,borderRadius:10,padding:"11px 13px",marginBottom:10}}>
+              <div style={{fontWeight:800,color:col,fontSize:12,marginBottom:7}}>{label}</div>
+              <RenderTekst tekst={felt} />
+            </div>
+          ))}
+          <div style={{display:"flex",gap:8,marginTop:4}}>
+            <button onClick={()=>skrivUtGenerell({tittel:valgtSkjema.tittel,meta:[valgtSkjema.alder,valgtSkjema.kategori].filter(Boolean).join(" • "),seksjoner:[{label:"🎯 Hva",tekst:valgtSkjema.hva,farge:"#795548",bg:"#fff9c4"},{label:"📦 Materialer",tekst:valgtSkjema.materialer,farge:"#c62828",bg:"#fce4ec"},{label:"⚙️ Hvordan",tekst:valgtSkjema.hvordan,farge:"#2e7d32",bg:"#e8f5e9"},{label:"❓ Hvorfor",tekst:valgtSkjema.hvorfor,farge:"#1565c0",bg:"#e3f2fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"8px 16px",fontSize:12,border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
+            <button className="btn" onClick={()=>setBekreftSlettSkjema(valgtSkjema)} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
+          </div>
+        </div>
+      ):(
+        <div style={{display:"grid",gap:9}}>
+          {skjemaer.map(s=>(
+            <div key={s.id} className="hover" onClick={()=>setValgtSkjema(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}</div>
+                  {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
+                  <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                    {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
+                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                  </div>
+                </div>
+                <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // RammeplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // TegnearkSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // SupportSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // ─── MaanedsplanSide ───
+  const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
+  // MaanedsplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // MaanedsbrevSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // PlanleggingSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+  // ─── Hjelpkomponent for sorterbar aktivitet i ukeplan (dnd-kit krever eget komponent) ───
+  function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
+    const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
+    return(
+      <div ref={setNodeRef} style={{transform:dndCSS.Transform.toString(transform),transition,opacity:isDragging?0.5:1,display:"flex",alignItems:"center",gap:5,background:tidBg,borderRadius:6,padding:"4px 7px",marginBottom:3}}>
+        <span {...attributes} {...listeners} style={{cursor:"grab",color:tidCol,fontSize:11,lineHeight:1,touchAction:"none"}}>⠿</span>
+        <span style={{flex:1,fontSize:11,color:"#1a2c45"}}>{a.tekst}</span>
+        <div style={{display:"flex",gap:2,flexShrink:0}}>
+          {dager.filter(x=>x!==dag).map(t2=><button key={t2} type="button" title={"Flytt til "+t2} onClick={()=>flyttFn(dag,a.id,t2)} style={{background:"none",border:"none",color:"#5d7390",cursor:"pointer",fontSize:9,padding:"0 2px",lineHeight:1}}>→{t2.slice(0,3)}</button>)}
+          <button type="button" onClick={()=>slettFn(dag,a.id)} style={{background:"none",border:"none",color:"#c62828",cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
+        </div>
+      </div>
+    );
+  }
+
+  // UkeplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // MaanedskalenderSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // ArsplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // DokumentasjonSide er definert på modul-nivå (se over Barnehagehjelpen)
+
+
+  // ProfilSide er definert på modul-nivå (se over Barnehagehjelpen)
+
 
   // FavoritterSide er definert på modul-nivå (se over Barnehagehjelpen)
 
@@ -10951,23 +10994,50 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
     navigerTil("ai");
   };
 
+  // Delt kontekst som sendes til modul-nivå Side-komponenter
+  const ctx = {
+    aktivBruker,
+    vis,
+    navigerTil,
+    setSide,
+    setPreselectAktiv,
+    planTema,
+    setPlanTema,
+    rammeSeksjon,
+    setRammeSeksjon,
+    valgtFag,
+    setValgtFag,
+    favoritter,
+    toggleFav,
+    setGlobalUkeplaner,
+    setGlobalMaanedsplaner,
+    setGlobalMaanedsbrev,
+    setGlobalArsplaner,
+    setGlobalDokumentasjon,
+    globalUserTegneark,
+    setGlobalUserTegneark,
+    preselectTegneark,
+    onUserUpdate,
+    onLogout,
+  };
+
   const sider={
     hjem:Hjem(),
     skjemaer:<MineSkjemaer/>,
-    rammeplan:<RammeplanSide/>,
-    tegneark:<TegnearkSide/>,
+    rammeplan:<RammeplanSide ctx={ctx}/>,
+    tegneark:<TegnearkSide ctx={ctx}/>,
     ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,
     admin:<AdminPanel aktivBruker={aktivBruker}/>,
     favoritter:<FavoritterSide favoritter={favoritter} favTotal={favTotal} aapneSang={aapneSang} aapneTegneark={aapneTegneark} toggleFav={toggleFav} setPreselectAktiv={setPreselectAktiv} navigerTil={navigerTil}/>,
-    profil:<ProfilSide/>,
+    profil:<ProfilSide ctx={ctx}/>,
     support:<SupportSide/>,
-    dokumentasjon:<DokumentasjonSide/>,
+    dokumentasjon:<DokumentasjonSide ctx={ctx}/>,
     planlegging:<PlanleggingSide planTema={planTema} setPlanTema={setPlanTema} navigerTil={navigerTil}/>,
-    maanedsplan:<MaanedsplanSide/>,
-    maanedsbrev:<MaanedsbrevSide/>,
-    ukeplan:<UkeplanSide/>,
-    maanedskalender:<MaanedskalenderSide/>,
-    arsplan:<ArsplanSide/>,
+    maanedsplan:<MaanedsplanSide ctx={ctx}/>,
+    maanedsbrev:<MaanedsbrevSide ctx={ctx}/>,
+    ukeplan:<UkeplanSide ctx={ctx}/>,
+    maanedskalender:<MaanedskalenderSide ctx={ctx}/>,
+    arsplan:<ArsplanSide ctx={ctx}/>,
     boker:<BokerSide aktivBruker={aktivBruker}/>,
     aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,
     samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>,
