@@ -5201,7 +5201,18 @@ async function loggInnBruker({ epost, passord }) {
   if (!e || !passord) return { ok: false, feil: "Fyll ut alle felt" };
 
   const { data, error } = await supabase.auth.signInWithPassword({ email: e, password: passord });
-  if (error) return { ok: false, feil: error.message || "Feil e-post eller passord" };
+  if (error) {
+    const msg = (error.message || "").toLowerCase();
+    if (msg.includes("invalid login") || msg.includes("invalid credentials") || msg.includes("wrong password"))
+      return { ok: false, feil: "Feil e-post eller passord. Prøv igjen." };
+    if (msg.includes("email not confirmed"))
+      return { ok: false, feil: "E-postadressen er ikke bekreftet. Sjekk innboksen din." };
+    if (msg.includes("too many requests") || msg.includes("rate limit"))
+      return { ok: false, feil: "For mange innloggingsforsøk. Vent noen minutter og prøv igjen." };
+    if (msg.includes("user not found") || msg.includes("no user"))
+      return { ok: false, feil: "Finner ingen konto med denne e-postadressen." };
+    return { ok: false, feil: "Innlogging feilet. Prøv igjen." };
+  }
 
   let profil = null;
   try { profil = await hentProfil(data.user.id); } catch (_) {}
@@ -7018,7 +7029,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
           // Steg 2: slett rader som ikke lenger er i listen (kun etter vellykket upsert)
           const ids = snapshot.map(s => String(s.id||"")).filter(Boolean);
           if (ids.length > 0) {
-            await supabase.from("skjemaer").delete().eq("user_id", userId).not("skjema_id", "in", `(${ids.map(id=>`'${id.replace(/'/g,"''")}'`).join(",")})`);
+            await supabase.from("skjemaer").delete().eq("user_id", userId).not("skjema_id", "in", `(${ids.join(",")})`);
           }
         }
       } catch(e) { console.error("[Skjemaer] Kunne ikke lagre:", e); }
@@ -7062,7 +7073,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     {id:"rammeplan",i:"📖",n:"Rammeplan"},
     {id:"boker",i:"📚",n:"Bøker"},
     {id:"ai",i:"🤖",n:"AI-assistent"},
-    {id:"planlegging",i:"📋",n:"Planlegging"},
+    {id:"planlegging",i:"📅",n:"Planlegging"},
     {id:"samarbeid",i:"👥",n:"Samarbeid"},
     {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
     {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
