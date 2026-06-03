@@ -1,5 +1,5 @@
 ﻿import React, { useState, useRef, useEffect, useMemo } from "react";
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as dndCSS } from "@dnd-kit/utilities";
 import DokumentSkanner from "./DokumentSkanner.jsx";
@@ -5106,10 +5106,16 @@ async function diagnostiserStorage() { return storageStatus; }
 
 // Helper: hent brukerprofil fra user_profiles – maks 4s timeout
 async function hentProfil(userId) {
-  const tidsbegrensning = new Promise(resolve => setTimeout(() => resolve(null), 4000));
-  const spørring = supabase.from("user_profiles").select("*").eq("id", userId).single()
-    .then(({ data }) => data).catch(() => null);
-  return Promise.race([spørring, tidsbegrensning]);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const { data } = await supabase.from("user_profiles").select("*").eq("id", userId).single().abortSignal(ctrl.signal);
+    return data || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // Helper: bygg aktivBruker-objekt fra Supabase user + profil
@@ -5150,6 +5156,62 @@ function skrivUtGenerell({ tittel, meta, seksjoner, logoTekst }) {
     return;
   }
   v.document.write(html);v.document.close();
+}
+
+async function lastNedPlanPDF({ tittel, meta, seksjoner, logoTekst }) {
+  try {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+    const mX = 18, pw = 174;
+    let y = 20;
+    const nyeside = () => { pdf.addPage(); y = 20; };
+    const sjekk = (h) => { if (y + h > 278) nyeside(); };
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.setTextColor(44, 91, 142);
+    pdf.text(tittel || "Plan", mX, y); y += 7;
+
+    if (meta) {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(93, 115, 144);
+      pdf.text(meta, mX, y); y += 6;
+    }
+
+    pdf.setDrawColor(216, 230, 245);
+    pdf.setLineWidth(0.5);
+    pdf.line(mX, y, mX + pw, y); y += 7;
+
+    for (const sek of (seksjoner || []).filter(s => s?.tekst?.trim())) {
+      sjekk(14);
+      if (sek.label) {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(44, 91, 142);
+        pdf.text(sek.label.toUpperCase(), mX, y); y += 4.5;
+      }
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(26, 44, 69);
+      for (const linje of pdf.splitTextToSize(sek.tekst.trim(), pw - 2)) {
+        sjekk(5.5);
+        pdf.text(linje, mX + 1, y); y += 5.5;
+      }
+      y += 4;
+    }
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(138, 155, 176);
+    pdf.text(logoTekst || "Barnehagehjelpen • Rammeplan 2017", mX, 290);
+
+    const filnavn = (tittel || "plan").replace(/[^a-zA-Z0-9æøåÆØÅ ]/g, "-").replace(/\s+/g, "-");
+    pdf.save(`${filnavn}.pdf`);
+  } catch (e) {
+    console.error("[PDF]", e);
+    alert("Kunne ikke generere PDF – prøv 'Skriv ut' i stedet.");
+  }
 }
 
 async function registrerBruker({ brukernavn, epost, passord, telefon }) {
@@ -6863,6 +6925,39 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
   );
 }
 
+// ── Modul-nivå hjelpere og konstanter ──
+
+function hilsen() {
+  const h = new Date().getHours();
+  if (h < 10) return ["God morgen","☀️","Klar for en ny dag i barnehagen?"];
+  if (h < 12) return ["God formiddag","🌤️","Hva skal barna oppdage i dag?"];
+  if (h < 17) return ["God ettermiddag","🌈","Midttimen er full av muligheter!"];
+  return ["God kveld","🌙","Planlegger du morgendagen?"];
+}
+
+const DAGENS_TIPS = [
+  {t:"Filosofisk samtale",t2:"Still spørsmålet: 'Hva er en god venn?' – og lytt til svarene!",f:"etikk"},
+  {t:"Tall i hverdagen",t2:"Tell trapper, stoler og vinduer på morgenturen!",f:"antall"},
+  {t:"Sansetur",t2:"Gå barbeint i gress – snakk om hva dere kjenner under føttene",f:"kropp"},
+  {t:"Fargebrev",t2:"La barna farge et brev til noen de er glad i",f:"kunst"},
+  {t:"Naturobservasjon",t2:"Ta med lupe ut og utforsk hva som lever i gresset",f:"natur"},
+  {t:"Rim og regler",t2:"Start samlingsstunden med Ole Dole Doff – barna velger aktivitet",f:"kommunikasjon"},
+  {t:"Følelseskort",t2:"La hvert barn velge et følelseskort som beskriver dagen deres",f:"etikk"},
+  {t:"Måling med kropp",t2:"Mål rommet i barneskritt – sammenlign hvem som tok flest",f:"antall"},
+  {t:"Skyformer",t2:"Legg dere på ryggen ute og se på skyene – hva ligner de på?",f:"natur"},
+  {t:"Naturlig fargepalett",t2:"Samle blader, blomster og steiner – sorter etter farge sammen",f:"kunst"},
+  {t:"Mage-pust",t2:"Legg en bok på magen – pust så boka går opp og ned. Beroliger gruppa",f:"kropp"},
+  {t:"Historiefortelling",t2:"Start med 'Det var en gang...' og la hvert barn legge til én setning",f:"kommunikasjon"},
+  {t:"Min nabo",t2:"Snakk om hvem som bor i nabolaget – hvem hjelper hverandre?",f:"naermiljo"},
+  {t:"Sortering",t2:"La barna sortere klosser etter form, farge og størrelse – diskuter valgene",f:"antall"},
+  {t:"Lyttesirkel",t2:"Sitt stille i 1 minutt – fortell etterpå hva dere hørte",f:"kommunikasjon"},
+  {t:"Småkrypjakt",t2:"Finn 5 ulike småkryp ute med lupe – tegn det dere fant",f:"natur"},
+  {t:"Bevegelseslek",t2:"Etterlign dyr: hopp som kanin, kryp som slange, fly som fugl",f:"kropp"},
+  {t:"Takknemlighet",t2:"Hvert barn nevner én ting de er glad for fra i dag",f:"etikk"},
+  {t:"Bygg sammen",t2:"Lag en stor borg med klosser – alle må bidra på sin måte",f:"kunst"},
+  {t:"Kart over rommet",t2:"Tegn et kart over barnehagen sett ovenfra – diskuter avstander",f:"naermiljo"},
+];
+
 // ── Modul-nivå komponenter (stabile referanser – monteres ikke på nytt ved parent-render) ──
 
 function SupportSide() {
@@ -7852,7 +7947,7 @@ function MaanedsplanSide({ ctx }) {
     const toggleFag=(f)=>setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);
     const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
-    if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}>Laster...</div>;
+    if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 10px"}}/>Laster...</div>;
     if(visning==="les"&&valgt)return(
       <div className="fade">
         <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
@@ -7865,6 +7960,7 @@ function MaanedsplanSide({ ctx }) {
             </div>
             <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
               <button onClick={()=>skrivUtGenerell({tittel:valgt.tittel||`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}${valgt.tema?" • Tema: "+valgt.tema:""}`,seksjoner:[...["uke1","uke2","uke3","uke4"].map((u,i)=>({label:`Uke ${i+1}`,tekst:valgt[u],farge:"#2c5b8e",bg:"#f5f9fd"})),{label:"Notat",tekst:valgt.notat,farge:"#795548",bg:"#fff9c4"}]})} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🖨️ Skriv ut</button>
+              <button onClick={()=>lastNedPlanPDF({tittel:valgt.tittel||`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}${valgt.tema?" • Tema: "+valgt.tema:""}`,seksjoner:[...["uke1","uke2","uke3","uke4"].map((u,i)=>({label:`Uke ${i+1}`,tekst:valgt[u]})),{label:"Notat",tekst:valgt.notat}]})} style={{background:"#e8f5e9",color:"#2e7d32",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>📄 PDF</button>
               <button onClick={()=>redigerPlan(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontWeight:700}}>✏️ Rediger</button>
               {bekreftSletting
                 ? <><button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{background:"#c62828",color:"#fff",border:"none",borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:12,fontWeight:700}}>Slett</button>
@@ -7997,7 +8093,7 @@ function MaanedsbrevSide({ ctx }) {
     const kopierBrev=(b)=>{const tekst=`${b.tittel}\n\n${b.gjort?"Vi har jobbet med:\n"+b.gjort+"\n\n":""}${b.kommende?"Kommende:\n"+b.kommende+"\n\n":""}${b.praktisk?"Praktisk info:\n"+b.praktisk+"\n\n":""}${b.hilsen?"Hilsen,\n"+b.hilsen:""}`.trim();navigator.clipboard?.writeText(tekst).then(()=>visLokal("✅ Kopiert")).catch(()=>visLokal("ℹ️ Kopiering ikke støttet"));};
     const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
-    if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}>Laster...</div>;
+    if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 10px"}}/>Laster...</div>;
     if(visning==="les"&&valgt)return(
       <div className="fade">
         <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
@@ -8009,6 +8105,7 @@ function MaanedsbrevSide({ ctx }) {
             </div>
             <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
               <button onClick={()=>skrivUtGenerell({tittel:valgt.tittel||`Månedsbrev ${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,seksjoner:[{label:"📚 Hva vi har jobbet med",tekst:valgt.gjort,farge:"#1565c0",bg:"#e3f2fd"},{label:"📅 Kommende aktiviteter",tekst:valgt.kommende,farge:"#2e7d32",bg:"#e8f5e9"},{label:"ℹ️ Praktisk informasjon",tekst:valgt.praktisk,farge:"#795548",bg:"#fff9c4"},{label:"Hilsen",tekst:valgt.hilsen,farge:"#5d7390",bg:"#f5f9fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🖨️ Skriv ut</button>
+              <button onClick={()=>lastNedPlanPDF({tittel:valgt.tittel||`Månedsbrev ${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,meta:`${MAANEDER[valgt.maaned-1]} ${valgt.aar}`,seksjoner:[{label:"📚 Hva vi har jobbet med",tekst:valgt.gjort},{label:"📅 Kommende aktiviteter",tekst:valgt.kommende},{label:"ℹ️ Praktisk informasjon",tekst:valgt.praktisk},{label:"Hilsen",tekst:valgt.hilsen}]})} style={{background:"#e8f5e9",color:"#2e7d32",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>📄 PDF</button>
               <button onClick={()=>kopierBrev(valgt)} style={{background:"#e3f2fd",color:"#1565c0",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>📋 Kopier</button>
               <button onClick={()=>redigerBrev(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontWeight:700}}>✏️ Rediger</button>
               {bekreftSletting
@@ -8123,7 +8220,10 @@ function UkeplanSide({ ctx }) {
     const [bildevelgerForDag, setBildevelgerForDag] = useState(null);
     const [bildeOpplaster, setBildeOpplaster] = useState(false);
     const [nyAktivitet, setNyAktivitet] = useState({});
-    const dndSensors = useSensors(useSensor(PointerSensor,{activationConstraint:{distance:6}}));
+    const dndSensors = useSensors(
+      useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+      useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } })
+    );
     const DAG_FARGER_DEF = { mandag:"#1565c0",tirsdag:"#0277bd",onsdag:"#6a1b9a",torsdag:"#c62828",fredag:"#2d6a4f" };
     const TID_FARGER = { formiddag:{label:"Formiddag",col:"#1565c0",bg:"#e3f2fd"}, ettermiddag:{label:"Ettermiddag",col:"#6a1b9a",bg:"#f3e5f5"}, notat:{label:"Notat",col:"#5d7390",bg:"#f5f9fd"} };
     const FARGEVALG = ["","#1565c0","#6a1b9a","#2d6a4f","#c62828","#f57c00"];
@@ -9483,6 +9583,7 @@ function ArsplanSide({ ctx }) {
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
             <button onClick={()=>skrivUtArsplan(valgt)} style={{background:"#e3f2fd",color:"#1565c0",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
+            <button onClick={()=>{const sek=SEKSJONER.filter(s=>valgt.seksjoner?.[s.id]?.trim()).map(s=>({label:`${s.ikon} ${s.navn}`,tekst:valgt.seksjoner[s.id]}));lastNedPlanPDF({tittel:valgt.tittel||"Årsplan",meta:[valgt.barnehage,valgt.avdeling,valgt.alder,valgt.aar].filter(Boolean).join(" • "),seksjoner:sek});}} style={{background:"#e8f5e9",color:"#2e7d32",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📄 PDF</button>
             <button onClick={() => redigerPlan(valgt)} style={{background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
             {bekreftSletting
               ? <div style={{display:"flex",gap:6}}>
@@ -10635,47 +10736,26 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     ...(aktivBruker?.admin?[{id:"admin",i:"👑",n:"Admin-panel"}]:[])
   ];
 
-  const hilsen = () => {
-    const h = new Date().getHours();
-    if (h < 10) return ["God morgen","☀️","Klar for en ny dag i barnehagen?"];
-    if (h < 12) return ["God formiddag","🌤️","Hva skal barna oppdage i dag?"];
-    if (h < 17) return ["God ettermiddag","🌈","Midttimen er full av muligheter!"];
-    return ["God kveld","🌙","Planlegger du morgendagen?"];
-  };
+  // hilsen og dagensTips er modul-nivå-konstanter (se over Barnehagehjelpen)
   const [hils, hikon, hsub] = hilsen();
-  const dagensTips = [
-    {t:"Filosofisk samtale",t2:"Still spørsmålet: 'Hva er en god venn?' – og lytt til svarene!",f:"etikk"},
-    {t:"Tall i hverdagen",t2:"Tell trapper, stoler og vinduer på morgenturen!",f:"antall"},
-    {t:"Sansetur",t2:"Gå barbeint i gress – snakk om hva dere kjenner under føttene",f:"kropp"},
-    {t:"Fargebrev",t2:"La barna farge et brev til noen de er glad i",f:"kunst"},
-    {t:"Naturobservasjon",t2:"Ta med lupe ut og utforsk hva som lever i gresset",f:"natur"},
-    {t:"Rim og regler",t2:"Start samlingsstunden med Ole Dole Doff – barna velger aktivitet",f:"kommunikasjon"},
-    {t:"Følelseskort",t2:"La hvert barn velge et følelseskort som beskriver dagen deres",f:"etikk"},
-    {t:"Måling med kropp",t2:"Mål rommet i barneskritt – sammenlign hvem som tok flest",f:"antall"},
-    {t:"Skyformer",t2:"Legg dere på ryggen ute og se på skyene – hva ligner de på?",f:"natur"},
-    {t:"Naturlig fargepalett",t2:"Samle blader, blomster og steiner – sorter etter farge sammen",f:"kunst"},
-    {t:"Mage-pust",t2:"Legg en bok på magen – pust så boka går opp og ned. Beroliger gruppa",f:"kropp"},
-    {t:"Historiefortelling",t2:"Start med 'Det var en gang...' og la hvert barn legge til én setning",f:"kommunikasjon"},
-    {t:"Min nabo",t2:"Snakk om hvem som bor i nabolaget – hvem hjelper hverandre?",f:"naermiljo"},
-    {t:"Sortering",t2:"La barna sortere klosser etter form, farge og størrelse – diskuter valgene",f:"antall"},
-    {t:"Lyttesirkel",t2:"Sitt stille i 1 minutt – fortell etterpå hva dere hørte",f:"kommunikasjon"},
-    {t:"Småkrypjakt",t2:"Finn 5 ulike småkryp ute med lupe – tegn det dere fant",f:"natur"},
-    {t:"Bevegelseslek",t2:"Etterlign dyr: hopp som kanin, kryp som slange, fly som fugl",f:"kropp"},
-    {t:"Takknemlighet",t2:"Hvert barn nevner én ting de er glad for fra i dag",f:"etikk"},
-    {t:"Bygg sammen",t2:"Lag en stor borg med klosser – alle må bidra på sin måte",f:"kunst"},
-    {t:"Kart over rommet",t2:"Tegn et kart over barnehagen sett ovenfra – diskuter avstander",f:"naermiljo"},
-  ];
   // Stabilt valg per dag: bruk dato (år+måned+dag) som seed istedenfor bare ukedag
   const idag = new Date();
   const datoFroe = idag.getFullYear() * 10000 + (idag.getMonth()+1) * 100 + idag.getDate();
   const [tipsOffset, setTipsOffset] = useState(0);
-  const tipsIndex = (datoFroe + tipsOffset) % dagensTips.length;
-  const tips = dagensTips[tipsIndex];
+  const tipsIndex = (datoFroe + tipsOffset) % DAGENS_TIPS.length;
+  const tips = DAGENS_TIPS[tipsIndex];
   const tipsFag = FAGOMRADER.find(f=>f.id===tips.f);
   const nesteTips = () => setTipsOffset(o => o + 1);
 
-  const [vær, setVær] = useState(null);
+  const [vær, setVær] = useState(() => {
+    try {
+      const c = sessionStorage.getItem("bh_vær");
+      if (c) { const { data, tid } = JSON.parse(c); if (Date.now() - tid < 30 * 60 * 1000) return data; }
+    } catch {}
+    return null;
+  });
   useEffect(() => {
+    if (vær) return; // allerede cachet
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
       try {
@@ -10684,10 +10764,12 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         const d = await r.json();
         const c = d?.current;
         if (!c) return;
-        setVær({ temp: Math.round(c.temperature_2m), kode: c.weather_code, vind: Math.round(c.wind_speed_10m) });
+        const data = { temp: Math.round(c.temperature_2m), kode: c.weather_code, vind: Math.round(c.wind_speed_10m) };
+        setVær(data);
+        try { sessionStorage.setItem("bh_vær", JSON.stringify({ data, tid: Date.now() })); } catch {}
       } catch {}
     }, () => {});
-  }, []);
+  }, [vær]);
 
   const værInfo = (kode) => {
     if (kode === 0) return ["☀️","Klarvær"];
@@ -11085,6 +11167,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
               <button
                 onClick={()=>setTema(t=>t==="dark"?"light":"dark")}
                 title="Bytt tema"
+                aria-label={tema==="dark" ? "Bytt til lys modus" : "Bytt til mørk modus"}
                 style={{background:tema==="dark"?"var(--c-g)":"rgba(255,255,255,0.25)",border:"none",borderRadius:20,padding:"3px",width:44,height:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:tema==="dark"?"flex-end":"flex-start",transition:"background 0.25s, justify-content 0s",flexShrink:0}}
               >
                 <div style={{width:18,height:18,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 3px rgba(0,0,0,0.3)",transition:"transform 0.25s"}} />
