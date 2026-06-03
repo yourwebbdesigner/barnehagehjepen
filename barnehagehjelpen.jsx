@@ -5137,7 +5137,18 @@ function skrivUtGenerell({ tittel, meta, seksjoner, logoTekst }) {
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;background:#f3f7fc;color:#1a2c45;padding:24px 20px;line-height:1.6}.topp{max-width:700px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{font-size:22px;color:#2c5b8e}.meta{font-size:12px;color:#5d7390;margin-top:4px}.innhold{max-width:700px;margin:0 auto}.knapper{display:flex;gap:8px}.knapp{padding:9px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.lukk{padding:9px 14px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.bunn{font-size:11px;color:#8a9bb0;text-align:center;margin-top:28px}@media print{@page{margin:12mm}.knapper{display:none}body{background:white;padding:0}}</style></head>
 <body><div class="topp"><div><h1>${esc(tittel)}</h1>${meta?`<div class="meta">${esc(meta)}</div>`:""}</div><div class="knapper"><button class="lukk" onclick="window.close()">← Lukk</button><button class="knapp" onclick="window.print()">🖨️ Skriv ut</button></div></div><div class="innhold">${seksHTML}</div><div class="bunn">${esc(logoTekst||"Barnehagehjelpen • Rammeplan 2017")}</div></body></html>`;
   const v=window.open("","_blank","width=820,height=720");
-  if(!v){alert("Popup ble blokkert. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut.");return;}
+  if(!v){
+    try {
+      const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;
+      a.download=`${(tittel||"dokument").replace(/[^a-zA-Z0-9æøåÆØÅ \-]/g,"")}.html`;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+    } catch { alert("Popup ble blokkert. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut."); }
+    return;
+  }
   v.document.write(html);v.document.close();
 }
 
@@ -6852,6 +6863,166 @@ function AktivitetskortPanel({ aktivBruker, onOppdater }) {
   );
 }
 
+// ── Modul-nivå komponenter (stabile referanser – monteres ikke på nytt ved parent-render) ──
+
+function SupportSide() {
+  const [aapenFaq, setAapenFaq] = useState(null);
+  const kontaktLenke = supportMailto();
+  return (
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>❓ Hjelp og FAQ</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Finn svar på vanlige spørsmål – trenger du mer hjelp, kontakt support direkte</p>
+      <div style={{display:"grid",gap:7,marginBottom:18}}>
+        {FAQ_DATA.map((item, i) => (
+          <div key={i} style={{background:C.w,borderRadius:10,boxShadow:"0 1px 5px rgba(44,91,142,0.07)",overflow:"hidden"}}>
+            <button onClick={()=>setAapenFaq(aapenFaq===i?null:i)} style={{width:"100%",padding:"13px 15px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,fontFamily:"'Nunito',sans-serif"}}>
+              <span style={{fontWeight:700,color:C.t,fontSize:13,flex:1}}>{item.sp}</span>
+              <span style={{color:C.g,fontSize:16,transform:aapenFaq===i?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
+            </button>
+            {aapenFaq===i && (
+              <div className="fade" style={{padding:"0 15px 13px",fontSize:13,color:C.t,lineHeight:1.7,borderTop:"1px solid #e8eff8",paddingTop:11}}>
+                {item.svar}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div style={{background:"linear-gradient(135deg,#2c5b8e,#4178bd)",borderRadius:14,padding:"18px 18px",color:"#fff",textAlign:"center"}}>
+        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,marginBottom:6}}>Fant du ikke svar?</div>
+        <div style={{fontSize:12,opacity:0.9,marginBottom:14,lineHeight:1.6}}>Send oss en melding direkte på e-post – vi svarer så raskt vi kan</div>
+        <a href={kontaktLenke} style={{display:"inline-block",background:"#fff",color:"#2c5b8e",padding:"11px 22px",borderRadius:10,textDecoration:"none",fontWeight:800,fontSize:14}}>
+          📧 Kontakt support
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function PlanleggingSide({ planTema, setPlanTema, navigerTil }) {
+  return (
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:10}}>📅 Planlegging</div>
+      <div style={{background:C.lg2,borderRadius:13,padding:"13px 14px",marginBottom:18,border:`1.5px solid ${C.lg}`}}>
+        <div style={{fontWeight:800,fontSize:12,color:C.g,marginBottom:7,display:"flex",alignItems:"center",gap:5}}>
+          🎯 Felles tema
+          {planTema && <span style={{background:C.g,color:"#fff",borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>Aktivt</span>}
+        </div>
+        <input
+          key={planTema}
+          defaultValue={planTema}
+          onBlur={e=>setPlanTema(e.target.value.trim())}
+          placeholder="Skriv inn felles tema for alle planer..."
+          style={{width:"100%",padding:"8px 11px",borderRadius:8,border:`1.5px solid ${C.lg}`,fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none",background:C.w,color:C.t}}
+        />
+        <div style={{fontSize:11,color:C.gr,marginTop:6,lineHeight:1.5}}>
+          {planTema
+            ? `Temaet «${planTema}» fylles automatisk inn i nye ukeplaner og månedsplaner.`
+            : "Sett et felles tema som automatisk fylles inn i nye planer – du kan alltid endre det per plan."}
+        </div>
+      </div>
+      <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mine planer</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        {[
+          {id:"ukeplan",  ikon:"📋",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
+          {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
+          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
+          {id:"arsplan",  ikon:"📋",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
+        ].map(({id,ikon,tittel,farge,border,desc})=>(
+          <div key={id} className="hover" onClick={()=>navigerTil(id)}
+            style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center"}}>
+            <div style={{fontSize:32,marginBottom:7}}>{ikon}</div>
+            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:farge,marginBottom:4}}>{tittel}</div>
+            <div style={{fontSize:10,color:C.gr,lineHeight:1.4}}>{desc}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Planmaler</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {[
+          {id:"ukeplan",   ikon:"📅",tittel:"Ukeplan",        farge:"#1565c0",bg:"#e3f2fd",desc:"Klassisk Man–Fre tavleplan"},
+          {id:"maanedskalender",ikon:"🗓️",tittel:"Månedskalender",farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
+          {id:"arsplan",   ikon:"📆",tittel:"Årshjul",         farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
+          {id:"ukeplan",   ikon:"🏫",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
+        ].map(({id,ikon,tittel,farge,bg,desc})=>(
+          <div key={tittel+"-mal"} className="hover" onClick={()=>navigerTil(id)}
+            style={{background:bg,borderRadius:12,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,border:`1.5px solid ${farge}33`}}>
+            <div style={{fontSize:26,flexShrink:0}}>{ikon}</div>
+            <div>
+              <div style={{fontWeight:800,fontSize:13,color:farge}}>{tittel}</div>
+              <div style={{fontSize:10,color:C.gr,marginTop:1}}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FavoritterSide({ favoritter, favTotal, aapneSang, aapneTegneark, toggleFav, setPreselectAktiv, navigerTil }) {
+  const favSanger = SANGER.filter(s=>favoritter.sanger?.includes(s.id));
+  const favAktiv = AKTIVITETER.filter(a=>favoritter.aktiviteter?.includes(a.id));
+  const favTegn = TEGNEARK.filter(t=>favoritter.tegneark?.includes(t.id));
+  return (
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>⭐ Mine favoritter</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Alle elementer du har stjernemerket – {favTotal} totalt</p>
+      {favTotal===0 && (
+        <div style={{background:C.w,borderRadius:14,padding:30,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
+          <div style={{fontSize:46,marginBottom:10}}>☆</div>
+          <div style={{fontWeight:800,color:C.t,fontSize:15,marginBottom:6}}>Ingen favoritter ennå</div>
+          <div style={{fontSize:12,color:C.gr,lineHeight:1.6}}>Trykk på ⭐-ikonet ved siden av en sang, aktivitet eller tegneark for å lagre den her. Da slipper du å lete etter dem igjen.</div>
+        </div>
+      )}
+      {favSanger.length>0 && (
+        <div style={{marginBottom:18}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🎵 Sanger og rim <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favSanger.length}</span></div>
+          <div style={{display:"grid",gap:8}}>
+            {favSanger.map(s=>(
+              <div key={s.id} className="hover" onClick={()=>aapneSang(s)} style={{background:C.w,borderRadius:11,padding:"11px 13px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:13}}>{s.tittel}</div>
+                  <div style={{fontSize:10,color:C.gr,marginTop:2}}>{s.kategori} • 👶 {s.alder}</div>
+                </div>
+                <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("sanger",s.id);}} aria-label="Fjern favoritt">⭐</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {favAktiv.length>0 && (
+        <div style={{marginBottom:18}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🏃 Aktiviteter <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favAktiv.length}</span></div>
+          <div style={{display:"grid",gap:8}}>
+            {favAktiv.map(a=>(
+              <div key={a.id} className="hover" onClick={()=>{setPreselectAktiv(a.id);navigerTil("aktiviteter");}} style={{background:C.w,borderRadius:11,padding:"11px 13px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:13}}>{a.tittel}</div>
+                  <div style={{fontSize:10,color:C.gr,marginTop:2}}>{a.kategori} • 👶 {a.alder}</div>
+                </div>
+                <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("aktiviteter",a.id);}} aria-label="Fjern favoritt">⭐</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {favTegn.length>0 && (
+        <div style={{marginBottom:18}}>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🖍️ Tegneark <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favTegn.length}</span></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+            {favTegn.map(t=>(
+              <div key={t.id} className="hover" onClick={()=>aapneTegneark(t)} style={{background:C.w,borderRadius:11,padding:"11px 9px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",textAlign:"center",position:"relative"}}>
+                <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:4,right:4,fontSize:15}} aria-label="Fjern favoritt">⭐</button>
+                <div style={{maxWidth:90,margin:"0 auto",pointerEvents:"none"}}>{t.svg}</div>
+                <div style={{fontWeight:800,color:C.t,fontSize:11,marginTop:4}}>{t.ikon} {t.tittel}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [tema, setTema] = useState(() => {
     const lagret = localStorage.getItem("bh_tema");
@@ -8163,42 +8334,7 @@ ${innhold}
     );
   };
 
-  // ─── SupportSide – ren FAQ-side ───
-  const SupportSide = ()=>{
-    const [aapenFaq, setAapenFaq] = useState(null);
-    const kontaktLenke = supportMailto();
-
-    return (
-      <div className="fade">
-        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>❓ Hjelp og FAQ</div>
-        <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Finn svar på vanlige spørsmål – trenger du mer hjelp, kontakt support direkte</p>
-
-        <div style={{display:"grid",gap:7,marginBottom:18}}>
-          {FAQ_DATA.map((item, i) => (
-            <div key={i} style={{background:C.w,borderRadius:10,boxShadow:"0 1px 5px rgba(44,91,142,0.07)",overflow:"hidden"}}>
-              <button onClick={()=>setAapenFaq(aapenFaq===i?null:i)} style={{width:"100%",padding:"13px 15px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,fontFamily:"'Nunito',sans-serif"}}>
-                <span style={{fontWeight:700,color:C.t,fontSize:13,flex:1}}>{item.sp}</span>
-                <span style={{color:C.g,fontSize:16,transform:aapenFaq===i?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
-              </button>
-              {aapenFaq===i && (
-                <div className="fade" style={{padding:"0 15px 13px",fontSize:13,color:C.t,lineHeight:1.7,borderTop:"1px solid #e8eff8",paddingTop:11}}>
-                  {item.svar}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div style={{background:"linear-gradient(135deg,#2c5b8e,#4178bd)",borderRadius:14,padding:"18px 18px",color:"#fff",textAlign:"center"}}>
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,marginBottom:6}}>Fant du ikke svar?</div>
-          <div style={{fontSize:12,opacity:0.9,marginBottom:14,lineHeight:1.6}}>Send oss en melding direkte på e-post – vi svarer så raskt vi kan</div>
-          <a href={kontaktLenke} style={{display:"inline-block",background:"#fff",color:"#2c5b8e",padding:"11px 22px",borderRadius:10,textDecoration:"none",fontWeight:800,fontSize:14}}>
-            📧 Kontakt support
-          </a>
-        </div>
-      </div>
-    );
-  };
+  // SupportSide er definert på modul-nivå (se over Barnehagehjelpen)
 
 
   // ─── MaanedsplanSide ───
@@ -8481,66 +8617,7 @@ ${innhold}
     );
   };
 
-  // ─── PlanleggingSide – landingsside for planleggingsverktøy ───
-  const PlanleggingSide = () => (
-    <div className="fade">
-      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:10}}>📋 Planlegging</div>
-      <div style={{background:C.lg2,borderRadius:13,padding:"13px 14px",marginBottom:18,border:`1.5px solid ${C.lg}`}}>
-        <div style={{fontWeight:800,fontSize:12,color:C.g,marginBottom:7,display:"flex",alignItems:"center",gap:5}}>
-          🎯 Felles tema
-          {planTema && <span style={{background:C.g,color:"#fff",borderRadius:6,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>Aktivt</span>}
-        </div>
-        <input
-          key={planTema}
-          defaultValue={planTema}
-          onBlur={e=>setPlanTema(e.target.value.trim())}
-          placeholder="Skriv inn felles tema for alle planer..."
-          style={{width:"100%",padding:"8px 11px",borderRadius:8,border:`1.5px solid ${C.lg}`,fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none",background:C.w,color:C.t}}
-        />
-        <div style={{fontSize:11,color:C.gr,marginTop:6,lineHeight:1.5}}>
-          {planTema
-            ? `Temaet «${planTema}» fylles automatisk inn i nye ukeplaner og månedsplaner.`
-            : "Sett et felles tema som automatisk fylles inn i nye planer – du kan alltid endre det per plan."}
-        </div>
-      </div>
-
-      <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mine planer</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-        {[
-          {id:"ukeplan",  ikon:"📋",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
-          {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
-          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
-          {id:"arsplan",  ikon:"📋",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
-        ].map(({id,ikon,tittel,farge,border,desc})=>(
-          <div key={id} className="hover" onClick={()=>navigerTil(id)}
-            style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center"}}>
-            <div style={{fontSize:32,marginBottom:7}}>{ikon}</div>
-            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:farge,marginBottom:4}}>{tittel}</div>
-            <div style={{fontSize:10,color:C.gr,lineHeight:1.4}}>{desc}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Planmaler</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        {[
-          {id:"ukeplan",   ikon:"📅",tittel:"Ukeplan",        farge:"#1565c0",bg:"#e3f2fd",desc:"Klassisk Man–Fre tavleplan"},
-          {id:"maanedskalender",ikon:"🗓️",tittel:"Månedskalender",farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
-          {id:"arsplan",   ikon:"📆",tittel:"Årshjul",         farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
-          {id:"ukeplan",   ikon:"🏫",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
-        ].map(({id,ikon,tittel,farge,bg,desc})=>(
-          <div key={tittel+"-mal"} className="hover" onClick={()=>navigerTil(id)}
-            style={{background:bg,borderRadius:12,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,border:`1.5px solid ${farge}33`}}>
-            <div style={{fontSize:26,flexShrink:0}}>{ikon}</div>
-            <div>
-              <div style={{fontWeight:800,fontSize:13,color:farge}}>{tittel}</div>
-              <div style={{fontSize:10,color:C.gr,marginTop:1}}>{desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  // PlanleggingSide er definert på modul-nivå (se over Barnehagehjelpen)
 
   // ─── Hjelpkomponent for sorterbar aktivitet i ukeplan (dnd-kit krever eget komponent) ───
   function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
@@ -10857,71 +10934,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
     );
   };
 
-  // ─── FavoritterSide – samler alle favoritter på tvers av typer ───
-  const FavoritterSide = ()=>{
-    const favSanger = SANGER.filter(s=>favoritter.sanger?.includes(s.id));
-    const favAktiv = AKTIVITETER.filter(a=>favoritter.aktiviteter?.includes(a.id));
-    const favTegn = TEGNEARK.filter(t=>favoritter.tegneark?.includes(t.id));
-    return (
-      <div className="fade">
-        <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>⭐ Mine favoritter</div>
-        <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Alle elementer du har stjernemerket – {favTotal} totalt</p>
-        {favTotal===0 && (
-          <div style={{background:C.w,borderRadius:14,padding:30,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
-            <div style={{fontSize:46,marginBottom:10}}>☆</div>
-            <div style={{fontWeight:800,color:C.t,fontSize:15,marginBottom:6}}>Ingen favoritter ennå</div>
-            <div style={{fontSize:12,color:C.gr,lineHeight:1.6}}>Trykk på ⭐-ikonet ved siden av en sang, aktivitet eller tegneark for å lagre den her. Da slipper du å lete etter dem igjen.</div>
-          </div>
-        )}
-        {favSanger.length>0 && (
-          <div style={{marginBottom:18}}>
-            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🎵 Sanger og rim <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favSanger.length}</span></div>
-            <div style={{display:"grid",gap:8}}>
-              {favSanger.map(s=>(
-                <div key={s.id} className="hover" onClick={()=>aapneSang(s)} style={{background:C.w,borderRadius:11,padding:"11px 13px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:800,color:C.t,fontSize:13}}>{s.tittel}</div>
-                    <div style={{fontSize:10,color:C.gr,marginTop:2}}>{s.kategori} • 👶 {s.alder}</div>
-                  </div>
-                  <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("sanger",s.id);}} aria-label="Fjern favoritt">⭐</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {favAktiv.length>0 && (
-          <div style={{marginBottom:18}}>
-            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🏃 Aktiviteter <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favAktiv.length}</span></div>
-            <div style={{display:"grid",gap:8}}>
-              {favAktiv.map(a=>(
-                <div key={a.id} className="hover" onClick={()=>{setPreselectAktiv(a.id);navigerTil("aktiviteter");}} style={{background:C.w,borderRadius:11,padding:"11px 13px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:800,color:C.t,fontSize:13}}>{a.tittel}</div>
-                    <div style={{fontSize:10,color:C.gr,marginTop:2}}>{a.kategori} • 👶 {a.alder}</div>
-                  </div>
-                  <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("aktiviteter",a.id);}} aria-label="Fjern favoritt">⭐</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {favTegn.length>0 && (
-          <div style={{marginBottom:18}}>
-            <div style={{fontFamily:"'Fredoka One',cursive",fontSize:15,color:C.t,marginBottom:9,display:"flex",alignItems:"center",gap:6}}>🖍️ Tegneark <span style={{background:C.mint,color:C.g,borderRadius:9,padding:"1px 8px",fontSize:11}}>{favTegn.length}</span></div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
-              {favTegn.map(t=>(
-                <div key={t.id} className="hover" onClick={()=>aapneTegneark(t)} style={{background:C.w,borderRadius:11,padding:"11px 9px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",textAlign:"center",position:"relative"}}>
-                  <button className="fav-btn aktiv" onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:4,right:4,fontSize:15}} aria-label="Fjern favoritt">⭐</button>
-                  <div style={{maxWidth:90,margin:"0 auto",pointerEvents:"none"}}>{t.svg}</div>
-                  <div style={{fontWeight:800,color:C.t,fontSize:11,marginTop:4}}>{t.ikon} {t.tittel}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  // FavoritterSide er definert på modul-nivå (se over Barnehagehjelpen)
 
   // Lagre AI-generert innhold som skjema og navigere dit
   const lagreAISomSkjema = (skjemaData) => {
@@ -10938,7 +10951,27 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
     navigerTil("ai");
   };
 
-  const sider={hjem:Hjem(),skjemaer:<MineSkjemaer/>,rammeplan:<RammeplanSide/>,tegneark:<TegnearkSide/>,ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,admin:<AdminPanel aktivBruker={aktivBruker}/>,favoritter:<FavoritterSide/>,profil:<ProfilSide/>,support:<SupportSide/>,dokumentasjon:<DokumentasjonSide/>,planlegging:<PlanleggingSide/>,maanedsplan:<MaanedsplanSide/>,maanedsbrev:<MaanedsbrevSide/>,ukeplan:<UkeplanSide/>,maanedskalender:<MaanedskalenderSide/>,arsplan:<ArsplanSide/>,boker:<BokerSide aktivBruker={aktivBruker}/>,aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>};
+  const sider={
+    hjem:Hjem(),
+    skjemaer:<MineSkjemaer/>,
+    rammeplan:<RammeplanSide/>,
+    tegneark:<TegnearkSide/>,
+    ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,
+    admin:<AdminPanel aktivBruker={aktivBruker}/>,
+    favoritter:<FavoritterSide favoritter={favoritter} favTotal={favTotal} aapneSang={aapneSang} aapneTegneark={aapneTegneark} toggleFav={toggleFav} setPreselectAktiv={setPreselectAktiv} navigerTil={navigerTil}/>,
+    profil:<ProfilSide/>,
+    support:<SupportSide/>,
+    dokumentasjon:<DokumentasjonSide/>,
+    planlegging:<PlanleggingSide planTema={planTema} setPlanTema={setPlanTema} navigerTil={navigerTil}/>,
+    maanedsplan:<MaanedsplanSide/>,
+    maanedsbrev:<MaanedsbrevSide/>,
+    ukeplan:<UkeplanSide/>,
+    maanedskalender:<MaanedskalenderSide/>,
+    arsplan:<ArsplanSide/>,
+    boker:<BokerSide aktivBruker={aktivBruker}/>,
+    aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,
+    samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>,
+  };
 
   return (
     <>
@@ -11013,11 +11046,13 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
         </div>
         <main className="bh-main">
           {feedback && <div className="fade" style={{position:"fixed",top:70,right:20,zIndex:200,background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
-          {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
-           : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
-           : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
-           : (sider[side]||Hjem())
-          }
+          <ErrorBoundary key={side} compact>
+            {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
+             : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
+             : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
+             : (sider[side]||Hjem())
+            }
+          </ErrorBoundary>
         </main>
       </div>
       {bekreftSlettSkjema && (
@@ -11043,13 +11078,22 @@ export class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { feil: null }; }
   static getDerivedStateFromError(e) { return { feil: e?.message || String(e) }; }
   render() {
-    if (this.state.feil) return (
-      <div style={{padding:32,fontFamily:"monospace",background:"#1a1a2e",color:"#ff6b6b",minHeight:"100vh"}}>
-        <h2 style={{color:"#fff",marginBottom:12}}>Noe gikk galt</h2>
-        <pre style={{whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{this.state.feil}</pre>
-        <button onClick={()=>window.location.reload()} style={{marginTop:20,padding:"10px 24px",background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,cursor:"pointer"}}>Last inn på nytt</button>
-      </div>
-    );
+    if (this.state.feil) {
+      if (this.props.compact) return (
+        <div style={{padding:"24px 20px",background:"#fff0f0",borderRadius:14,border:"1.5px solid #ffcdd2",margin:8}}>
+          <div style={{fontWeight:800,color:"#c62828",fontSize:15,marginBottom:8}}>⚠️ Noe gikk galt i denne seksjonen</div>
+          <div style={{fontSize:12,color:"#5d7390",marginBottom:14}}>Prøv å navigere bort og tilbake, eller last inn siden på nytt.</div>
+          <button onClick={()=>this.setState({feil:null})} style={{padding:"8px 18px",background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"'Nunito',sans-serif"}}>↩ Prøv igjen</button>
+        </div>
+      );
+      return (
+        <div style={{padding:32,fontFamily:"monospace",background:"#1a1a2e",color:"#ff6b6b",minHeight:"100vh"}}>
+          <h2 style={{color:"#fff",marginBottom:12}}>Noe gikk galt</h2>
+          <pre style={{whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{this.state.feil}</pre>
+          <button onClick={()=>window.location.reload()} style={{marginTop:20,padding:"10px 24px",background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,cursor:"pointer"}}>Last inn på nytt</button>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }
