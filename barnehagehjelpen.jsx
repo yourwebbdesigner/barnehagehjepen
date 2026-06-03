@@ -10509,6 +10509,138 @@ function ProfilSide({ ctx }) {
   }
 
 
+function Hjem({ ctx }) {
+  const { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon } = ctx;
+  return (
+    <div className="fade">
+      {/* HERO */}
+      <div style={{background:`linear-gradient(135deg, #2c5b8e 0%, #4178bd 50%, #6ba0d9 100%)`, borderRadius:22, padding:"28px 22px 24px", color:"#fff", marginBottom:20, position:"relative", overflow:"hidden"}}>
+        <div style={{position:"absolute", top:-20, right:-20, fontSize:90, opacity:.15, transform:"rotate(15deg)", pointerEvents:"none"}}>🌟</div>
+        <div style={{position:"absolute", bottom:-15, left:10, fontSize:70, opacity:.12, transform:"rotate(-10deg)", pointerEvents:"none"}}>🎨</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{fontSize:28}}>{hikon}</div>
+          {vær && (
+            <div style={{background:"rgba(255,255,255,0.18)",borderRadius:12,padding:"8px 13px",textAlign:"center",backdropFilter:"blur(4px)",minWidth:90}}>
+              <div style={{fontSize:22,lineHeight:1}}>{værIkon}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,lineHeight:1.1,marginTop:2}}>{vær.temp}°</div>
+              <div style={{fontSize:10,opacity:.9,marginTop:1}}>{værTekst}</div>
+              <div style={{fontSize:10,opacity:.75,marginTop:1}}>💨 {vær.vind} m/s</div>
+            </div>
+          )}
+        </div>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:26, marginTop:4}}>{hils}!</div>
+        <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
+          {[[SANGER.length+"","🎵","Sanger"],[AKTIVITETER.length+"","🏃","Aktiviteter"],[skjemaer.length+"","📋","Skjemaer"],[FAGOMRADER.length+"","📖","Fagområder"]].map(([n,ic,l])=>(
+            <div key={l} style={{background:"rgba(255,255,255,0.22)", borderRadius:12, padding:"11px 6px", textAlign:"center", backdropFilter:"blur(4px)"}}>
+              <div style={{fontSize:18}}>{ic}</div>
+              <div style={{fontFamily:"'Fredoka One',cursive", fontSize:20, lineHeight:1}}>{n}</div>
+              <div style={{fontSize:10, opacity:.85, marginTop:2}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* GLOBAL SØK */}
+      <GlobalSok
+        verdi={globalSok}
+        setVerdi={setGlobalSok}
+        sokeResultat={sokeResultat}
+        navigerTil={navigerTil}
+        aapneAktivitet={aapneAktivitet}
+        aapneSang={aapneSang}
+        aapneTegneark={aapneTegneark}
+        aapneFagomrade={aapneFagomrade}
+        aapneRammeplan={aapneRammeplan}
+        aapneAktivitetskort={aapneAktivitetskort}
+        aapneDokumentasjon={aapneDokumentasjon}
+        C={C}
+      />
+
+      {/* DAGENS TIPS */}
+      <div style={{background:C.w, borderRadius:16, padding:"15px 18px", marginBottom:18, boxShadow:"0 2px 14px rgba(44,91,142,0.10)", borderLeft:`4px solid ${tipsFag?.farge||C.g}`}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, marginBottom:5}}>
+          <div style={{display:"flex", alignItems:"center", gap:8}}>
+            <span style={{fontSize:20}}>{tipsFag?.ikon||"💡"}</span>
+            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>Dagens pedagogiske tips</div>
+          </div>
+          <button onClick={nesteTips} title="Vis neste tips" aria-label="Vis neste tips"
+            style={{background:"transparent", border:"1.5px solid var(--c-divider)", color:C.g, width:32, height:32, borderRadius:8, cursor:"pointer", fontSize:14, fontFamily:"'Nunito',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+            🔄
+          </button>
+        </div>
+        <div style={{fontWeight:800, color:tipsFag?.farge||C.g, fontSize:13, marginBottom:3}}>{tips.t}</div>
+        <div style={{fontSize:13, color:C.gr, lineHeight:1.6}}>{tips.t2}</div>
+      </div>
+
+      {/* HURTIGTILGANG */}
+      <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>🚀 Hurtigtilgang</div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:20}}>
+        {[
+          ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","sanger"],
+          ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","aktiviteter"],
+          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","boker"],
+          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","aktivitetskort"],
+          ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","skjema-ny"],
+          ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","tegneark"],
+          ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","rammeplan"],
+          ["🤖","AI-assistent","Lag sanger, planer og mer","#37474f","ai"],
+        ].map(([ic,t,u,fc,sid])=>(
+          <div key={t} className="hover fade" onClick={()=>navigerTil(sid)} style={{background:C.w, borderRadius:14, padding:"16px 14px", cursor:"pointer", boxShadow:`0 2px 10px ${fc}22`, borderLeft:`4px solid ${fc}`}}>
+            <div style={{fontSize:26, marginBottom:4}}>{ic}</div>
+            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>{t}</div>
+            <div style={{fontSize:11, color:C.gr, marginTop:2}}>{u}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* PLANLEGGING */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>📋 Planlegging</div>
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
+        {[
+          ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
+          ["📋","Månedsplan","Hele måneden strukturert","maanedsplan","#6a1b9a"],
+          ["✉️","Månedsbrev","Brev til foreldre","maanedsbrev","#e67e22"],
+          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
+        ].map(([ic,t,u,sideId,fc])=>(
+          <div key={t} className="hover" onClick={()=>navigerTil(sideId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+              <span style={{fontSize:18}}>{ic}</span>
+              <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t}</div>
+            </div>
+            <div style={{fontSize:11, color:C.gr, lineHeight:1.4}}>{u}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* FAGOMRÅDER */}
+      <div style={{background:C.w, borderRadius:16, padding:"16px 18px", boxShadow:"0 2px 10px rgba(44,91,142,0.08)", marginBottom:14}}>
+        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>📖 De 7 fagområdene – klikk for å utforske</div>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
+          {FAGOMRADER.map(f=>(
+            <div key={f.id} className="hover" onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");navigerTil("rammeplan");}}
+              style={{background:C.lg2, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s", borderLeft:`3px solid ${f.farge}`}}>
+              <span style={{fontSize:20}}>{f.ikon}</span>
+              <div>
+                <div data-fag-color={f.id} style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
+                <div style={{fontSize:9, color:C.gr, marginTop:1}}>{f.kortbeskrivelse}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:C.lg2, borderRadius:13, padding:"13px 15px", borderLeft:`4px solid ${C.g}`}}>
+        <div style={{fontWeight:800, color:C.g, fontSize:12, marginBottom:4}}>🌿 Om Barnehagehjelpen</div>
+        <div style={{fontSize:12, color:C.t, lineHeight:1.7}}>Alt innhold er koblet til Rammeplan 2017. Bruk AI-assistenten til å generere sanger, aktiviteter og pedagogiske planer tilpasset din barnegruppe.</div>
+      </div>
+    </div>
+  );
+}
+
 function MineSkjemaer({ ctx }) {
   const { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil } = ctx;
   return (
@@ -10897,134 +11029,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   const [værIkon, værTekst] = vær ? værInfo(vær.kode) : [null, null];
 
-  const Hjem = ()=>(
-    <div className="fade">
-      {/* HERO */}
-      <div style={{background:`linear-gradient(135deg, #2c5b8e 0%, #4178bd 50%, #6ba0d9 100%)`, borderRadius:22, padding:"28px 22px 24px", color:"#fff", marginBottom:20, position:"relative", overflow:"hidden"}}>
-        <div style={{position:"absolute", top:-20, right:-20, fontSize:90, opacity:.15, transform:"rotate(15deg)", pointerEvents:"none"}}>🌟</div>
-        <div style={{position:"absolute", bottom:-15, left:10, fontSize:70, opacity:.12, transform:"rotate(-10deg)", pointerEvents:"none"}}>🎨</div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <div style={{fontSize:28}}>{hikon}</div>
-          {vær && (
-            <div style={{background:"rgba(255,255,255,0.18)",borderRadius:12,padding:"8px 13px",textAlign:"center",backdropFilter:"blur(4px)",minWidth:90}}>
-              <div style={{fontSize:22,lineHeight:1}}>{værIkon}</div>
-              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,lineHeight:1.1,marginTop:2}}>{vær.temp}°</div>
-              <div style={{fontSize:10,opacity:.9,marginTop:1}}>{værTekst}</div>
-              <div style={{fontSize:10,opacity:.75,marginTop:1}}>💨 {vær.vind} m/s</div>
-            </div>
-          )}
-        </div>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:26, marginTop:4}}>{hils}!</div>
-        <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
-        <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8}}>
-          {[[SANGER.length+"","🎵","Sanger"],[AKTIVITETER.length+"","🏃","Aktiviteter"],[skjemaer.length+"","📋","Skjemaer"],[FAGOMRADER.length+"","📖","Fagområder"]].map(([n,ic,l])=>(
-            <div key={l} style={{background:"rgba(255,255,255,0.22)", borderRadius:12, padding:"11px 6px", textAlign:"center", backdropFilter:"blur(4px)"}}>
-              <div style={{fontSize:18}}>{ic}</div>
-              <div style={{fontFamily:"'Fredoka One',cursive", fontSize:20, lineHeight:1}}>{n}</div>
-              <div style={{fontSize:10, opacity:.85, marginTop:2}}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* GLOBAL SØK */}
-      <GlobalSok
-        verdi={globalSok}
-        setVerdi={setGlobalSok}
-        sokeResultat={sokeResultat}
-        navigerTil={navigerTil}
-        aapneAktivitet={aapneAktivitet}
-        aapneSang={aapneSang}
-        aapneTegneark={aapneTegneark}
-        aapneFagomrade={aapneFagomrade}
-        aapneRammeplan={aapneRammeplan}
-        aapneAktivitetskort={aapneAktivitetskort}
-        aapneDokumentasjon={aapneDokumentasjon}
-        C={C}
-      />
-
-      {/* DAGENS TIPS */}
-      <div style={{background:C.w, borderRadius:16, padding:"15px 18px", marginBottom:18, boxShadow:"0 2px 14px rgba(44,91,142,0.10)", borderLeft:`4px solid ${tipsFag?.farge||C.g}`}}>
-        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, marginBottom:5}}>
-          <div style={{display:"flex", alignItems:"center", gap:8}}>
-            <span style={{fontSize:20}}>{tipsFag?.ikon||"💡"}</span>
-            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>Dagens pedagogiske tips</div>
-          </div>
-          <button onClick={nesteTips} title="Vis neste tips" aria-label="Vis neste tips"
-            style={{background:"transparent", border:"1.5px solid #d8e6f5", color:C.g, width:32, height:32, borderRadius:8, cursor:"pointer", fontSize:14, fontFamily:"'Nunito',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-            🔄
-          </button>
-        </div>
-        <div style={{fontWeight:800, color:tipsFag?.farge||C.g, fontSize:13, marginBottom:3}}>{tips.t}</div>
-        <div style={{fontSize:13, color:C.gr, lineHeight:1.6}}>{tips.t2}</div>
-      </div>
-
-      {/* HURTIGTILGANG */}
-      <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>🚀 Hurtigtilgang</div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:20}}>
-        {[
-          ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","sanger"],
-          ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","aktiviteter"],
-          ["📚","Bøker","Pedagogisk litteratur og AI-fortelling","#00796b","boker"],
-          ["🃏","Aktivitetskort","Kort til samlingsstund og lek","#f57f17","aktivitetskort"],
-          ["✏️","Nytt skjema","HVA · HVORDAN · HVORFOR","#6a1b9a","skjema-ny"],
-          ["🖍️","Tegneark",`${TEGNEARK.length} tegneark å skrive ut`,"#c62828","tegneark"],
-          ["📖","Rammeplan","7 fagområder utdypet","#2d6a4f","rammeplan"],
-          ["🤖","AI-assistent","Lag sanger, planer og mer","#37474f","ai"],
-        ].map(([ic,t,u,fc,sid])=>(
-          <div key={t} className="hover fade" onClick={()=>setSide(sid)} style={{background:C.w, borderRadius:14, padding:"16px 14px", cursor:"pointer", boxShadow:`0 2px 10px ${fc}22`, borderLeft:`4px solid ${fc}`}}>
-            <div style={{fontSize:26, marginBottom:4}}>{ic}</div>
-            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:15, color:C.t}}>{t}</div>
-            <div style={{fontSize:11, color:C.gr, marginTop:2}}>{u}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* PLANLEGGING */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>📋 Planlegging</div>
-        <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
-      </div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
-        {[
-          ["📅","Ukeplan","Mandag–fredag med tema","ukeplan","#1565c0"],
-          ["📋","Månedsplan","Hele måneden strukturert","maanedsplan","#6a1b9a"],
-          ["✉️","Månedsbrev","Brev til foreldre","maanedsbrev","#e67e22"],
-          ["📆","Årsplan","Overordnet tema og mål","arsplan","#2d6a4f"],
-        ].map(([ic,t,u,sideId,fc])=>(
-          <div key={t} className="hover" onClick={()=>navigerTil(sideId)} style={{background:C.w, borderRadius:12, padding:"12px 13px", cursor:"pointer", boxShadow:`0 2px 8px ${fc}1f`, borderLeft:`3px solid ${fc}`}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-              <span style={{fontSize:18}}>{ic}</span>
-              <div style={{fontWeight:800,color:C.t,fontSize:13}}>{t}</div>
-            </div>
-            <div style={{fontSize:11, color:C.gr, lineHeight:1.4}}>{u}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* FAGOMRÅDER */}
-      <div style={{background:C.w, borderRadius:16, padding:"16px 18px", boxShadow:"0 2px 10px rgba(44,91,142,0.08)", marginBottom:14}}>
-        <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>📖 De 7 fagområdene – klikk for å utforske</div>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
-          {FAGOMRADER.map(f=>(
-            <div key={f.id} className="hover" onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");setSide("rammeplan");}}
-              style={{background:C.lg2, borderRadius:10, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, transition:"all 0.18s", borderLeft:`3px solid ${f.farge}`}}>
-              <span style={{fontSize:20}}>{f.ikon}</span>
-              <div>
-                <div data-fag-color={f.id} style={{fontSize:11, fontWeight:800, color:f.farge, lineHeight:1.3}}>{f.navn}</div>
-                <div style={{fontSize:9, color:C.gr, marginTop:1}}>{f.kortbeskrivelse}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{background:C.lg2, borderRadius:13, padding:"13px 15px", borderLeft:`4px solid ${C.g}`}}>
-        <div style={{fontWeight:800, color:C.g, fontSize:12, marginBottom:4}}>🌿 Om Barnehagehjelpen</div>
-        <div style={{fontSize:12, color:C.t, lineHeight:1.7}}>Alt innhold er koblet til Rammeplan 2017. Bruk AI-assistenten til å generere sanger, aktiviteter og pedagogiske planer tilpasset din barnegruppe.</div>
-      </div>
-    </div>
-  );
+  // Hjem, MineSkjemaer, AIKnapper er definert på modul-nivå (se over Barnehagehjelpen)
 
   // NyttSkjemaForm is rendered directly in JSX (not via sider object) to keep component type stable
 
@@ -11106,10 +11111,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     onLogout,
   };
 
+  const hjemCtx = { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon };
   const skjemaCtx = { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil };
 
   const sider={
-    hjem:Hjem(),
+    hjem:<Hjem ctx={hjemCtx}/>,
     skjemaer:<MineSkjemaer ctx={skjemaCtx}/>,
     rammeplan:<RammeplanSide ctx={ctx}/>,
     tegneark:<TegnearkSide ctx={ctx}/>,
