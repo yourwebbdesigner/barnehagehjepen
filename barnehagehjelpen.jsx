@@ -7549,7 +7549,7 @@ function RammeplanSide({ ctx }) {
   }
 
 function TegnearkSide({ ctx }) {
-  const { aktivBruker, vis, preselectTegneark, favoritter, toggleFav, setGlobalUserTegneark } = ctx;
+  const { aktivBruker, vis, preselectTegneark, setPreselectTegneark, favoritter, toggleFav, setGlobalUserTegneark } = ctx;
 
     const [tkat, setTkat] = useState("alle");
     const [valgtT, setValgtT] = useState(() => preselectTegneark ? TEGNEARK.find(t => t.id === preselectTegneark) || null : null);
@@ -11095,6 +11095,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     globalUserTegneark,
     setGlobalUserTegneark,
     preselectTegneark,
+    setPreselectTegneark,
     onUserUpdate,
     onLogout,
   };
