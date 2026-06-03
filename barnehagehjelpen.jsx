@@ -8081,7 +8081,7 @@ function MaanedsbrevSide({ ctx }) {
     const lagreNy=async()=>{setBFeil("");if(!b_gjort.trim()&&!b_kommende.trim()){setBFeil("Fyll inn minst ett felt");return;}setBLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen,opprettet:new Date().toISOString()},...brev]);setBLoading(false);if(ok){visLokal("✅ Månedsbrev lagret");setVisning("liste");}};
     const lagreEndring=async()=>{setBFeil("");if(!valgt)return;setBLoading(true);const ok=await lagre(brev.map(b=>b.id===valgt.id?{...b,tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen}:b));setBLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
     const genererAI=async()=>{setBAiLoading(true);const temaStr=planTema?` Månedstema: «${planTema}».`:"";const prompt=`Skriv et månedsbrev til foreldre fra norsk barnehage for ${MAANEDER[b_maaned-1]} ${b_aar}.${temaStr}\nBruk NØYAKTIG denne strukturen:\n\n## Hva vi har jobbet med\n• [punkt]\n• [punkt]\n• [punkt]\n\n## Kommende aktiviteter\n• [aktivitet/dato]\n• [aktivitet/dato]\n\n## Praktisk informasjon\n• [praktisk info]\n• [praktisk info]\n\nSkriv vennlig og engasjerende. Referer til Rammeplan 2017 og barnehagens pedagogiske arbeid.`;
-    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),90000);
+    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),25000);
     try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1500}),signal:ctrl.signal});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
       const norm=(tekst.startsWith("##")?"\n":"")+tekst;
       const deler=norm.split(/\n##\s+/).slice(1);
@@ -8182,6 +8182,21 @@ function MaanedsbrevSide({ ctx }) {
       </div>
     );
   }
+
+// ─── Hjelpkomponent for sorterbar aktivitet i ukeplan (dnd-kit krever eget komponent på modul-nivå) ───
+function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
+  const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
+  return(
+    <div ref={setNodeRef} style={{transform:dndCSS.Transform.toString(transform),transition,opacity:isDragging?0.5:1,display:"flex",alignItems:"center",gap:5,background:tidBg,borderRadius:6,padding:"4px 7px",marginBottom:3}}>
+      <span {...attributes} {...listeners} style={{cursor:"grab",color:tidCol,fontSize:11,lineHeight:1,touchAction:"none"}}>⠿</span>
+      <span style={{flex:1,fontSize:11,color:"var(--c-t)"}}>{a.tekst}</span>
+      <div style={{display:"flex",gap:2,flexShrink:0}}>
+        {dager.filter(x=>x!==dag).map(t2=><button key={t2} type="button" title={"Flytt til "+t2} onClick={()=>flyttFn(dag,a.id,t2)} style={{background:"none",border:"none",color:"var(--c-gr)",cursor:"pointer",fontSize:9,padding:"0 2px",lineHeight:1}}>→{t2.slice(0,3)}</button>)}
+        <button type="button" onClick={()=>slettFn(dag,a.id)} style={{background:"none",border:"none",color:"#c62828",cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
+      </div>
+    </div>
+  );
+}
 
 function UkeplanSide({ ctx }) {
   const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalUkeplaner } = ctx;
@@ -8926,7 +8941,7 @@ function MaanedskalenderSide({ ctx }) {
       const mNavn=MAANEDER_KAL[k_maaned-1];
       const antallDager=new Date(k_aar,k_maaned,0).getDate();
       const prompt=`Du er pedagog i norsk barnehage. Lag en fullstendig månedsoversikt for ${mNavn} ${k_aar} (${antallDager} dager) med tema "${k_tema}".\nDekk ALLE hverdager (mandag–fredag) med minst én hendelse per dag – ca. 18–22 hendelser totalt.\nTyper: aktivitet (daglig pedagogisk aktivitet), tur (uteaktivitet/tur), bursdag (markering), praktisk (info til foreldre).\nReturner KUN gyldig JSON uten markdown, eksempel:\n{"events":{"1":[{"type":"aktivitet","tekst":"Samlingsstund: tema ${k_tema}","ikon":"🎨"}],"2":[{"type":"tur","tekst":"Skogstur","ikon":"🌲"}],"3":[{"type":"aktivitet","tekst":"Forming og kreativitet","ikon":"✂️"}]}}\nBruk dagtall som nøkler (1–${antallDager}). Hopp over lørdager og søndager. Varier aktivitetene gjennom måneden.`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),35000);
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),25000);
       try{
         const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1100}),signal:ctrl.signal});
         if(!r.ok){const d=await r.json().catch(()=>({}));setKFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}
@@ -9235,6 +9250,7 @@ function ArsplanSide({ ctx }) {
       { id:"april",     navn:"April",     ikon:"🐣", farge:"#f39c12" },
       { id:"mai",       navn:"Mai",       ikon:"🇳🇴", farge:"#c0392b" },
       { id:"juni",      navn:"Juni",      ikon:"☀️", farge:"#f1c40f" },
+      { id:"juli",      navn:"Juli",      ikon:"🏖️", farge:"#e67e22" },
     ];
 
     const skrivUtArsplan = (p) => {
@@ -9313,7 +9329,7 @@ function ArsplanSide({ ctx }) {
         ? { prompt, max_tokens: maxTokens }
         : { model:"claude-sonnet-4-6", max_tokens: maxTokens, messages:[{ role:"user", content:prompt }] };
       const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 90000);
+      const tid = setTimeout(() => ctrl.abort(), 25000);
       try {
         const r = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:ctrl.signal });
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -10755,7 +10771,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     return null;
   });
   useEffect(() => {
-    if (vær) return; // allerede cachet
+    if (vær) return; // allerede cachet i sessionStorage
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
       try {
@@ -10769,7 +10785,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         try { sessionStorage.setItem("bh_vær", JSON.stringify({ data, tid: Date.now() })); } catch {}
       } catch {}
     }, () => {});
-  }, [vær]);
+  }, []); // kjøres én gang – vær-cachen sjekkes i useState-initializer
 
   const værInfo = (kode) => {
     if (kode === 0) return ["☀️","Klarvær"];
@@ -11029,22 +11045,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   // PlanleggingSide er definert på modul-nivå (se over Barnehagehjelpen)
 
-  // ─── Hjelpkomponent for sorterbar aktivitet i ukeplan (dnd-kit krever eget komponent) ───
-  function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
-    const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
-    return(
-      <div ref={setNodeRef} style={{transform:dndCSS.Transform.toString(transform),transition,opacity:isDragging?0.5:1,display:"flex",alignItems:"center",gap:5,background:tidBg,borderRadius:6,padding:"4px 7px",marginBottom:3}}>
-        <span {...attributes} {...listeners} style={{cursor:"grab",color:tidCol,fontSize:11,lineHeight:1,touchAction:"none"}}>⠿</span>
-        <span style={{flex:1,fontSize:11,color:"#1a2c45"}}>{a.tekst}</span>
-        <div style={{display:"flex",gap:2,flexShrink:0}}>
-          {dager.filter(x=>x!==dag).map(t2=><button key={t2} type="button" title={"Flytt til "+t2} onClick={()=>flyttFn(dag,a.id,t2)} style={{background:"none",border:"none",color:"#5d7390",cursor:"pointer",fontSize:9,padding:"0 2px",lineHeight:1}}>→{t2.slice(0,3)}</button>)}
-          <button type="button" onClick={()=>slettFn(dag,a.id)} style={{background:"none",border:"none",color:"#c62828",cursor:"pointer",fontSize:11,padding:0,lineHeight:1}}>✕</button>
-        </div>
-      </div>
-    );
-  }
-
-  // UkeplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+  // UkeplanSide og SortableAktivitetItem er definert på modul-nivå (se over Barnehagehjelpen)
 
 
   // MaanedskalenderSide er definert på modul-nivå (se over Barnehagehjelpen)
@@ -11198,7 +11199,9 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
           </div>
         </div>
         <main className="bh-main">
-          {feedback && <div className="fade" style={{position:"fixed",top:70,right:20,zIndex:200,background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
+          <div aria-live="polite" aria-atomic="true" style={{position:"fixed",top:70,right:20,zIndex:200,pointerEvents:"none"}}>
+            {feedback && <div className="fade" style={{background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
+          </div>
           <ErrorBoundary key={side} compact>
             {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
              : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
@@ -11233,10 +11236,10 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.feil) {
       if (this.props.compact) return (
-        <div style={{padding:"24px 20px",background:"#fff0f0",borderRadius:14,border:"1.5px solid #ffcdd2",margin:8}}>
+        <div style={{padding:"24px 20px",background:"var(--c-w)",borderRadius:14,border:"1.5px solid var(--c-divider)",borderLeft:"4px solid #c62828",margin:8}}>
           <div style={{fontWeight:800,color:"#c62828",fontSize:15,marginBottom:8}}>⚠️ Noe gikk galt i denne seksjonen</div>
-          <div style={{fontSize:12,color:"#5d7390",marginBottom:14}}>Prøv å navigere bort og tilbake, eller last inn siden på nytt.</div>
-          <button onClick={()=>this.setState({feil:null})} style={{padding:"8px 18px",background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"'Nunito',sans-serif"}}>↩ Prøv igjen</button>
+          <div style={{fontSize:12,color:"var(--c-gr)",marginBottom:14}}>Prøv å navigere bort og tilbake, eller last inn siden på nytt.</div>
+          <button onClick={()=>this.setState({feil:null})} style={{padding:"8px 18px",background:"var(--c-g)",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"'Nunito',sans-serif"}}>↩ Prøv igjen</button>
         </div>
       );
       return (
