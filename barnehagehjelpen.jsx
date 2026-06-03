@@ -9205,6 +9205,42 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
     );
   }
 
+function AIKnapper({ seksjonId, aiAktiv, aiLoading, aiTekst, utforSeksjonAI, aksepterForslag, avvisForslag }) {
+  const erAktivSeksjon = aiAktiv?.seksjonId === seksjonId;
+  const handlinger = [
+    { id:"start",        label:"✨ Hjelp meg starte",  bg:"linear-gradient(135deg,#2c5b8e,#4178bd)", col:"#fff" },
+    { id:"profesjonell", label:"✨ Mer profesjonell",   bg:"#e8eff8", col:C.g },
+    { id:"rammeplan",    label:"✨ Tilpass Rammeplan",  bg:"#d8f3dc", col:"#2d6a4f" },
+    { id:"forkort",      label:"✨ Forkort teksten",    bg:"#fff8e1", col:"#795548" },
+    { id:"alternativ",   label:"✨ Gi flere forslag",   bg:"#f3e5f5", col:"#6a1b9a" },
+  ];
+  return (
+    <div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8}}>
+        {handlinger.map(h => {
+          const erDenne = erAktivSeksjon && aiAktiv?.handling === h.id && aiLoading;
+          return (
+            <button key={h.id} disabled={aiLoading && erAktivSeksjon} onClick={() => utforSeksjonAI(seksjonId, h.id)}
+              style={{background:h.bg,color:h.col,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,cursor:aiLoading&&erAktivSeksjon?"wait":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aiLoading&&erAktivSeksjon?0.65:1,transition:"opacity 0.15s"}}>
+              {erDenne ? "⏳ Genererer..." : h.label}
+            </button>
+          );
+        })}
+      </div>
+      {erAktivSeksjon && aiTekst && (
+        <div ref={el => el && el.scrollIntoView({ behavior:"smooth", block:"nearest" })} className="fade" style={{background:C.lg2,border:"2px solid var(--c-g)",borderRadius:10,padding:12,marginTop:10}}>
+          <div style={{fontSize:11,fontWeight:800,color:C.g,marginBottom:6}}>✨ AI-forslag – klikk "Bruk" for å legge inn i seksjonen:</div>
+          <div style={{fontSize:12,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.6,marginBottom:8,maxHeight:220,overflowY:"auto"}}>{aiTekst}</div>
+          <div style={{display:"flex",gap:7}}>
+            <button onClick={() => aksepterForslag(seksjonId)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✅ Bruk forslaget</button>
+            <button onClick={avvisForslag} style={{background:"transparent",color:C.gr,border:"1px solid var(--c-divider)",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avvis</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ArsplanSide({ ctx }) {
   const { aktivBruker, vis, navigerTil, planTema, setPlanTema } = ctx;
 
@@ -9420,48 +9456,11 @@ function ArsplanSide({ ctx }) {
             visLokal("✨ Komplett årshjul generert!");
           } catch (e) { console.error("[AI Komplett årshjul]", e); visLokal("ℹ️ AI utilgjengelig"); }
         } else { visLokal("ℹ️ AI utilgjengelig"); }
-      }, 4096);
+      }, 1200);
     };
 
     const aksepterForslag = (seksjonId) => { oppdaterSeksjon(seksjonId, aiTekst); setAiTekst(""); setAiAktiv(null); visLokal("✅ Forslag lagt inn"); };
     const avvisForslag = () => { setAiTekst(""); setAiAktiv(null); };
-
-    // Definert utenfor if-blokken så React ikke remounter den ved hvert render
-    const AIKnapper = ({ seksjonId }) => {
-      const erAktivSeksjon = aiAktiv?.seksjonId === seksjonId;
-      const handlinger = [
-        { id:"start",        label:"✨ Hjelp meg starte",  bg:"linear-gradient(135deg,#2c5b8e,#4178bd)", col:"#fff" },
-        { id:"profesjonell", label:"✨ Mer profesjonell",   bg:"#e8eff8", col:C.g },
-        { id:"rammeplan",    label:"✨ Tilpass Rammeplan",  bg:"#d8f3dc", col:"#2d6a4f" },
-        { id:"forkort",      label:"✨ Forkort teksten",    bg:"#fff8e1", col:"#795548" },
-        { id:"alternativ",   label:"✨ Gi flere forslag",   bg:"#f3e5f5", col:"#6a1b9a" },
-      ];
-      return (
-        <div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8}}>
-            {handlinger.map(h => {
-              const erDenne = erAktivSeksjon && aiAktiv?.handling === h.id && aiLoading;
-              return (
-                <button key={h.id} disabled={aiLoading && erAktivSeksjon} onClick={() => utforSeksjonAI(seksjonId, h.id)}
-                  style={{background:h.bg,color:h.col,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,cursor:aiLoading&&erAktivSeksjon?"wait":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aiLoading&&erAktivSeksjon?0.65:1,transition:"opacity 0.15s"}}>
-                  {erDenne ? "⏳ Genererer..." : h.label}
-                </button>
-              );
-            })}
-          </div>
-          {erAktivSeksjon && aiTekst && (
-            <div ref={el => el && el.scrollIntoView({ behavior:"smooth", block:"nearest" })} className="fade" style={{background:"#f0f7ff",border:"2px solid #2c5b8e",borderRadius:10,padding:12,marginTop:10}}>
-              <div style={{fontSize:11,fontWeight:800,color:C.g,marginBottom:6}}>✨ AI-forslag – klikk "Bruk" for å legge inn i seksjonen:</div>
-              <div style={{fontSize:12,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.6,marginBottom:8,maxHeight:220,overflowY:"auto"}}>{aiTekst}</div>
-              <div style={{display:"flex",gap:7}}>
-                <button onClick={() => aksepterForslag(seksjonId)} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✅ Bruk forslaget</button>
-                <button onClick={avvisForslag} style={{background:"transparent",color:C.gr,border:"1px solid #d8e6f5",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avvis</button>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    };
 
     const iS = { width:"100%", border:"1.5px solid #d8e6f5", borderRadius:10, padding:"11px 13px", fontSize:13, background:"#f5f9fd", color:C.t, fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", outline:"none", resize:"vertical" };
     const labelStil = { display:"block", fontWeight:700, color:C.t, fontSize:12, marginBottom:5 };
@@ -9534,7 +9533,7 @@ function ArsplanSide({ ctx }) {
                 style={{...iS, marginBottom:0, minHeight:100}}
                 placeholder={`Skriv om ${s.navn.toLowerCase()} her, eller bruk AI-hjelp nedenfor …`}
               />
-              <AIKnapper seksjonId={s.id} />
+              <AIKnapper seksjonId={s.id} aiAktiv={aiAktiv} aiLoading={aiLoading} aiTekst={aiTekst} utforSeksjonAI={utforSeksjonAI} aksepterForslag={aksepterForslag} avvisForslag={avvisForslag} />
             </div>
           ))}
 
@@ -10510,6 +10509,101 @@ function ProfilSide({ ctx }) {
   }
 
 
+function MineSkjemaer({ ctx }) {
+  const { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil } = ctx;
+  return (
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📋 Mine skjemaer</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:12}}>{skjemaer.length} skjema{skjemaer.length!==1?"er":""} lagret</p>
+      {feedback&&<div className="fade" style={{marginBottom:12,background:C.mint,borderRadius:8,padding:"9px 13px",color:C.g,fontWeight:700}}>{feedback}</div>}
+      {skjemaer.length===0?(
+        <div style={{background:C.w,borderRadius:16,padding:28,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.07)"}}>
+          <div style={{fontSize:40,marginBottom:8}}>📝</div>
+          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,color:C.t}}>Ingen skjemaer ennå</div>
+          <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema!</div>
+          <button className="btn" onClick={()=>navigerTil("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
+        </div>
+      ):valgtSkjema?(
+        <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
+          <Tilbake onClick={()=>{setValgtSkjema(null);setRedigerSkjemaTittel(null);}} />
+          {redigerSkjemaTittel !== null ? (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:800,color:C.g,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:5}}>Endre navn</div>
+              <div style={{display:"flex",gap:8}}>
+                <input autoFocus type="text" value={redigerSkjemaTittel} onChange={e=>setRedigerSkjemaTittel(e.target.value)}
+                  onKeyDown={e=>{
+                    if(e.key==="Enter"&&redigerSkjemaTittel.trim()){
+                      const nyTittel=redigerSkjemaTittel.trim();
+                      setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
+                      setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
+                      setRedigerSkjemaTittel(null);
+                      vis("✅ Navn oppdatert");
+                    }
+                    if(e.key==="Escape") setRedigerSkjemaTittel(null);
+                  }}
+                  style={{flex:1,padding:"9px 12px",border:`2px solid ${C.g}`,borderRadius:9,fontSize:14,fontFamily:"'Nunito',sans-serif",fontWeight:700,color:C.t}} />
+                <button className="btn" onClick={()=>{
+                  const nyTittel=redigerSkjemaTittel.trim();
+                  if(!nyTittel) return;
+                  setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
+                  setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
+                  setRedigerSkjemaTittel(null);
+                  vis("✅ Navn oppdatert");
+                }} style={{background:C.g,color:"#fff",padding:"9px 16px",fontSize:13}}>Lagre</button>
+                <button className="btn" onClick={()=>setRedigerSkjemaTittel(null)} style={{background:C.lg2,color:C.g,padding:"9px 12px",fontSize:13}}>Avbryt</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:C.t,flex:1}}>{valgtSkjema.tittel}</div>
+              <button className="btn" onClick={()=>setRedigerSkjemaTittel(valgtSkjema.tittel)}
+                style={{background:C.lg2,color:C.g,padding:"5px 10px",fontSize:12,flexShrink:0}}>✏️ Endre navn</button>
+            </div>
+          )}
+          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+            {valgtSkjema.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtSkjema.alder}</span>}
+            {valgtSkjema.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{valgtSkjema.kategori}</span>}
+            {valgtSkjema.rammeplan?.map(r=><FagTag key={r} rid={r}/>)}
+          </div>
+          {[
+            {felt:valgtSkjema.hva, label:"🎯 HVA", bg:"#fff9c4", col:"#795548"},
+            {felt:valgtSkjema.materialer, label:"📦 MATERIALER", bg:"#fce4ec", col:"#c62828"},
+            {felt:valgtSkjema.hvordan, label:"⚙️ HVORDAN", bg:"#e8f5e9", col:"#2e7d32"},
+            {felt:valgtSkjema.hvorfor, label:"❓ HVORFOR", bg:"#e3f2fd", col:"#1565c0"},
+          ].filter(s=>s.felt).map(({felt,label,bg,col})=>(
+            <div key={label} style={{background:bg,borderRadius:10,padding:"11px 13px",marginBottom:10}}>
+              <div style={{fontWeight:800,color:col,fontSize:12,marginBottom:7}}>{label}</div>
+              <RenderTekst tekst={felt} />
+            </div>
+          ))}
+          <div style={{display:"flex",gap:8,marginTop:4}}>
+            <button onClick={()=>skrivUtGenerell({tittel:valgtSkjema.tittel,meta:[valgtSkjema.alder,valgtSkjema.kategori].filter(Boolean).join(" • "),seksjoner:[{label:"🎯 Hva",tekst:valgtSkjema.hva,farge:"#795548",bg:"#fff9c4"},{label:"📦 Materialer",tekst:valgtSkjema.materialer,farge:"#c62828",bg:"#fce4ec"},{label:"⚙️ Hvordan",tekst:valgtSkjema.hvordan,farge:"#2e7d32",bg:"#e8f5e9"},{label:"❓ Hvorfor",tekst:valgtSkjema.hvorfor,farge:"#1565c0",bg:"#e3f2fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"8px 16px",fontSize:12,border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
+            <button className="btn" onClick={()=>setBekreftSlettSkjema(valgtSkjema)} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
+          </div>
+        </div>
+      ):(
+        <div style={{display:"grid",gap:9}}>
+          {skjemaer.map(s=>(
+            <div key={s.id} className="hover" onClick={()=>setValgtSkjema(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}</div>
+                  {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
+                  <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                    {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
+                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                  </div>
+                </div>
+                <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [tema, setTema] = useState(() => {
     const lagret = localStorage.getItem("bh_tema");
@@ -10934,99 +11028,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   // NyttSkjemaForm is rendered directly in JSX (not via sider object) to keep component type stable
 
-  const MineSkjemaer = ()=>(
-    <div className="fade">
-      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📋 Mine skjemaer</div>
-      <p style={{color:C.gr,fontSize:12,marginBottom:12}}>{skjemaer.length} skjema{skjemaer.length!==1?"er":""} lagret</p>
-      {feedback&&<div className="fade" style={{marginBottom:12,background:C.mint,borderRadius:8,padding:"9px 13px",color:C.g,fontWeight:700}}>{feedback}</div>}
-      {skjemaer.length===0?(
-        <div style={{background:C.w,borderRadius:16,padding:28,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.07)"}}>
-          <div style={{fontSize:40,marginBottom:8}}>📝</div>
-          <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,color:C.t}}>Ingen skjemaer ennå</div>
-          <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema!</div>
-          <button className="btn" onClick={()=>setSide("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
-        </div>
-      ):valgtSkjema?(
-        <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
-          <Tilbake onClick={()=>{setValgtSkjema(null);setRedigerSkjemaTittel(null);}} />
-          {redigerSkjemaTittel !== null ? (
-            <div style={{marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:800,color:C.g,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:5}}>Endre navn</div>
-              <div style={{display:"flex",gap:8}}>
-                <input autoFocus type="text" value={redigerSkjemaTittel} onChange={e=>setRedigerSkjemaTittel(e.target.value)}
-                  onKeyDown={e=>{
-                    if(e.key==="Enter"&&redigerSkjemaTittel.trim()){
-                      const nyTittel=redigerSkjemaTittel.trim();
-                      setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
-                      setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
-                      setRedigerSkjemaTittel(null);
-                      vis("✅ Navn oppdatert");
-                    }
-                    if(e.key==="Escape") setRedigerSkjemaTittel(null);
-                  }}
-                  style={{flex:1,padding:"9px 12px",border:`2px solid ${C.g}`,borderRadius:9,fontSize:14,fontFamily:"'Nunito',sans-serif",fontWeight:700,color:C.t}} />
-                <button className="btn" onClick={()=>{
-                  const nyTittel=redigerSkjemaTittel.trim();
-                  if(!nyTittel) return;
-                  setSkjemaer(p=>p.map(s=>s.id===valgtSkjema.id?{...s,tittel:nyTittel}:s));
-                  setValgtSkjema(v=>v?{...v,tittel:nyTittel}:v);
-                  setRedigerSkjemaTittel(null);
-                  vis("✅ Navn oppdatert");
-                }} style={{background:C.g,color:"#fff",padding:"9px 16px",fontSize:13}}>Lagre</button>
-                <button className="btn" onClick={()=>setRedigerSkjemaTittel(null)} style={{background:C.lg2,color:C.g,padding:"9px 12px",fontSize:13}}>Avbryt</button>
-              </div>
-            </div>
-          ) : (
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:C.t,flex:1}}>{valgtSkjema.tittel}</div>
-              <button className="btn" onClick={()=>setRedigerSkjemaTittel(valgtSkjema.tittel)}
-                style={{background:C.lg2,color:C.g,padding:"5px 10px",fontSize:12,flexShrink:0}}>✏️ Endre navn</button>
-            </div>
-          )}
-          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-            {valgtSkjema.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtSkjema.alder}</span>}
-            {valgtSkjema.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{valgtSkjema.kategori}</span>}
-            {valgtSkjema.rammeplan?.map(r=><FagTag key={r} rid={r}/>)}
-          </div>
-          {[
-            {felt:valgtSkjema.hva, label:"🎯 HVA", bg:"#fff9c4", col:"#795548"},
-            {felt:valgtSkjema.materialer, label:"📦 MATERIALER", bg:"#fce4ec", col:"#c62828"},
-            {felt:valgtSkjema.hvordan, label:"⚙️ HVORDAN", bg:"#e8f5e9", col:"#2e7d32"},
-            {felt:valgtSkjema.hvorfor, label:"❓ HVORFOR", bg:"#e3f2fd", col:"#1565c0"},
-          ].filter(s=>s.felt).map(({felt,label,bg,col})=>(
-            <div key={label} style={{background:bg,borderRadius:10,padding:"11px 13px",marginBottom:10}}>
-              <div style={{fontWeight:800,color:col,fontSize:12,marginBottom:7}}>{label}</div>
-              <RenderTekst tekst={felt} />
-            </div>
-          ))}
-          <div style={{display:"flex",gap:8,marginTop:4}}>
-            <button onClick={()=>skrivUtGenerell({tittel:valgtSkjema.tittel,meta:[valgtSkjema.alder,valgtSkjema.kategori].filter(Boolean).join(" • "),seksjoner:[{label:"🎯 Hva",tekst:valgtSkjema.hva,farge:"#795548",bg:"#fff9c4"},{label:"📦 Materialer",tekst:valgtSkjema.materialer,farge:"#c62828",bg:"#fce4ec"},{label:"⚙️ Hvordan",tekst:valgtSkjema.hvordan,farge:"#2e7d32",bg:"#e8f5e9"},{label:"❓ Hvorfor",tekst:valgtSkjema.hvorfor,farge:"#1565c0",bg:"#e3f2fd"}]})} style={{background:"#e3f2fd",color:"#1565c0",padding:"8px 16px",fontSize:12,border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
-            <button className="btn" onClick={()=>setBekreftSlettSkjema(valgtSkjema)} style={{background:"#ffebee",color:"#c62828",padding:"8px 16px",fontSize:12}}>🗑 Slett skjema</button>
-          </div>
-        </div>
-      ):(
-        <div style={{display:"grid",gap:9}}>
-          {skjemaer.map(s=>(
-            <div key={s.id} className="hover" onClick={()=>setValgtSkjema(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}</div>
-                  {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
-                  <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
-                    {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
-                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
-                  </div>
-                </div>
-                <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // RammeplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+  // MineSkjemaer, RammeplanSide og TegnearkSide er definert på modul-nivå (se over Barnehagehjelpen)
 
 
   // TegnearkSide er definert på modul-nivå (se over Barnehagehjelpen)
@@ -11104,9 +11106,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     onLogout,
   };
 
+  const skjemaCtx = { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil };
+
   const sider={
     hjem:Hjem(),
-    skjemaer:<MineSkjemaer/>,
+    skjemaer:<MineSkjemaer ctx={skjemaCtx}/>,
     rammeplan:<RammeplanSide ctx={ctx}/>,
     tegneark:<TegnearkSide ctx={ctx}/>,
     ai:<AiSideComp onLagreSomSkjema={lagreAISomSkjema} initialType={aiInitialType} clearInitialType={()=>setAiInitialType(null)}/>,
