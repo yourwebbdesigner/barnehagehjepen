@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useMemo } from "react";
+﻿import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as dndCSS } from "@dnd-kit/utilities";
@@ -3478,6 +3478,10 @@ function NyttSkjemaForm({ onSave, onNavigate }) {
   );
 }
 
+const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
+
 // ─── Standalone search/list components ─────────────────────────
 // Defined OUTSIDE the main component so they never remount on parent re-renders
 function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
@@ -3802,9 +3806,9 @@ function SangerSideComp({ favoritter, toggleFav, aktivBruker, onNyUserSang, pres
     return (filter==="alle"||s.kategori===filter)&&(!sok||s.tittel.toLowerCase().includes(sok.toLowerCase()));
   });
   const skrivUtSang = (s) => {
-    const melodiHtml = s.melodi ? ' · 🎼 ' + s.melodi : '';
-    const tipsHtml = s.tips ? '<div style="margin-top:12px;padding:12px;background:#fffde7;border-radius:8px;font-size:13px;"><strong>💡 Tips:</strong> ' + s.tips + '</div>' : '';
-    skrivUtVindu('<div style="max-width:620px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + s.tittel + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + s.kategori + ' · ' + s.alder + melodiHtml + '</div><pre style="font-size:16px;line-height:2.1;white-space:pre-wrap;font-family:inherit;background:#f5f9fd;padding:18px;border-radius:10px;border:1px solid #c4d6ec;">' + s.tekst + '</pre>' + tipsHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', s.tittel);
+    const melodiHtml = s.melodi ? ' · 🎼 ' + escapeHTML(s.melodi) : '';
+    const tipsHtml = s.tips ? '<div style="margin-top:12px;padding:12px;background:#fffde7;border-radius:8px;font-size:13px;"><strong>💡 Tips:</strong> ' + mdToHtml(s.tips) + '</div>' : '';
+    skrivUtVindu('<div style="max-width:620px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + escapeHTML(s.tittel) + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + escapeHTML(s.kategori) + ' · ' + escapeHTML(s.alder) + melodiHtml + '</div><pre style="font-size:16px;line-height:2.1;white-space:pre-wrap;font-family:inherit;background:#f5f9fd;padding:18px;border-radius:10px;border:1px solid #c4d6ec;">' + stripMd(s.tekst) + '</pre>' + tipsHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', escapeHTML(s.tittel));
   };
   const slettMin = async (dbId) => {
     await slettUserSang(dbId, aktivBruker.id);
@@ -4086,11 +4090,11 @@ function AktivSideComp({ preselectId, clearPreselect, favoritter, toggleFav }) {
   });
   const filtre = [["alle","Alle"],["favoritter",`⭐ Favoritter${favSet.size?" ("+favSet.size+")":""}`],...AKTIV_KATS.filter(k=>k[0]!=="alle")];
   const skrivUtAktivitet = (a) => {
-    const tidHtml = a.tid ? ' · ⏱ ' + a.tid : '';
-    const gruppeHtml = a.gruppe ? ' · 👥 ' + a.gruppe : '';
-    const matHtml = a.materialer ? '<div style="background:#fce4ec;border-radius:8px;padding:12px 14px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:#c62828;margin-bottom:4px;">🧰 Materialer</div><div style="font-size:13px;">' + a.materialer + '</div></div>' : '';
-    const seksjoner = [['🎯 HVA – Beskrivelse', a.hva, '#fffde7', '#795548'], ['⚙️ HVORDAN – Gjennomføring', a.hvordan, '#e8f5e9', '#2e7d32'], ['❓ HVORFOR – Pedagogisk begrunnelse', a.hvorfor, '#e3f2fd', '#1565c0']].map(([t,v,bg,tc]) => '<div style="background:' + bg + ';border-radius:8px;padding:12px 14px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:' + tc + ';margin-bottom:4px;">' + t + '</div><div style="font-size:13px;line-height:1.7;">' + v + '</div></div>').join('');
-    skrivUtVindu('<div style="max-width:640px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + a.tittel + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + a.kategori + ' · ' + a.alder + tidHtml + gruppeHtml + '</div>' + seksjoner + matHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', a.tittel);
+    const tidHtml = a.tid ? ' · ⏱ ' + escapeHTML(a.tid) : '';
+    const gruppeHtml = a.gruppe ? ' · 👥 ' + escapeHTML(a.gruppe) : '';
+    const matHtml = a.materialer ? '<div style="background:#fce4ec;border-radius:8px;padding:12px 14px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:#c62828;margin-bottom:4px;">🧰 Materialer</div><div style="font-size:13px;">' + mdToHtml(a.materialer) + '</div></div>' : '';
+    const seksjoner = [['🎯 HVA – Beskrivelse', a.hva, '#fffde7', '#795548'], ['⚙️ HVORDAN – Gjennomføring', a.hvordan, '#e8f5e9', '#2e7d32'], ['❓ HVORFOR – Pedagogisk begrunnelse', a.hvorfor, '#e3f2fd', '#1565c0']].map(([t,v,bg,tc]) => '<div style="background:' + bg + ';border-radius:8px;padding:12px 14px;margin-bottom:10px;"><div style="font-weight:bold;font-size:12px;color:' + tc + ';margin-bottom:4px;">' + t + '</div><div style="font-size:13px;line-height:1.7;">' + mdToHtml(v) + '</div></div>').join('');
+    skrivUtVindu('<div style="max-width:640px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + escapeHTML(a.tittel) + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + escapeHTML(a.kategori) + ' · ' + escapeHTML(a.alder) + tidHtml + gruppeHtml + '</div>' + seksjoner + matHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', escapeHTML(a.tittel));
   };
   return (
     <div className="fade">
@@ -5137,7 +5141,7 @@ function skrivUtGenerell({ tittel, meta, seksjoner, logoTekst }) {
   const seksHTML = (seksjoner||[]).filter(s=>s?.tekst?.trim()).map(s=>`
     <section style="margin-bottom:16px;padding:13px 15px;background:${s.bg||"#f5f9fd"};border-radius:10px;border-left:4px solid ${s.farge||"#2c5b8e"}">
       ${s.label?`<div style="font-size:11px;font-weight:800;color:${s.farge||"#2c5b8e"};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px">${esc(s.label)}</div>`:""}
-      <div style="font-size:13px;color:#1a2c45;line-height:1.75;white-space:pre-wrap">${esc(s.tekst)}</div>
+      <div style="font-size:13px;color:#1a2c45;line-height:1.75;white-space:pre-wrap">${esc(s.tekst).replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>")}</div>
     </section>`).join("");
   const html=`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${esc(tittel)} – Barnehagehjelpen</title>
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,"Segoe UI",sans-serif;background:#f3f7fc;color:#1a2c45;padding:24px 20px;line-height:1.6}.topp{max-width:700px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{font-size:22px;color:#2c5b8e}.meta{font-size:12px;color:#5d7390;margin-top:4px}.innhold{max-width:700px;margin:0 auto}.knapper{display:flex;gap:8px}.knapp{padding:9px 14px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.lukk{padding:9px 14px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.bunn{font-size:11px;color:#8a9bb0;text-align:center;margin-top:28px}@media print{@page{margin:12mm}.knapper{display:none}body{background:white;padding:0}}</style></head>
@@ -5194,7 +5198,7 @@ async function lastNedPlanPDF({ tittel, meta, seksjoner, logoTekst }) {
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(11);
       pdf.setTextColor(26, 44, 69);
-      for (const linje of pdf.splitTextToSize(sek.tekst.trim(), pw - 2)) {
+      for (const linje of pdf.splitTextToSize(stripMd(sek.tekst.trim()), pw - 2)) {
         sjekk(5.5);
         pdf.text(linje, mX + 1, y); y += 5.5;
       }
@@ -6993,7 +6997,7 @@ function SupportSide() {
   );
 }
 
-function PlanleggingSide({ planTema, setPlanTema, navigerTil }) {
+function PlanleggingSide({ planTema, setPlanTema, navigerTil, antallUkeplaner=0, antallMaanedsplaner=0, antallMaanedsbrev=0, antallArsplaner=0 }) {
   return (
     <div className="fade">
       <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:10}}>📅 Planlegging</div>
@@ -7018,13 +7022,17 @@ function PlanleggingSide({ planTema, setPlanTema, navigerTil }) {
       <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mine planer</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
         {[
-          {id:"ukeplan",  ikon:"📋",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop"},
-          {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan",farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder"},
-          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev",farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp"},
-          {id:"arsplan",  ikon:"📋",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn"},
-        ].map(({id,ikon,tittel,farge,border,desc})=>(
+          {id:"ukeplan",    ikon:"📋",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop", antall:antallUkeplaner},
+          {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan", farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder",  antall:antallMaanedsplaner},
+          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev", farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp",      antall:antallMaanedsbrev},
+          {id:"arsplan",    ikon:"📋",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn",  antall:antallArsplaner},
+        ].map(({id,ikon,tittel,farge,border,desc,antall})=>(
           <div key={id} className="hover" onClick={()=>navigerTil(id)}
-            style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center"}}>
+            style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center",position:"relative"}}>
+            {antall > 0
+              ? <span style={{position:"absolute",top:8,right:8,background:farge,color:"#fff",borderRadius:10,padding:"1px 7px",fontSize:10,fontWeight:800}}>{antall}</span>
+              : <span style={{position:"absolute",top:8,right:8,background:C.lg2,color:C.gr,borderRadius:10,padding:"1px 7px",fontSize:9,fontWeight:700}}>Ingen</span>
+            }
             <div style={{fontSize:32,marginBottom:7}}>{ikon}</div>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:14,color:farge,marginBottom:4}}>{tittel}</div>
             <div style={{fontSize:10,color:C.gr,lineHeight:1.4}}>{desc}</div>
@@ -7275,7 +7283,7 @@ function RammeplanSide({ ctx }) {
                     AKTIVITETER.filter(a=>a.rammeplan.includes(valgtFag.id)).map(a=>(
                       <div key={a.id} className="hover" onClick={()=>{setPreselectAktiv(a.id);setSide("aktiviteter");}} style={{background:C.bg,borderRadius:8,padding:"8px 11px",marginBottom:6,cursor:"pointer"}}>
                         <span style={{fontWeight:700,color:C.t,fontSize:12}}>⭐ {a.tittel}</span>
-                        <div style={{fontSize:10,color:C.gr}}>{a.hva.substring(0,55)}...</div>
+                        <div style={{fontSize:10,color:C.gr}}>{a.hva?.substring(0,55)}...</div>
                       </div>
                     )):<div style={{fontSize:12,color:C.gr}}>Ingen aktiviteter koblet ennå.</div>}
                 </div>
@@ -7586,7 +7594,6 @@ function TegnearkSide({ ctx }) {
     // ─── Bygg fullstendig selvstendig HTML for et tegneark ───
     // Brukes både for utskrift og nedlasting. All CSS er inline, SVG er innebygd,
     // og den fungerer uavhengig av appen.
-    const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     const trygtFilnavn = (s) => String(s||"tegneark").toLowerCase().replace(/[^a-z0-9æøå]+/gi,"_").replace(/^_+|_+$/g,"").slice(0,50) || "tegneark";
 
     const byggUtskriftsHTML = (ark, { selvstendig = true } = {}) => {
@@ -8414,7 +8421,6 @@ Returner KUN gyldig JSON uten markdown:
 
     // Bygg HTML for utskrift/nedlasting
     const byggHTML = (p) => {
-      const escapeHTML = (s) => String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
       const dagNavn = { mandag:"MANDAG", tirsdag:"TIRSDAG", onsdag:"ONSDAG", torsdag:"TORSDAG", fredag:"FREDAG" };
       const erEmoji = (b) => b && !b.startsWith("data:");
       const dagerHTML = ["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
@@ -8525,7 +8531,6 @@ Returner KUN gyldig JSON uten markdown:
         }
 
         // Bygg utskriftsinnhold som direkte HTML (ikke selvstendig dokument)
-        const escapeHTML = (s) => String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         const erEmoji = (b) => b && !b.startsWith("data:");
         const dagNavn = { mandag:"MANDAG", tirsdag:"TIRSDAG", onsdag:"ONSDAG", torsdag:"TORSDAG", fredag:"FREDAG" };
         const dagerHTML = ["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
@@ -8689,7 +8694,7 @@ Returner KUN gyldig JSON uten markdown:
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     {dagBilde ? (<>
                       {erEmoji?<span style={{fontSize:22,lineHeight:1}}>{dagBilde}</span>:<img src={dagBilde} alt="" style={{width:32,height:32,borderRadius:6,objectFit:"cover",border:"1px solid #d8e6f5"}}/>}
-                      <button type="button" onClick={()=>oppdaterDag(d,"bilde","")} style={{background:"#fdecea",color:"#c62828",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,padding:0}}>✕</button>
+                      <button type="button" aria-label="Slett bilde" onClick={()=>oppdaterDag(d,"bilde","")} style={{background:"#fdecea",color:"#c62828",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,padding:0}}>✕</button>
                     </>) : (
                       <button type="button" onClick={()=>setBildevelgerForDag(d)} style={{background:"#e8eff8",color:dagFarge,border:"none",borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"'Nunito',sans-serif"}}>📷 Bilde</button>
                     )}
@@ -8731,7 +8736,7 @@ Returner KUN gyldig JSON uten markdown:
 
           {/* BILDEVELGER-MODAL */}
           {bildevelgerForDag && (
-            <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBildevelgerForDag(null)}>
+            <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBildevelgerForDag(null)} onKeyDown={e=>e.key==="Escape"&&setBildevelgerForDag(null)} tabIndex={-1}>
               <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:18,maxWidth:420,width:"100%",maxHeight:"85vh",overflowY:"auto",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
                 <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.t,marginBottom:6}}>📷 Velg bilde for {bildevelgerForDag.charAt(0).toUpperCase()+bildevelgerForDag.slice(1)}</div>
                 <p style={{fontSize:12,color:C.gr,marginBottom:14,lineHeight:1.5}}>Velg en emoji nedenfor, eller last opp et eget bilde.</p>
@@ -8952,7 +8957,7 @@ function MaanedskalenderSide({ ctx }) {
         if(!m){setKFeil("❌ AI svarte uten JSON – prøv igjen.");return;}
         let parsed;try{parsed=JSON.parse(m[0]);}catch{setKFeil("❌ AI-svaret var ikke gyldig JSON – prøv igjen.");return;}
         if(parsed.events&&Object.keys(parsed.events).length>0){
-          setKEvents(prev=>{const ny={...prev};Object.entries(parsed.events).forEach(([dag,evts])=>{ny[dag]=[...(ny[dag]||[]),...(evts||[]).map(e=>({...e,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)}))];});return ny;});
+          setKEvents(prev=>{const ny={...prev};Object.entries(parsed.events).forEach(([dag,evts])=>{ny[dag]=[...(ny[dag]||[]),...(Array.isArray(evts)?evts:[]).map(e=>({...e,id:Date.now().toString(36)+Math.random().toString(36).slice(2,5)}))];});return ny;});
           const antHend=Object.values(parsed.events).reduce((s,a)=>s+(a?.length||0),0);
           visLokal(`✨ AI la til ${antHend} hendelser i kalenderen`);
         }else{setKFeil("❌ AI fant ingen hendelser å legge til – prøv igjen.");}
@@ -8989,7 +8994,7 @@ function MaanedskalenderSide({ ctx }) {
                   {dagEvents.map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
                     <div key={ev.id} style={{background:t.bg,color:t.farge,borderRadius:4,fontSize:9,padding:"1px 4px",marginBottom:1,display:"flex",alignItems:"center",gap:2,whiteSpace:"nowrap",overflow:"hidden"}}>
                       <span>{ev.ikon||t.ikon}</span><span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{ev.tekst}</span>
-                      {redigerbar&&<button onClick={e=>{e.stopPropagation();slettEvent(String(d),ev.id);}} style={{marginLeft:"auto",background:"none",border:"none",color:t.farge,cursor:"pointer",fontSize:9,padding:0,flexShrink:0}}>✕</button>}
+                      {redigerbar&&<button aria-label="Slett hendelse" onClick={e=>{e.stopPropagation();slettEvent(String(d),ev.id);}} style={{marginLeft:"auto",background:"none",border:"none",color:t.farge,cursor:"pointer",fontSize:9,padding:0,flexShrink:0}}>✕</button>}
                     </div>
                   );})}
                 </div>
@@ -9102,7 +9107,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
           </div>
 
           {aktivDag&&(
-            <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setAktivDag(null)}>
+            <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setAktivDag(null)} onKeyDown={e=>e.key==="Escape"&&setAktivDag(null)} tabIndex={-1}>
               <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:18,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
                 <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.t,marginBottom:12}}>{MAANEDER_KAL[k_maaned-1]} {aktivDag}</div>
                 {(k_events[aktivDag]||[]).length>0&&(
@@ -9110,7 +9115,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
                     {(k_events[aktivDag]||[]).map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
                       <div key={ev.id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 8px",background:t.bg,borderRadius:7,marginBottom:4}}>
                         <span>{ev.ikon||t.ikon}</span><span style={{flex:1,fontSize:12,color:t.farge}}>{ev.tekst}</span>
-                        <button onClick={()=>slettEvent(aktivDag,ev.id)} style={{background:"none",border:"none",color:"#999",cursor:"pointer",fontSize:12}}>✕</button>
+                        <button aria-label="Slett hendelse" onClick={()=>slettEvent(aktivDag,ev.id)} style={{background:"none",border:"none",color:"#999",cursor:"pointer",fontSize:12}}>✕</button>
                       </div>
                     );})}
                   </div>
@@ -9878,7 +9883,6 @@ function DokumentasjonSide({ ctx }) {
     // Eksport: bygg samlet HTML-fil med alle dokumentasjoner
     const eksporterAlle = () => {
       try {
-        const escapeHTML = (s) => String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         const fagNavn = (id) => FAGOMRADER.find(f=>f.id===id)?.navn || id;
         const dokHTML = dok.map(d => `
           <article class="dok">
@@ -10936,12 +10940,17 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     return () => { avbrutt = true; clearTimeout(t); };
   }, [skjemaer, aktivBruker?.id, skjemaerLastet]);
 
+  // Ref holder alltid siste favoritter-verdi, unngår stale closure i useCallback
+  const favorittersRef = useRef(favoritter);
+  useEffect(() => { favorittersRef.current = favoritter; }, [favoritter]);
+
   // Toggle favoritt og lagre umiddelbart med ordentlig feilhåndtering
-  const toggleFav = async (type, id) => {
-    const liste = favoritter[type] || [];
+  const toggleFav = useCallback(async (type, id) => {
+    const curr = favorittersRef.current;
+    const liste = curr[type] || [];
     const finnes = liste.includes(id);
     const ny = finnes ? liste.filter(x=>x!==id) : [...liste, id];
-    const oppdatert = { ...favoritter, [type]: ny };
+    const oppdatert = { ...curr, [type]: ny };
     setFavoritter(oppdatert);
     if (aktivBruker?.id) {
       try {
@@ -10949,15 +10958,14 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         vis(finnes ? "Fjernet fra favoritter" : "⭐ Lagt til i favoritter");
       } catch (e) {
         console.error("[Favoritter] Lagring feilet:", e);
-        // Rull tilbake state-endringen
-        setFavoritter(favoritter);
+        setFavoritter(curr);
         vis("❌ Kunne ikke lagre favoritter");
       }
     }
-  };
+  }, [aktivBruker?.id]);
 
   // Navigasjon: lukk sidebar etter valg på mobil
-  const navigerTil = (s) => { setSide(s); setSidebarOpen(false); };
+  const navigerTil = useCallback((s) => { setSide(s); setSidebarOpen(false); }, []);
 
   const favTotal = (favoritter.sanger?.length||0) + (favoritter.aktiviteter?.length||0) + (favoritter.tegneark?.length||0);
 
@@ -11114,7 +11122,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     profil:<ProfilSide ctx={ctx}/>,
     support:<SupportSide/>,
     dokumentasjon:<DokumentasjonSide ctx={ctx}/>,
-    planlegging:<PlanleggingSide planTema={planTema} setPlanTema={setPlanTema} navigerTil={navigerTil}/>,
+    planlegging:<PlanleggingSide planTema={planTema} setPlanTema={setPlanTema} navigerTil={navigerTil} antallUkeplaner={globalUkeplaner.length} antallMaanedsplaner={globalMaanedsplaner.length} antallMaanedsbrev={globalMaanedsbrev.length} antallArsplaner={globalArsplaner.length}/>,
     maanedsplan:<MaanedsplanSide ctx={ctx}/>,
     maanedsbrev:<MaanedsbrevSide ctx={ctx}/>,
     ukeplan:<UkeplanSide ctx={ctx}/>,
