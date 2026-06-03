@@ -7900,6 +7900,8 @@ ${innhold}
     );
   }
 
+const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
+
 function MaanedsplanSide({ ctx }) {
   const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsplaner } = ctx;
 
@@ -11029,22 +11031,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   const [værIkon, værTekst] = vær ? værInfo(vær.kode) : [null, null];
 
-  // Hjem, MineSkjemaer, AIKnapper er definert på modul-nivå (se over Barnehagehjelpen)
-
-  // NyttSkjemaForm is rendered directly in JSX (not via sider object) to keep component type stable
-
-  // MineSkjemaer, RammeplanSide og TegnearkSide er definert på modul-nivå (se over Barnehagehjelpen)
-
-
-  // TegnearkSide er definert på modul-nivå (se over Barnehagehjelpen)
-
-
-  // SupportSide er definert på modul-nivå (se over Barnehagehjelpen)
-
-
-  // ─── MaanedsplanSide ───
-  const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
-  // MaanedsplanSide er definert på modul-nivå (se over Barnehagehjelpen)
+  // Alle Side-komponenter er definert på modul-nivå (se over Barnehagehjelpen)
+  // NyttSkjemaForm rendres direkte i JSX (ikke via sider-objektet) for stabil komponent-type
 
 
   // MaanedsbrevSide er definert på modul-nivå (se over Barnehagehjelpen)
@@ -11216,7 +11204,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
             {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
              : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
              : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
-             : (sider[side]||Hjem())
+             : (sider[side]||<Hjem ctx={hjemCtx}/>)
             }
           </ErrorBoundary>
         </main>
