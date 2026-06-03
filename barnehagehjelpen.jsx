@@ -6116,7 +6116,7 @@ function AuthScreen({ onLoginSuccess }) {
                 <label style={labelStil}>Passord</label>
                 <div style={{position:"relative"}}>
                   <input type={visPassord?"text":"password"} value={li_pw} onChange={e=>setLiPw(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="current-password" placeholder="••••••••" />
-                  <button type="button" onClick={()=>setVisPassord(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:"#5d7390",fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>
+                  <button type="button" aria-label={visPassord?"Skjul passord":"Vis passord"} onClick={()=>setVisPassord(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:"#5d7390",fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>
                     {visPassord?"Skjul":"Vis"}
                   </button>
                 </div>
@@ -6153,7 +6153,7 @@ function AuthScreen({ onLoginSuccess }) {
                 <label style={labelStil}>Passord (min. 6 tegn)</label>
                 <div style={{position:"relative"}}>
                   <input type={visPassord?"text":"password"} value={r_passord} onChange={e=>setRPassord(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="new-password" placeholder="••••••••" />
-                  <button type="button" onClick={()=>setVisPassord(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:"#5d7390",fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>
+                  <button type="button" aria-label={visPassord?"Skjul passord":"Vis passord"} onClick={()=>setVisPassord(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:"#5d7390",fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>
                     {visPassord?"Skjul":"Vis"}
                   </button>
                 </div>
@@ -10472,7 +10472,7 @@ function ProfilSide({ ctx }) {
             <label style={labelStil}>Nytt passord (min. 6 tegn)</label>
             <div style={{position:"relative"}}>
               <input type={pw_vis?"text":"password"} value={pw_nytt} onChange={e=>setPwNytt(e.target.value)} placeholder="••••••••" style={{...iS,paddingRight:60}} autoComplete="new-password"/>
-              <button type="button" onClick={()=>setPwVis(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:C.gr,fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>{pw_vis?"Skjul":"Vis"}</button>
+              <button type="button" aria-label={pw_vis?"Skjul passord":"Vis passord"} onClick={()=>setPwVis(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:C.gr,fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>{pw_vis?"Skjul":"Vis"}</button>
             </div>
             {/* Passord-styrke-måler */}
             {pw_nytt && (
