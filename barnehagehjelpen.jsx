@@ -4661,7 +4661,7 @@ function AiSideComp({ onLagreSomSkjema, initialType, clearInitialType }) {
         };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
 
     // Hjelpefunksjon: ett forsøk
     const forsok = async () => {
