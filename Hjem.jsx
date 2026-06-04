@@ -1,5 +1,7 @@
 import React from "react";
 import { FAGOMRADER } from './data/rammeplan.js';
+import { SANGER } from './data/sanger.js';
+import { AKTIVITETER } from './data/aktiviteter.js';
 import { DAGENS_TIPS, hilsen } from './data/tips.js';
 
 const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };

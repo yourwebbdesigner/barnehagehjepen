@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
+import { AKTIVITETER } from './data/aktiviteter.js';
 import { hentAktivitetskort, lagreNyttAktivitetskort, oppdaterAktivitetskort, slettAktivitetskort, hentKortFavoritter } from './api.js';
 
 const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
