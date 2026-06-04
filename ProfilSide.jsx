@@ -3,6 +3,20 @@ import { supabase } from "./supabase.js";
 import { oppdaterVisningsnavn, oppdaterTelefon, oppdaterAvatar, oppdaterProfilbilde, oppdaterBrukernavn, oppdaterEpost, oppdaterPassord, validerTelefon, passordStyrke, AVATAR_VALG, komprimerBilde } from './api.js';
 
 const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
+function Tilbake({ onClick }) {
+  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
+}
+function AvatarDisplay({ src, emoji, size, bg = "rgba(255,255,255,0.18)" }) {
+  return (
+    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:src?"#e8eff8":bg,lineHeight:1,position:"relative"}}>
+      {src ? (
+        <img src={src} alt="Profilbilde" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={(e)=>{e.currentTarget.style.display="none";}}/>
+      ) : (
+        <span style={{fontSize:Math.floor(size*0.55)}}>{emoji || "👤"}</span>
+      )}
+    </div>
+  );
+}
 export default function ProfilSide({ ctx }) {
   const { aktivBruker, onUserUpdate, onLogout } = ctx;
 
@@ -147,17 +161,6 @@ export default function ProfilSide({ ctx }) {
       onUserUpdate(r.bruker);
       visBekreftelse("✅ Profilbilde fjernet");
     };
-
-    // Avatar-display-helper: viser bilde hvis sett, ellers emoji, alltid sentrert i sirkel uten å strekkes
-    const AvatarDisplay = ({ src, emoji, size, bg = "rgba(255,255,255,0.18)" }) => (
-      <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:src?"#e8eff8":bg,lineHeight:1,position:"relative"}}>
-        {src ? (
-          <img src={src} alt="Profilbilde" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={(e)=>{e.currentTarget.style.display="none";}}/>
-        ) : (
-          <span style={{fontSize:Math.floor(size*0.55)}}>{emoji || "👤"}</span>
-        )}
-      </div>
-    );
 
     const iS = {width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:14,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
     const labelStil = {display:"block",fontWeight:700,color:C.t,fontSize:12,marginBottom:5};
