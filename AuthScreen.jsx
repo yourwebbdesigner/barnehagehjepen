@@ -315,7 +315,6 @@ export default function AuthScreen({ onLoginSuccess }) {
 
   return (
     <>
-      <style>{CSS}</style>
       {visModal && <VilkaarModal type={visModal} onLukk={() => setVisModal(null)} />}
       <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1f4068 0%,#3a72b0 50%,#6ba0d9 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 14px",fontFamily:"'Nunito',sans-serif"}}>
         <div style={{width:"100%",maxWidth:420}}>

@@ -1600,19 +1600,19 @@ export default function App() {
   };
 
   if (laster) {
-    return <Velkomst onStart={() => {}} sjekkSesjon={true}/>;
+    return <><style>{CSS}</style><Velkomst onStart={() => {}} sjekkSesjon={true}/></>;
   }
 
   if (visGjenopprettPassord) {
-    return <GjenopprettPassordSkjerm onFerdig={() => { setVisGjenopprettPassord(false); setVisInnlogging(true); }} />;
+    return <><style>{CSS}</style><GjenopprettPassordSkjerm onFerdig={() => { setVisGjenopprettPassord(false); setVisInnlogging(true); }} /></>;
   }
 
   if (!aktivBruker && !visInnlogging) {
-    return <Velkomst onStart={() => setVisInnlogging(true)} sjekkSesjon={false}/>;
+    return <><style>{CSS}</style><Velkomst onStart={() => setVisInnlogging(true)} sjekkSesjon={false}/></>;
   }
 
   if (!aktivBruker) {
-    return <AuthScreen onLoginSuccess={setAktivBruker}/>;
+    return <><style>{CSS}</style><AuthScreen onLoginSuccess={setAktivBruker}/></>;
   }
 
   return <Barnehagehjelpen aktivBruker={aktivBruker} onLogout={handleLogout} onUserUpdate={handleUserUpdate}/>;
