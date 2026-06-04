@@ -10,7 +10,7 @@ import { SUPPORT_E_POST, supportMailto, FAQ_DATA } from './data/faq.js';
 import { hilsen, DAGENS_TIPS } from './data/tips.js';
 import RammeplanSide from './RammeplanSide.jsx';
 import TegnearkSide, { hentUserTegneark } from './TegnearkSide.jsx';
-import { SvgPlaceholder } from './data/tegneark.jsx';
+import { SvgPlaceholder, TEGNEARK, TEGNEKAT } from './data/tegneark.jsx';
 import SangerSideComp, { hentUserSanger } from './SangerSide.jsx';
 import AktivSideComp, { GlobalSok } from './AktivSide.jsx';
 import AiSideComp from './AiSide.jsx';

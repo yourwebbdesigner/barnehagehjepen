@@ -2,6 +2,7 @@ import React from "react";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { SANGER } from './data/sanger.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
+import { TEGNEARK } from './data/tegneark.jsx';
 import { DAGENS_TIPS, hilsen } from './data/tips.js';
 import { GlobalSok } from './AktivSide.jsx';
 import { RenderTekst } from './AiSide.jsx';
