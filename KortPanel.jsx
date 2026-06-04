@@ -5,6 +5,29 @@ import { AKTIVITETER } from './data/aktiviteter.js';
 import { hentAktivitetskort, lagreNyttAktivitetskort, oppdaterAktivitetskort, slettAktivitetskort, hentKortFavoritter } from './api.js';
 
 const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
+
+const KORT_KATEGORIER = [
+  { id:"Lek",         ikon:"🎮", bg:"#e3f2fd", txt:"#1565c0" },
+  { id:"Natur",       ikon:"🌿", bg:"#e8f5e9", txt:"#2e7d32" },
+  { id:"Vann",        ikon:"💧", bg:"#e1f5fe", txt:"#0277bd" },
+  { id:"Bevegelse",   ikon:"🏃", bg:"#fff3e0", txt:"#e65100" },
+  { id:"Kreativt",    ikon:"🎨", bg:"#fce4ec", txt:"#880e4f" },
+  { id:"Språk",       ikon:"💬", bg:"#f3e5f5", txt:"#6a1b9a" },
+  { id:"Antall",      ikon:"🔢", bg:"#e8eaf6", txt:"#283593" },
+  { id:"Musikk",      ikon:"🎵", bg:"#fbe9e7", txt:"#bf360c" },
+  { id:"Ute",         ikon:"🌳", bg:"#f1f8e9", txt:"#33691e" },
+  { id:"Rolig",       ikon:"🧘", bg:"#e0f2f1", txt:"#004d40" },
+  { id:"Eksperiment", ikon:"🔬", bg:"#fff8e1", txt:"#ff6f00" },
+  { id:"Sosialt",     ikon:"🤝", bg:"#fce4ec", txt:"#c2185b" },
+];
+
+const KORT_IKONER = [
+  "🦁","🐸","🐻","🐼","🐨","🐱","🐶","🦊","🐮","🐷","🐔","🦆","🐣","🦖","🦕","🐢","🐛","🐞","🐝","🦋","🐧","🐬","🐙","🦓","🐘",
+  "🌈","🌞","🌻","🌸","🌺","🌼","🌷","🍄","🌲","🌿","💧","🌊","🏔️","🍂","❄️","⛄","🌙","⭐","💫",
+  "🎨","🎵","🎭","🧩","🎈","🎪","🏃","⚽","🏀","🎠","🚂","🚀","🧸","🎀","🎁",
+  "🍎","🍓","🍭","🧁","🍕",
+  "🤝","🔬","🧲","🎯","🦄","🏕️","🎶","🖍️","✂️","🔑"
+];
 function Tilbake({ onClick }) {
   return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
 }
