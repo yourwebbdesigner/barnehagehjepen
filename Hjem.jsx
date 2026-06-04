@@ -1,5 +1,6 @@
 import React from "react";
 import { FAGOMRADER } from './data/rammeplan.js';
+import { skrivUtGenerell, lastNedPlanPDF } from './api.js';
 import { SANGER } from './data/sanger.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
 import { TEGNEARK } from './data/tegneark.jsx';
