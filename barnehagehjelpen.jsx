@@ -6116,10 +6116,10 @@ function AuthScreen({ onLoginSuccess }) {
             {!bekreftEpostAdresse && modus === "login" && (
               <form onSubmit={handleLogin}>
                 <label style={labelStil}>E-postadresse</label>
-                <input type="email" value={li_epost} onChange={e=>setLiEpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" />
+                <input type="email" value={li_epost} onChange={e=>setLiEpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" required />
                 <label style={labelStil}>Passord</label>
                 <div style={{position:"relative"}}>
-                  <input type={visPassord?"text":"password"} value={li_pw} onChange={e=>setLiPw(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="current-password" placeholder="••••••••" />
+                  <input type={visPassord?"text":"password"} value={li_pw} onChange={e=>setLiPw(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="current-password" placeholder="••••••••" required />
                   <button type="button" aria-label={visPassord?"Skjul passord":"Vis passord"} onClick={()=>setVisPassord(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:"#5d7390",fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>
                     {visPassord?"Skjul":"Vis"}
                   </button>
@@ -6149,20 +6149,20 @@ function AuthScreen({ onLoginSuccess }) {
             {!bekreftEpostAdresse && modus === "register" && (
               <form onSubmit={handleRegister}>
                 <label style={labelStil}>Brukernavn (min. 3 tegn)</label>
-                <input type="text" value={r_brukernavn} onChange={e=>setRBrukernavn(e.target.value)} style={inputStil} autoComplete="username" placeholder="kari_barnehagelaerer" />
+                <input type="text" value={r_brukernavn} onChange={e=>setRBrukernavn(e.target.value)} style={inputStil} autoComplete="username" placeholder="kari_barnehagelaerer" required minLength={3} />
                 <label style={labelStil}>E-postadresse</label>
-                <input type="email" value={r_epost} onChange={e=>setREpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" />
+                <input type="email" value={r_epost} onChange={e=>setREpost(e.target.value)} style={inputStil} autoComplete="email" placeholder="kari@example.no" required />
                 <label style={labelStil}>Telefonnummer <span style={{color:"#8898ad",fontWeight:600,fontSize:10}}>(valgfritt)</span></label>
                 <input type="tel" value={r_telefon} onChange={e=>setRTelefon(e.target.value)} style={inputStil} autoComplete="tel" placeholder="+47 123 45 678" inputMode="tel" />
                 <label style={labelStil}>Passord (min. 6 tegn)</label>
                 <div style={{position:"relative"}}>
-                  <input type={visPassord?"text":"password"} value={r_passord} onChange={e=>setRPassord(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="new-password" placeholder="••••••••" />
+                  <input type={visPassord?"text":"password"} value={r_passord} onChange={e=>setRPassord(e.target.value)} style={{...inputStil,paddingRight:60}} autoComplete="new-password" placeholder="••••••••" required minLength={6} />
                   <button type="button" aria-label={visPassord?"Skjul passord":"Vis passord"} onClick={()=>setVisPassord(v=>!v)} style={{position:"absolute",right:11,top:11,background:"transparent",border:"none",color:"#5d7390",fontSize:11,cursor:"pointer",fontWeight:700,padding:"3px 6px"}}>
                     {visPassord?"Skjul":"Vis"}
                   </button>
                 </div>
                 <label style={labelStil}>Bekreft passord</label>
-                <input type={visPassord?"text":"password"} value={r_passord2} onChange={e=>setRPassord2(e.target.value)} style={inputStil} autoComplete="new-password" placeholder="••••••••" />
+                <input type={visPassord?"text":"password"} value={r_passord2} onChange={e=>setRPassord2(e.target.value)} style={inputStil} autoComplete="new-password" placeholder="••••••••" required minLength={6} />
 
                 {/* Vilkår-samtykke */}
                 <div style={{
@@ -11313,6 +11313,16 @@ export default function App() {
   const [laster, setLaster] = useState(true);
   const [visInnlogging, setVisInnlogging] = useState(false);
   const [visGjenopprettPassord, setVisGjenopprettPassord] = useState(false);
+
+  // Sett data-theme tidlig basert på lagret preferanse – gjelder også velkomst/auth-skjerm
+  useEffect(() => {
+    try {
+      const lagret = localStorage.getItem("bh_tema");
+      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+      const tema = lagret === "dark" || lagret === "light" ? lagret : (prefersDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", tema);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     // onAuthStateChange setter bruker FØR getSession() (synkront fra cache)
