@@ -1601,7 +1601,7 @@ export default function App() {
   };
 
   if (laster) {
-    return <><style>{CSS}</style><Velkomst onStart={() => {}} sjekkSesjon={true}/></>;
+    return <Velkomst onStart={() => {}} sjekkSesjon={true}/>;
   }
 
   if (visGjenopprettPassord) {
@@ -1609,7 +1609,7 @@ export default function App() {
   }
 
   if (!aktivBruker && !visInnlogging) {
-    return <><style>{CSS}</style><Velkomst onStart={() => setVisInnlogging(true)} sjekkSesjon={false}/></>;
+    return <Velkomst onStart={() => setVisInnlogging(true)} sjekkSesjon={false}/>;
   }
 
   if (!aktivBruker) {
