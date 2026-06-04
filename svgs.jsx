@@ -1,9 +1,6 @@
-// Autogenerert – ikke rediger direkte.
+import React from 'react';
 
-// ═══════════════════════════════════════════
-//  SVG TEGNEARK – enkle fargerike utkaststegninger
-// ═══════════════════════════════════════════
-const S = { f:"white", s:"#334155", sw:3.5, sc:"round", sj:"round" };
+export const S = { f:"white", s:"#334155", sw:3.5, sc:"round", sj:"round" };
 const SvgKanin = ()=>(
   <svg viewBox="0 0 300 330" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
     <ellipse cx="108" cy="82" rx="22" ry="60"/><ellipse cx="108" cy="88" rx="11" ry="40" fill="#fce8e8" stroke="none"/>
@@ -1718,7 +1715,7 @@ function hentSvg(navn, OriginalKomponent) {
 // ═══════════════════════════════════════════
 //  TEGNEARK ARRAY
 // ═══════════════════════════════════════════
-export const TEGNEARK = [
+const TEGNEARK = [
   {id:1,tittel:"Kaninen med lange ører",ikon:"🐰",kategori:"dyr",alder:"2-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgKanin/>,oppgave:"1. Farg pelsen lys brun eller hvit. 2. Farg innsiden av ørene lyserøde. 3. Tegn grønt gress og tre gulrøtter rundt. 4. Gi kaninen store runde øyne og en knopplignende hale.",samtale:"Hva er forskjellen på en kanin og en hare? Kan du telle frambeina og bakbeina – er det likt antall? Hva kalles kaninens unge?",mal:"Pattedyr og kroppsdeler. Rammeplanen: Natur – bli kjent med dyrs kjennetegn og levevis."},
   {id:2,tittel:"Bjørnen i norsk skog",ikon:"🐻",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","etikk"],svg:<SvgBjorn/>,oppgave:"1. Farg kroppen mørk brun, snuten litt lysere. 2. Tegn et hi (hulrom i bakken eller under en rot). 3. Legg til blåbærbusker og en honningkube i treet. 4. Tegn bjørneunger som titter ut av hiet.",samtale:"Hva er vinterhvile – er det det samme som å sove? Hva spiser bjørnen for å legge på seg til vinteren? Hvor i Norge finnes bjørner?",mal:"Rovdyr og tilpasning til årstider. Rammeplanen: Natur – forstå dyrs livsstrategier og Norges dyreliv."},
   {id:3,tittel:"Meisen på fuglebordet",ikon:"🐦",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kommunikasjon"],svg:<SvgFugl/>,oppgave:"1. Farg brystet gult og vingen blågrønn. 2. Tegn et fuglebord den sitter på med frø. 3. Legg til snø rundt – det er vinter. 4. Tegn en menneskehånd som fyller på frø.",samtale:"Hva heter fuglen du ser mest i barnehagen? Hvorfor legger vi ut mat om vinteren? Hva er forskjellen på trekkfugler og vinterfugler?",mal:"Fugler i norsk natur og omsorg for dyr. Rammeplanen: Natur – observere og lære om lokalt dyreliv."},
@@ -1833,7 +1830,7 @@ export const TEGNEARK = [
   {id:112,tittel:"Fotballkampen",ikon:"⚽",kategori:"sport",alder:"3-6 år",rammeplan:["kropp","etikk"],svg:<SvgFotball/>,oppgave:"1. Farg ballen svart og hvit i klassisk mønster. 2. Tegn et mål med nett bak. 3. Legg til to lag med fargerike drakter. 4. Tegn jubel fra banen.",samtale:"Hva er reglene i fotball? Hva er fair play? Hva betyr det å samarbeide i et lag?",mal:"Lagsport og samarbeid. Rammeplanen: Kropp og etikk – motorisk mestring og sportslig adferd."},
   {id:113,tittel:"Målvakten redder",ikon:"⚽",kategori:"sport",alder:"2-6 år",rammeplan:["kropp","kommunikasjon"],svg:<SvgMaalvakt/>,oppgave:"1. Farg fotballen i dine favorittfarger. 2. Tegn en målvakt som hopper og strekker seg. 3. Legg til et mål med keeper-hansker. 4. Tegn publikum som heier.",samtale:"Hva gjør en målvakt? Hva er de vanskeligste skuddene å redde? Hva er det som gjør fotball spennende?",mal:"Idrett og kroppsmestring. Rammeplanen: Kropp – utfordre og utvikle motoriske ferdigheter."},
 ];
-export const TEGNEKAT = [
+const TEGNEKAT = [
   ["alle","Alle 🖍️"],
   ["dyr","Dyr 🐾"],
   ["vaar","Vår 🌸"],
@@ -1857,8 +1854,135 @@ export const TEGNEKAT = [
   ["sport","Sport ⚽"],
 ];
 
-// (FagTag, Tilbake, NyttSkjemaForm, escapeHTML, mdToHtml, stripMd, skrivUtVindu tilhører barnehagehjelpen.jsx)
-export const SvgPlaceholder = ()=>(
+function FagTag({ rid }) {
+  const f = FAGOMRADER.find(x => x.id === rid);
+  if (!f) return null;
+  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
+}
+function Tilbake({ onClick }) {
+  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
+}
+
+// Standalone form — fully self-contained so typing NEVER re-renders the parent
+// IMPORTANT: No inner component definitions (like Felt) — those cause the same remount bug
+function NyttSkjemaForm({ onSave, onNavigate }) {
+  const [form, setForm] = useState({ tittel:"", hva:"", hvordan:"", hvorfor:"", rammeplan:[], alder:"", kategori:"", materialer:"" });
+  const [msg, setMsg] = useState("");
+
+  const upd = (felt) => (e) => setForm(p => ({...p, [felt]: e.target.value}));
+  const toggleR = (id) => setForm(p => ({...p, rammeplan: p.rammeplan.includes(id) ? p.rammeplan.filter(r=>r!==id) : [...p.rammeplan, id]}));
+
+  const lagre = () => {
+    if (!form.tittel.trim()) { setMsg("⚠️ Skriv inn en tittel!"); return; }
+    onSave({ ...form, id: Date.now() });
+    setForm({ tittel:"", hva:"", hvordan:"", hvorfor:"", rammeplan:[], alder:"", kategori:"", materialer:"" });
+    setMsg("✅ Skjema lagret!");
+    setTimeout(() => { setMsg(""); onNavigate("skjemaer"); }, 1200);
+  };
+
+  const iStyle = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"10px 12px", fontSize:13, color:C.t, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box" };
+  const lStyle = { display:"block", fontWeight:700, color:C.t, fontSize:12, marginBottom:4 };
+
+  return (
+    <div className="fade">
+      <div style={{fontFamily:"'Fredoka One',cursive", fontSize:22, color:C.t, marginBottom:3}}>✏️ Nytt aktivitetsskjema</div>
+      <p style={{color:C.gr, fontSize:12, marginBottom:14}}>Lag ditt eget pedagogiske skjema koblet til rammeplanen</p>
+      <div style={{background:C.w, borderRadius:16, padding:18, boxShadow:"0 2px 14px rgba(44,91,142,0.10)"}}>
+
+        <div style={{marginBottom:11}}>
+          <label style={lStyle}>Aktivitetstittel *</label>
+          <input value={form.tittel} onChange={upd("tittel")} placeholder="Gi aktiviteten et navn..." style={iStyle}/>
+        </div>
+
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:0}}>
+          <div style={{marginBottom:11}}>
+            <label style={lStyle}>Aldersgruppe</label>
+            <input value={form.alder} onChange={upd("alder")} placeholder="f.eks. 3-6 år" style={iStyle}/>
+          </div>
+          <div style={{marginBottom:11}}>
+            <label style={lStyle}>Kategori</label>
+            <input value={form.kategori} onChange={upd("kategori")} placeholder="kreativ, ute, musikk..." style={iStyle}/>
+          </div>
+        </div>
+
+        <div style={{background:C.lg2, borderRadius:11, padding:13, marginBottom:11, borderLeft:"3px solid #f59e0b"}}>
+          <div style={{fontWeight:800, color:C.t, fontSize:12, marginBottom:6}}>🎯 HVA – Beskriv aktiviteten</div>
+          <textarea value={form.hva} onChange={upd("hva")} placeholder="Hva skal barna gjøre?" rows={2}
+            style={{...iStyle, border:`1.5px solid var(--c-divider)`, resize:"vertical"}}/>
+        </div>
+
+        <div style={{background:C.lg2, borderRadius:11, padding:13, marginBottom:11, borderLeft:"3px solid #10b981"}}>
+          <div style={{fontWeight:800, color:C.t, fontSize:12, marginBottom:6}}>⚙️ HVORDAN – Gjennomføring</div>
+          <textarea value={form.hvordan} onChange={upd("hvordan")} placeholder="Steg for steg – beskriv gjennomføringen..." rows={4}
+            style={{...iStyle, border:`1.5px solid var(--c-divider)`, resize:"vertical"}}/>
+        </div>
+
+        <div style={{background:C.lg2, borderRadius:11, padding:13, marginBottom:11, borderLeft:"3px solid #3b82f6"}}>
+          <div style={{fontWeight:800, color:C.t, fontSize:12, marginBottom:6}}>❓ HVORFOR – Pedagogisk begrunnelse</div>
+          <textarea value={form.hvorfor} onChange={upd("hvorfor")} placeholder="Hva lærer barna? Hva er den pedagogiske verdien?" rows={2}
+            style={{...iStyle, border:`1.5px solid var(--c-divider)`, resize:"vertical"}}/>
+        </div>
+
+        <div style={{marginBottom:16}}>
+          <label style={lStyle}>Materialer</label>
+          <input value={form.materialer} onChange={upd("materialer")} placeholder="f.eks. maling, pensler, papir, leire..." style={iStyle}/>
+        </div>
+
+        <div style={{marginBottom:16}}>
+          <div style={{fontWeight:700, color:C.t, fontSize:12, marginBottom:8}}>📖 Kobling til rammeplan</div>
+          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:7}}>
+            {FAGOMRADER.map(f=>(
+              <div key={f.id} onClick={()=>toggleR(f.id)} style={{
+                background:form.rammeplan.includes(f.id)?f.farge:C.lg2,
+                borderRadius:8, padding:"9px 11px", cursor:"pointer", display:"flex", alignItems:"center", gap:7,
+                border:`2px solid ${form.rammeplan.includes(f.id)?f.farge:"var(--c-divider)"}`, transition:"all 0.15s"
+              }}>
+                <span style={{fontSize:16}}>{f.ikon}</span>
+                <span style={{fontSize:10, fontWeight:700, color:form.rammeplan.includes(f.id)?"#fff":C.t, lineHeight:1.3}}>{f.navn}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button className="btn" onClick={lagre} style={{background:C.g, color:"#fff", padding:"13px 18px", fontSize:14, width:"100%", borderRadius:12}}>
+          💾 Lagre skjema
+        </button>
+        {msg && <div className="fade" style={{marginTop:10, background:C.mint, borderRadius:9, padding:"10px 14px", color:C.g, fontWeight:700, textAlign:"center"}}>{msg}</div>}
+      </div>
+    </div>
+  );
+}
+
+const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
+
+// ─── Standalone search/list components ─────────────────────────
+// Defined OUTSIDE the main component so they never remount on parent re-renders
+function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
+  const w = window.open("", "_blank");
+  if (!w) { alert("Popup ble blokkert av nettleseren. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut."); return; }
+  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}
+.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}
+.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
+.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
+</style></head><body>
+<div class="knapper no-print">
+  <button class="lukk-btn" onclick="window.close()">← Lukk</button>
+  <button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button>
+</div>
+${html}
+</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 500);
+}
+
+const SvgPlaceholder = ()=>(
   <svg viewBox="0 0 300 240" fill="none">
     <rect x="12" y="12" width="276" height="216" rx="16" stroke="#c4d6ec" strokeWidth="2.5" strokeDasharray="10 5"/>
     <circle cx="90" cy="90" r="32" stroke="#d8e8f5" strokeWidth="2.5"/>
@@ -1870,4 +1994,3 @@ export const SvgPlaceholder = ()=>(
     <ellipse cx="150" cy="210" rx="85" ry="15" stroke="#d8e8f5" strokeWidth="1.5"/>
   </svg>
 );
-
