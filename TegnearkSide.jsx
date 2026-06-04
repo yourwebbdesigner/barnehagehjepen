@@ -140,6 +140,16 @@ function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
   );
 }
 
+// Finn en ekte SVG fra TEGNEARK-databasen som passer kategorien.
+// Bedre enn SvgPlaceholder for AI-genererte ark.
+function matchSvg(kategori, tittel = '') {
+  const matches = TEGNEARK.filter(t => t.kategori === kategori);
+  if (matches.length === 0) return <SvgPlaceholder />;
+  // Bruk tittel som seed for konsistent valg
+  const seed = tittel.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  return matches[seed % matches.length].svg;
+}
+
 export default function TegnearkSide({ ctx }) {
   const { aktivBruker, vis, preselectTegneark, setPreselectTegneark, favoritter, toggleFav, setGlobalUserTegneark } = ctx;
 
@@ -157,7 +167,7 @@ export default function TegnearkSide({ ctx }) {
         setUserTegneark(ut);
         if (preselectTegneark && !valgtT) {
           const funnet = ut.find(t => "user_"+t.id === preselectTegneark);
-          if (funnet) setValgtT({ id:"user_"+funnet.id, tittel:funnet.tittel, ikon:funnet.ikon||"🖍️", kategori:funnet.kategori||"natur", alder:funnet.alder, rammeplan:funnet.rammeplan||[], svg:<SvgPlaceholder/>, oppgave:funnet.oppgave, samtale:funnet.samtale, mal:funnet.mal, _erMin:true, _dbId:funnet.id });
+          if (funnet) setValgtT({ id:"user_"+funnet.id, tittel:funnet.tittel, ikon:funnet.ikon||"🖍️", kategori:funnet.kategori||"natur", alder:funnet.alder, rammeplan:funnet.rammeplan||[], svg:matchSvg(funnet.kategori||"natur", funnet.tittel||""), oppgave:funnet.oppgave, samtale:funnet.samtale, mal:funnet.mal, _erMin:true, _dbId:funnet.id });
         }
       });
     }, [aktivBruker?.id]);
@@ -167,7 +177,7 @@ export default function TegnearkSide({ ctx }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const userMapped = userTegneark.map(t => ({ id:"user_"+t.id, tittel:t.tittel, ikon:t.ikon||"🖍️", kategori:t.kategori||"natur", alder:t.alder, rammeplan:t.rammeplan||[], svg:<SvgPlaceholder/>, oppgave:t.oppgave, samtale:t.samtale, mal:t.mal, _erMin:true, _dbId:t.id }));
+    const userMapped = userTegneark.map(t => ({ id:"user_"+t.id, tittel:t.tittel, ikon:t.ikon||"🖍️", kategori:t.kategori||"natur", alder:t.alder, rammeplan:t.rammeplan||[], svg:matchSvg(t.kategori||"natur", t.tittel||""), oppgave:t.oppgave, samtale:t.samtale, mal:t.mal, _erMin:true, _dbId:t.id }));
     const alleData = [...userMapped, ...TEGNEARK];
     const data = tkat==="favoritter"
       ? alleData.filter(t=>favSet.has(t.id))
