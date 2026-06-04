@@ -552,7 +552,7 @@ export default function AuthScreen({ onLoginSuccess }) {
 // ═══════════════════════════════════════════
 //  ADMIN PANEL – kun for admin-brukere
 // ═══════════════════════════════════════════
-function AdminPanel({ aktivBruker }) {
+export function AdminPanel({ aktivBruker }) {
   const [brukere, setBrukere] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
@@ -661,5 +661,6 @@ function AdminPanel({ aktivBruker }) {
 // ═══════════════════════════════════════════
 //  AKTIVITETSKORT – Lag eget kort (modal)
 // ═══════════════════════════════════════════
+
 
 

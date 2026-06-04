@@ -3,6 +3,12 @@ import { FAGOMRADER } from './data/rammeplan.js';
 import { SANGER } from './data/sanger.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
 import { DAGENS_TIPS, hilsen } from './data/tips.js';
+import { GlobalSok } from './AktivSide.jsx';
+import { RenderTekst } from './AiSide.jsx';
+
+function Tilbake({ onClick }) {
+  return <button className="btn" onClick={onClick} style={{background:"var(--c-mint)", color:"var(--c-t)", padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
+}
 
 const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
 const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

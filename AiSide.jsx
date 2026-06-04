@@ -150,7 +150,7 @@ function renderInline(tekst) {
   );
 }
 
-function RenderTekst({ tekst }) {
+export function RenderTekst({ tekst }) {
   if (!tekst) return null;
   return (
     <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"var(--c-t, #1a2c45)"}}>
@@ -706,4 +706,5 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
     </div>
   );
 }
+
 
