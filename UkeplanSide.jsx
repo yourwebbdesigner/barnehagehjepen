@@ -4,7 +4,7 @@ import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } 
 import { CSS as dndCSS } from "@dnd-kit/utilities";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
-import { hentUkeplaner, lagreUkeplaner } from './api.js';
+import { hentUkeplaner, lagreUkeplaner, komprimerBilde } from './api.js';
 
 const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
 const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -708,5 +708,6 @@ Returner KUN gyldig JSON uten markdown:
       </div>
     );
   }
+
 
 
