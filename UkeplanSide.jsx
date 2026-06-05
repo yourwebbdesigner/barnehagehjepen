@@ -4,9 +4,10 @@ import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } 
 import { CSS as dndCSS } from "@dnd-kit/utilities";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
-import { hentUkeplaner, lagreUkeplaner, komprimerBilde } from './api.js';
+import { hentUkeplaner, lagreUkeplaner, komprimerBilde, sjekkPlanKonflikt } from './api.js';
 import { C, escapeHTML, skrivUtVindu } from './utils.js';
 import { sanitizeForPrompt } from './data/ai-data.js';
+import { KonfliktDialog } from './UnsavedDialog.jsx';
 function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
   const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
   return(
@@ -22,7 +23,7 @@ function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn 
 }
 
 export default function UkeplanSide({ ctx }) {
-  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalUkeplaner, preselectPlanId, setPreselectPlanId } = ctx;
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalUkeplaner, preselectPlanId, setPreselectPlanId, sesjonsStart } = ctx;
 
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
@@ -34,6 +35,9 @@ export default function UkeplanSide({ ctx }) {
     const [bekreftSletting, setBekreftSletting] = useState(false);
     const [harEndringer, setHarEndringer] = useState(false);
     const [bekreftNavigerBort, setBekreftNavigerBort] = useState(null); // lagrer destinasjon
+    const [konflikt, setKonflikt] = useState(false);
+    const [lasterKonflikt, setLasterKonflikt] = useState(false);
+    const [ventendeLagring, setVentendeLagring] = useState(null);
 
     // Blokkér nettleserfane-lukking / oppdatering ved ulagrede endringer
     useEffect(() => {
@@ -104,12 +108,30 @@ export default function UkeplanSide({ ctx }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preselectPlanId, lastet, planer.length]);
 
-    const lagre = async (oppdatertListe) => {
+    const lagre = async (oppdatertListe, tving = false) => {
+      if (!tving) {
+        const harKonflikt = await sjekkPlanKonflikt(aktivBruker.id, "ukeplaner", sesjonsStart);
+        if (harKonflikt) { setKonflikt(true); setVentendeLagring(oppdatertListe); return false; }
+      }
       const ok = await lagreUkeplaner(aktivBruker.id, oppdatertListe);
       if (!ok) { setUFeil("Kunne ikke lagre – muligens fordi lagring er blokkert i dette miljøet"); return false; }
+      setKonflikt(false); setVentendeLagring(null);
       setPlaner(oppdatertListe);
       setGlobalUkeplaner(oppdatertListe);
       return true;
+    };
+
+    const konfliktLastInn = async () => {
+      setLasterKonflikt(true);
+      const liste = await hentUkeplaner(aktivBruker.id);
+      setPlaner(liste);
+      setGlobalUkeplaner(liste);
+      setKonflikt(false); setVentendeLagring(null); setHarEndringer(false);
+      setVisning("liste");
+      setLasterKonflikt(false);
+    };
+    const konfliktOverskriver = async () => {
+      if (ventendeLagring) await lagre(ventendeLagring, true);
     };
 
     const nyPlan = () => {
@@ -712,6 +734,7 @@ Returner KUN gyldig JSON uten markdown:
     // VISNING: Liste (default)
     return (
       <div className="fade">
+        <KonfliktDialog vis={konflikt} onLastInn={konfliktLastInn} onOverskriver={konfliktOverskriver} lasterInn={lasterKonflikt} />
         <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 8px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📅 Ukeplaner</div>
         <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Mandag–fredag med formiddag, ettermiddag og notat</p>

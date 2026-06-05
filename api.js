@@ -474,6 +474,22 @@ export async function hentUkeplaner(brukerId) {
     return [...sett.values()];
   } catch { return []; }
 }
+// Sjekk om noen (på en annen enhet/tab) lagret planer etter at denne sesjonen lastet data.
+// Returnerer true = konflikt oppdaget, false = trygt å lagre.
+export async function sjekkPlanKonflikt(brukerId, tabell, sesjonsStart) {
+  if (!brukerId || !sesjonsStart) return false;
+  try {
+    const { data } = await supabase
+      .from(tabell)
+      .select("created_at")
+      .eq("user_id", brukerId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (!data?.length) return false;
+    return new Date(data[0].created_at) > new Date(sesjonsStart);
+  } catch { return false; }
+}
+
 export async function lagreUkeplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {

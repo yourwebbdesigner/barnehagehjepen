@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
-import { hentKalenderplaner, lagreKalenderplaner } from './api.js';
+import { hentKalenderplaner, lagreKalenderplaner, sjekkPlanKonflikt } from './api.js';
 import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { sanitizeForPrompt } from './data/ai-data.js';
-import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { UnsavedDialog, KonfliktDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 
 export default function MaanedskalenderSide({ ctx }) {
-  const { aktivBruker, navigerTil, planTema, setGlobalKalenderplaner } = ctx;
+  const { aktivBruker, navigerTil, planTema, setGlobalKalenderplaner, sesjonsStart } = ctx;
 
     const MAANEDER_KAL = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
     const UKEDAGER = ["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
@@ -27,6 +27,9 @@ export default function MaanedskalenderSide({ ctx }) {
     const [bekreftSletting,setBekreftSletting]=useState(false);
     const [printModus,setPrintModus]=useState(false);
     const { harEndringer: kalHar, setHarEndringer: kalSetHar, bekreftDest: kalDest, sjekkNavigasjon: kalSjekk, bekreftNavigasjon: kalBekreft, avbrytNavigasjon: kalAvbryt, nullstillGuard: kalNullstill } = useUnsavedGuard();
+    const [kalKonflikt, setKalKonflikt] = useState(false);
+    const [kalLasterKonflikt, setKalLasterKonflikt] = useState(false);
+    const [kalVentende, setKalVentende] = useState(null);
     const [k_tittel,setKTittel]=useState("");
     const [k_aar,setKAar]=useState(new Date().getFullYear());
     const [k_maaned,setKMaaned]=useState(new Date().getMonth()+1);
@@ -44,7 +47,12 @@ export default function MaanedskalenderSide({ ctx }) {
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
 
-    const lagre=async(liste)=>{const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}setPlaner(liste);if(setGlobalKalenderplaner)setGlobalKalenderplaner(liste);kalNullstill();return true;};
+    const lagre=async(liste,tving=false)=>{
+      if(!tving){const hk=await sjekkPlanKonflikt(aktivBruker.id,"maanedsplaner",sesjonsStart);if(hk){setKalKonflikt(true);setKalVentende(liste);return false;}}
+      const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}
+      setKalKonflikt(false);setKalVentende(null);setPlaner(liste);if(setGlobalKalenderplaner)setGlobalKalenderplaner(liste);kalNullstill();return true;};
+    const kalLastInn=async()=>{setKalLasterKonflikt(true);const l=await hentKalenderplaner(aktivBruker.id);setPlaner(l);if(setGlobalKalenderplaner)setGlobalKalenderplaner(l);setKalKonflikt(false);setKalVentende(null);kalNullstill();setVisning("liste");setKalLasterKonflikt(false);};
+    const kalOverskriver=async()=>{if(kalVentende)await lagre(kalVentende,true);};
 
     const nyPlan=()=>{setValgt(null);setKTittel("");setKAar(new Date().getFullYear());setKMaaned(new Date().getMonth()+1);setKTema(planTema);setKEvents({});setKFeil("");kalNullstill();setVisning("ny");};
     const redigerPlan=p=>{setValgt(p);setKTittel(p.tittel||"");setKAar(p.aar);setKMaaned(p.maaned);setKTema(p.tema||"");setKEvents(p.events||{});setKFeil("");kalNullstill();setVisning("rediger");};
@@ -308,6 +316,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
     // VISNING: Liste
     return(
       <div className="fade">
+        <KonfliktDialog vis={kalKonflikt} onLastInn={kalLastInn} onOverskriver={kalOverskriver} lasterInn={kalLasterKonflikt}/>
         <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 8px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>🗓 Månedskalender</div>
         <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Ekte kalendervisning med hendelser, turer og bursdager per dag</p>

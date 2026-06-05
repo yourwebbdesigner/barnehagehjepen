@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
-import { hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, skrivUtGenerell, lastNedPlanPDF } from './api.js';
+import { hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, skrivUtGenerell, lastNedPlanPDF, sjekkPlanKonflikt } from './api.js';
 import { RenderTekst } from './AiSide.jsx';
 import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { sanitizeForPrompt } from './data/ai-data.js';
-import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { UnsavedDialog, KonfliktDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 
 const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
 
 export function MaanedsplanSide({ ctx }) {
-  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsplaner } = ctx;
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsplaner, sesjonsStart } = ctx;
 
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
@@ -31,12 +31,20 @@ export function MaanedsplanSide({ ctx }) {
     const [m_aiLoading, setMAiLoading] = useState(false);
     const [bekreftSletting, setBekreftSletting] = useState(false);
     const { harEndringer: mpHarEndringer, setHarEndringer: mpSetHar, bekreftDest: mpDest, sjekkNavigasjon: mpSjekk, bekreftNavigasjon: mpBekreft, avbrytNavigasjon: mpAvbryt, nullstillGuard: mpNullstill } = useUnsavedGuard();
+    const [mpKonflikt, setMpKonflikt] = useState(false);
+    const [mpLasterKonflikt, setMpLasterKonflikt] = useState(false);
+    const [mpVentende, setMpVentende] = useState(null);
     useEffect(()=>{
       let avbrutt=false;
       (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsplaner(aktivBruker.id); if(!avbrutt){setPlaner(liste);setLastet(true);} })();
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
-    const lagre=async(liste)=>{const ok=await lagreMaanedsplaner(aktivBruker.id,liste);if(!ok){setMFeil("Kunne ikke lagre");return false;}setPlaner(liste);setGlobalMaanedsplaner(liste);return true;};
+    const lagre=async(liste,tving=false)=>{
+      if(!tving){const hk=await sjekkPlanKonflikt(aktivBruker.id,"maanedsplaner",sesjonsStart);if(hk){setMpKonflikt(true);setMpVentende(liste);return false;}}
+      const ok=await lagreMaanedsplaner(aktivBruker.id,liste);if(!ok){setMFeil("Kunne ikke lagre");return false;}
+      setMpKonflikt(false);setMpVentende(null);setPlaner(liste);setGlobalMaanedsplaner(liste);return true;};
+    const mpLastInn=async()=>{setMpLasterKonflikt(true);const l=await hentMaanedsplaner(aktivBruker.id);setPlaner(l);setGlobalMaanedsplaner(l);setMpKonflikt(false);setMpVentende(null);mpNullstill();setVisning("liste");setMpLasterKonflikt(false);};
+    const mpOverskriver=async()=>{if(mpVentende)await lagre(mpVentende,true);};
     const nullstill=()=>{const n=new Date();setMTittel("");setMAar(n.getFullYear());setMMaaned(n.getMonth()+1);setMTema("");setMFag([]);setMUker(["","","",""]);setMNotat("");setMFeil("");};
     const nyPlan=()=>{nullstill();setMTema(planTema);setValgt(null);mpNullstill();setVisning("ny");};
     const redigerPlan=(p)=>{setValgt(p);setMTittel(p.tittel||"");setMAar(p.aar||new Date().getFullYear());setMMaaned(p.maaned||1);setMTema(p.tema||"");setMFag(p.fagomrader||[]);setMUker([p.uke1||"",p.uke2||"",p.uke3||"",p.uke4||""]);setMNotat(p.notat||"");setMFeil("");mpNullstill();setVisning("rediger");};
@@ -138,6 +146,7 @@ export function MaanedsplanSide({ ctx }) {
     );
     return(
       <div className="fade">
+        <KonfliktDialog vis={mpKonflikt} onLastInn={mpLastInn} onOverskriver={mpOverskriver} lasterInn={mpLasterKonflikt}/>
         <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 10px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>📅 Månedsplaner</div>
@@ -160,7 +169,7 @@ export function MaanedsplanSide({ ctx }) {
   }
 
 export default function MaanedsbrevSide({ ctx }) {
-  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsbrev } = ctx;
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalMaanedsbrev, sesjonsStart } = ctx;
 
     const [brev, setBrev] = useState([]);
     const [lastet, setLastet] = useState(false);
@@ -180,12 +189,20 @@ export default function MaanedsbrevSide({ ctx }) {
     const [b_aiLoading, setBAiLoading] = useState(false);
     const [bekreftSletting, setBekreftSletting] = useState(false);
     const { harEndringer: mbHarEndringer, setHarEndringer: mbSetHar, bekreftDest: mbDest, sjekkNavigasjon: mbSjekk, bekreftNavigasjon: mbBekreft, avbrytNavigasjon: mbAvbryt, nullstillGuard: mbNullstill } = useUnsavedGuard();
+    const [mbKonflikt, setMbKonflikt] = useState(false);
+    const [mbLasterKonflikt, setMbLasterKonflikt] = useState(false);
+    const [mbVentende, setMbVentende] = useState(null);
     useEffect(()=>{
       let avbrutt=false;
       (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsbrev(aktivBruker.id); if(!avbrutt){setBrev(liste);setLastet(true);} })();
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
-    const lagre=async(liste)=>{const ok=await lagreMaanedsbrev(aktivBruker.id,liste);if(!ok){setBFeil("Kunne ikke lagre");return false;}setBrev(liste);setGlobalMaanedsbrev(liste);return true;};
+    const lagre=async(liste,tving=false)=>{
+      if(!tving){const hk=await sjekkPlanKonflikt(aktivBruker.id,"maanedbrev",sesjonsStart);if(hk){setMbKonflikt(true);setMbVentende(liste);return false;}}
+      const ok=await lagreMaanedsbrev(aktivBruker.id,liste);if(!ok){setBFeil("Kunne ikke lagre");return false;}
+      setMbKonflikt(false);setMbVentende(null);setBrev(liste);setGlobalMaanedsbrev(liste);return true;};
+    const mbLastInn=async()=>{setMbLasterKonflikt(true);const l=await hentMaanedsbrev(aktivBruker.id);setBrev(l);setGlobalMaanedsbrev(l);setMbKonflikt(false);setMbVentende(null);mbNullstill();setVisning("liste");setMbLasterKonflikt(false);};
+    const mbOverskriver=async()=>{if(mbVentende)await lagre(mbVentende,true);};
     const nullstill=()=>{const n=new Date();setBTittel("");setBAar(n.getFullYear());setBMaaned(n.getMonth()+1);setBGjort("");setBKommende("");setBPraktisk("");setBHilsen("");setBFeil("");};
     const nyBrev=()=>{nullstill();setValgt(null);mbNullstill();setVisning("ny");};
     const redigerBrev=(b)=>{setValgt(b);setBTittel(b.tittel||"");setBAar(b.aar||new Date().getFullYear());setBMaaned(b.maaned||1);setBGjort(b.gjort||"");setBKommende(b.kommende||"");setBPraktisk(b.praktisk||"");setBHilsen(b.hilsen||"");setBFeil("");mbNullstill();setVisning("rediger");};
@@ -276,6 +293,7 @@ export default function MaanedsbrevSide({ ctx }) {
     );
     return(
       <div className="fade">
+        <KonfliktDialog vis={mbKonflikt} onLastInn={mbLastInn} onOverskriver={mbOverskriver} lasterInn={mbLasterKonflikt}/>
         <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 10px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t}}>📨 Månedsbrev</div>

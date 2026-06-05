@@ -1084,12 +1084,15 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const aapnePlan = (plan, sidId) => { setPreselectPlanId(plan.id||null); navigerTil(sidId); setGlobalSok(""); };
 
 
+  const sesjonsStart = React.useRef(null);
+
   // Last alle brukerdata ved innlogging – én samlet Promise.all for færre round-trips
   useEffect(() => {
     const uid = aktivBruker?.id;
-    if (!uid) { setDataLastet(true); return; }
+    if (!uid) { setDataLastet(true); sesjonsStart.current = null; return; }
     let avbrutt = false;
     setDataLastet(false);
+    sesjonsStart.current = new Date().toISOString();
     Promise.all([
       hentFavoritter(uid).catch(() => ({ sanger:[], aktiviteter:[], tegneark:[] })),
       hentUkeplaner(uid).catch(() => []),
@@ -1357,6 +1360,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     setPreselectTegneark,
     onUserUpdate,
     onLogout,
+    sesjonsStart: sesjonsStart.current,
   };
 
   const hjemCtx = { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner };

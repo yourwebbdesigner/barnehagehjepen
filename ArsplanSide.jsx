@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
-import { hentArsplaner, lagreArsplaner, skrivUtGenerell, lastNedPlanPDF } from './api.js';
+import { hentArsplaner, lagreArsplaner, skrivUtGenerell, lastNedPlanPDF, sjekkPlanKonflikt } from './api.js';
 import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { sanitizeForPrompt } from './data/ai-data.js';
-import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { UnsavedDialog, KonfliktDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 function AIKnapper({ seksjonId, aiAktiv, aiLoading, aiTekst, utforSeksjonAI, aksepterForslag, avvisForslag }) {
   const erAktivSeksjon = aiAktiv?.seksjonId === seksjonId;
@@ -43,7 +43,7 @@ function AIKnapper({ seksjonId, aiAktiv, aiLoading, aiTekst, utforSeksjonAI, aks
 }
 
 export default function ArsplanSide({ ctx }) {
-  const { aktivBruker, vis, navigerTil, planTema, setPlanTema } = ctx;
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, sesjonsStart } = ctx;
 
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
@@ -59,6 +59,9 @@ export default function ArsplanSide({ ctx }) {
     const visLokal = (m) => { setLokalToast(m); setTimeout(() => setLokalToast(""), 3000); };
     const [bekreftSletting, setBekreftSletting] = useState(false);
     const { harEndringer, setHarEndringer, bekreftDest, sjekkNavigasjon, bekreftNavigasjon, avbrytNavigasjon, nullstillGuard } = useUnsavedGuard();
+    const [apKonflikt, setApKonflikt] = useState(false);
+    const [apLasterKonflikt, setApLasterKonflikt] = useState(false);
+    const [apVentende, setApVentende] = useState(null);
 
     // AI-state
     const [aiAktiv, setAiAktiv] = useState(null); // { seksjonId, handling }
@@ -120,12 +123,19 @@ export default function ArsplanSide({ ctx }) {
       return () => { avbrutt = true; };
     }, [aktivBruker?.id]);
 
-    const lagreListe = async (oppdatertListe) => {
+    const lagreListe = async (oppdatertListe, tving = false) => {
+      if (!tving) {
+        const hk = await sjekkPlanKonflikt(aktivBruker.id, "arsplaner", sesjonsStart);
+        if (hk) { setApKonflikt(true); setApVentende(oppdatertListe); return false; }
+      }
       const ok = await lagreArsplaner(aktivBruker.id, oppdatertListe);
       if (!ok) { setPlanFeil("Kunne ikke lagre – muligens fordi lagring er blokkert"); return false; }
+      setApKonflikt(false); setApVentende(null);
       setPlaner(oppdatertListe);
       return true;
     };
+    const apLastInn = async () => { setApLasterKonflikt(true); const l = await hentArsplaner(aktivBruker.id); setPlaner(l); setApKonflikt(false); setApVentende(null); nullstillGuard(); setVisning("liste"); setApLasterKonflikt(false); };
+    const apOverskriver = async () => { if (apVentende) await lagreListe(apVentende, true); };
 
     const nyPlan = () => { setAp(tomArsplan()); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); nullstillGuard(); setVisning("ny"); };
     const redigerPlan = (p) => { setAp({ ...p, seksjoner:{...p.seksjoner}, arshjul:{...p.arshjul} }); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); nullstillGuard(); setVisning("rediger"); };
@@ -461,6 +471,7 @@ export default function ArsplanSide({ ctx }) {
 
     return (
       <div className="fade">
+        <KonfliktDialog vis={apKonflikt} onLastInn={apLastInn} onOverskriver={apOverskriver} lasterInn={apLasterKonflikt}/>
         <button onClick={()=>navigerTil("planlegging")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 8px",display:"flex",alignItems:"center",gap:5}}>← Planlegging</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📆 Årsplaner</div>
         <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Fullstendige årsplaner med AI-assistanse og interaktivt årshjul</p>
