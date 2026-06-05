@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { supabase } from "./supabase.js";
 import { oppdaterVisningsnavn, oppdaterTelefon, oppdaterAvatar, oppdaterProfilbilde, oppdaterBrukernavn, oppdaterEpost, oppdaterPassord, validerTelefon, passordStyrke, AVATAR_VALG, komprimerBilde } from './api.js';
 
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
+import { C } from './utils.js';
 function Tilbake({ onClick }) {
   return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
 }

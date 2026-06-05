@@ -3,17 +3,9 @@ import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, skrivUtGenerell, lastNedPlanPDF } from './api.js';
 import { RenderTekst } from './AiSide.jsx';
-
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert. Tillat popup for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}</style></head><body><div class="knapper no-print"><button class="lukk-btn" onclick="window.close()">← Lukk</button><button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button></div>${html}</body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 500);
-}
+import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
+import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { useUnsavedGuard } from './hooks.js';
 
 const MAANEDER = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
 
@@ -37,6 +29,7 @@ export function MaanedsplanSide({ ctx }) {
     const [m_feil, setMFeil] = useState("");
     const [m_aiLoading, setMAiLoading] = useState(false);
     const [bekreftSletting, setBekreftSletting] = useState(false);
+    const { harEndringer: mpHarEndringer, setHarEndringer: mpSetHar, bekreftDest: mpDest, sjekkNavigasjon: mpSjekk, bekreftNavigasjon: mpBekreft, avbrytNavigasjon: mpAvbryt, nullstillGuard: mpNullstill } = useUnsavedGuard();
     useEffect(()=>{
       let avbrutt=false;
       (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsplaner(aktivBruker.id); if(!avbrutt){setPlaner(liste);setLastet(true);} })();
@@ -44,14 +37,14 @@ export function MaanedsplanSide({ ctx }) {
     },[aktivBruker?.id]);
     const lagre=async(liste)=>{const ok=await lagreMaanedsplaner(aktivBruker.id,liste);if(!ok){setMFeil("Kunne ikke lagre");return false;}setPlaner(liste);setGlobalMaanedsplaner(liste);return true;};
     const nullstill=()=>{const n=new Date();setMTittel("");setMAar(n.getFullYear());setMMaaned(n.getMonth()+1);setMTema("");setMFag([]);setMUker(["","","",""]);setMNotat("");setMFeil("");};
-    const nyPlan=()=>{nullstill();setMTema(planTema);setValgt(null);setVisning("ny");};
-    const redigerPlan=(p)=>{setValgt(p);setMTittel(p.tittel||"");setMAar(p.aar||new Date().getFullYear());setMMaaned(p.maaned||1);setMTema(p.tema||"");setMFag(p.fagomrader||[]);setMUker([p.uke1||"",p.uke2||"",p.uke3||"",p.uke4||""]);setMNotat(p.notat||"");setMFeil("");setVisning("rediger");};
+    const nyPlan=()=>{nullstill();setMTema(planTema);setValgt(null);mpNullstill();setVisning("ny");};
+    const redigerPlan=(p)=>{setValgt(p);setMTittel(p.tittel||"");setMAar(p.aar||new Date().getFullYear());setMMaaned(p.maaned||1);setMTema(p.tema||"");setMFag(p.fagomrader||[]);setMUker([p.uke1||"",p.uke2||"",p.uke3||"",p.uke4||""]);setMNotat(p.notat||"");setMFeil("");mpNullstill();setVisning("rediger");};
     const slettPlan=async(id)=>{const ok=await lagre(planer.filter(p=>p.id!==id));if(ok){visLokal("🗑 Slettet");setVisning("liste");setValgt(null);}};
     const autoTittel=()=>m_tittel.trim()||`${MAANEDER[m_maaned-1]} ${m_aar}`;
-    const lagreNy=async()=>{setMFeil("");if(!m_tema.trim()){setMFeil("Skriv et tema");return;}setMLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat,opprettet:new Date().toISOString()},...planer]);setMLoading(false);if(ok){visLokal("✅ Månedsplan lagret");setVisning("liste");}};
-    const lagreEndring=async()=>{setMFeil("");if(!valgt)return;setMLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat}:p));setMLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
+    const lagreNy=async()=>{setMFeil("");if(!m_tema.trim()){setMFeil("Skriv et tema");return;}setMLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat,opprettet:new Date().toISOString()},...planer]);setMLoading(false);if(ok){mpNullstill();visLokal("✅ Månedsplan lagret");setVisning("liste");}};
+    const lagreEndring=async()=>{setMFeil("");if(!valgt)return;setMLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat}:p));setMLoading(false);if(ok){mpNullstill();visLokal("✅ Endringer lagret");setVisning("liste");}};
     const genererAI=async()=>{if(!m_tema.trim()){setMFeil("Skriv et tema først");return;}setMAiLoading(true);setMFeil("");const fagNavn=m_fag.filter(Boolean).map(f=>FAGOMRADER.find(x=>x.id===f)?.navn.split(",")[0]||f).join(", ")||"generelt";const prompt=`Lag en kort månedsoversikt for norsk barnehage. Tema: "${m_tema}". Fagområder: ${fagNavn}.\nSkriv KUN dette (ingen innledning, ingen forklaring):\n\n## Uke 1\n[undertema + 2-3 korte aktiviteter + 1 mål, maks 5 linjer]\n\n## Uke 2\n[samme]\n\n## Uke 3\n[samme]\n\n## Uke 4\n[samme]`;
-    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),32000);
+    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),12000);
     try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:900}),signal:ctrl.signal});
     if(!r.ok){let msg="Serverfeil "+r.status;try{const e=await r.json();if(e?.error)msg=e.error;}catch{}setMFeil("❌ "+msg);return;}
     const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
@@ -61,7 +54,7 @@ export function MaanedsplanSide({ ctx }) {
       if(nyeUker.some(u=>u.length>0)){setMUker(nyeUker);visLokal("✅ AI-innhold generert i ukefeltene");}
       else{setMFeil("AI returnerte innhold uten gjenkjennbar struktur – prøv igjen.");}
     }else{setMFeil("AI ga for kort svar – prøv igjen.");}}catch(e){console.error("[AI Månedsplan]",e);setMFeil(e.name==="AbortError"?"⏱ AI brukte for lang tid – prøv igjen.":e.name==="TypeError"?"❌ Nettverksfeil – sjekk internett og prøv igjen.":"❌ "+e.message);}finally{clearTimeout(tid);setMAiLoading(false);};};
-    const toggleFag=(f)=>setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);
+    const toggleFag=(f)=>{setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);mpSetHar(true);};
     const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
     if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 10px"}}/>Laster...</div>;
@@ -97,7 +90,8 @@ export function MaanedsplanSide({ ctx }) {
     );
     if(visning==="ny"||visning==="rediger")return(
       <div className="fade">
-        <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+        <UnsavedDialog bekreftDest={mpDest} onBekreft={mpBekreft} onAvbryt={mpAvbryt}/>
+        <button onClick={()=>mpSjekk("liste",setVisning)} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:14}}>{visning==="ny"?"📅 Ny månedsplan":"✏️ Rediger månedsplan"}</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
           <div><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>ÅR</label><input type="number" value={m_aar} onChange={e=>setMAar(parseInt(e.target.value)||new Date().getFullYear())} style={inputStyle}/></div>
@@ -113,7 +107,7 @@ export function MaanedsplanSide({ ctx }) {
               <button type="button" onClick={()=>setPlanTema(m_tema.trim())} style={{background:"none",border:"none",color:"#1565c0",fontSize:10,cursor:"pointer",fontWeight:700,padding:0,fontFamily:"'Nunito',sans-serif"}}>🔗 Sett som felles tema</button>
             )}
           </div>
-          <input value={m_tema} onChange={e=>setMTema(e.target.value)} placeholder={planTema||"Eks: Vennskap, Natur og årstider..."} style={inputStyle}/>
+          <input value={m_tema} onChange={e=>{setMTema(e.target.value);mpSetHar(true);}} placeholder={planTema||"Eks: Vennskap, Natur og årstider..."} style={inputStyle}/>
           {planTema && !m_tema.trim() && (
             <div onClick={()=>setMTema(planTema)} style={{fontSize:10,color:"#1565c0",marginTop:3,cursor:"pointer",fontWeight:600}}>← Bruk felles tema: «{planTema}»</div>
           )}
@@ -133,10 +127,10 @@ export function MaanedsplanSide({ ctx }) {
         {[0,1,2,3].map(i=>(
           <div key={i} style={{marginBottom:10}}>
             <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>UKE {i+1}</label>
-            <textarea value={m_uker[i]} onChange={e=>setMUker(p=>{const ny=[...p];ny[i]=e.target.value;return ny;})} placeholder={`Aktiviteter og mål for uke ${i+1}...`} style={taStyle}/>
+            <textarea value={m_uker[i]} onChange={e=>{setMUker(p=>{const ny=[...p];ny[i]=e.target.value;return ny;});mpSetHar(true);}} placeholder={`Aktiviteter og mål for uke ${i+1}...`} style={taStyle}/>
           </div>
         ))}
-        <div style={{marginBottom:14}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>NOTAT</label><textarea value={m_notat} onChange={e=>setMNotat(e.target.value)} placeholder="Praktisk info, merknader..." style={{...taStyle,minHeight:60}}/></div>
+        <div style={{marginBottom:14}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>NOTAT</label><textarea value={m_notat} onChange={e=>{setMNotat(e.target.value);mpSetHar(true);}} placeholder="Praktisk info, merknader..." style={{...taStyle,minHeight:60}}/></div>
         {m_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:13}}>{m_feil}</div>}
         <button onClick={visning==="ny"?lagreNy:lagreEndring} disabled={m_loading} style={{background:C.g,color:"#fff",border:"none",borderRadius:9,padding:"11px",width:"100%",cursor:"pointer",fontWeight:800,fontSize:14,fontFamily:"'Nunito',sans-serif"}}>{m_loading?"⏳ Lagrer...":"💾 Lagre månedsplan"}</button>
       </div>
@@ -184,6 +178,7 @@ export default function MaanedsbrevSide({ ctx }) {
     const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
     const [b_aiLoading, setBAiLoading] = useState(false);
     const [bekreftSletting, setBekreftSletting] = useState(false);
+    const { harEndringer: mbHarEndringer, setHarEndringer: mbSetHar, bekreftDest: mbDest, sjekkNavigasjon: mbSjekk, bekreftNavigasjon: mbBekreft, avbrytNavigasjon: mbAvbryt, nullstillGuard: mbNullstill } = useUnsavedGuard();
     useEffect(()=>{
       let avbrutt=false;
       (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsbrev(aktivBruker.id); if(!avbrutt){setBrev(liste);setLastet(true);} })();
@@ -191,14 +186,14 @@ export default function MaanedsbrevSide({ ctx }) {
     },[aktivBruker?.id]);
     const lagre=async(liste)=>{const ok=await lagreMaanedsbrev(aktivBruker.id,liste);if(!ok){setBFeil("Kunne ikke lagre");return false;}setBrev(liste);setGlobalMaanedsbrev(liste);return true;};
     const nullstill=()=>{const n=new Date();setBTittel("");setBAar(n.getFullYear());setBMaaned(n.getMonth()+1);setBGjort("");setBKommende("");setBPraktisk("");setBHilsen("");setBFeil("");};
-    const nyBrev=()=>{nullstill();setValgt(null);setVisning("ny");};
-    const redigerBrev=(b)=>{setValgt(b);setBTittel(b.tittel||"");setBAar(b.aar||new Date().getFullYear());setBMaaned(b.maaned||1);setBGjort(b.gjort||"");setBKommende(b.kommende||"");setBPraktisk(b.praktisk||"");setBHilsen(b.hilsen||"");setBFeil("");setVisning("rediger");};
+    const nyBrev=()=>{nullstill();setValgt(null);mbNullstill();setVisning("ny");};
+    const redigerBrev=(b)=>{setValgt(b);setBTittel(b.tittel||"");setBAar(b.aar||new Date().getFullYear());setBMaaned(b.maaned||1);setBGjort(b.gjort||"");setBKommende(b.kommende||"");setBPraktisk(b.praktisk||"");setBHilsen(b.hilsen||"");setBFeil("");mbNullstill();setVisning("rediger");};
     const slettBrev=async(id)=>{const ok=await lagre(brev.filter(b=>b.id!==id));if(ok){visLokal("🗑 Slettet");setVisning("liste");setValgt(null);}};
     const autoTittel=()=>b_tittel.trim()||`Månedsbrev ${MAANEDER[b_maaned-1]} ${b_aar}`;
-    const lagreNy=async()=>{setBFeil("");if(!b_gjort.trim()&&!b_kommende.trim()){setBFeil("Fyll inn minst ett felt");return;}setBLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen,opprettet:new Date().toISOString()},...brev]);setBLoading(false);if(ok){visLokal("✅ Månedsbrev lagret");setVisning("liste");}};
-    const lagreEndring=async()=>{setBFeil("");if(!valgt)return;setBLoading(true);const ok=await lagre(brev.map(b=>b.id===valgt.id?{...b,tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen}:b));setBLoading(false);if(ok){visLokal("✅ Endringer lagret");setVisning("liste");}};
+    const lagreNy=async()=>{setBFeil("");if(!b_gjort.trim()&&!b_kommende.trim()){setBFeil("Fyll inn minst ett felt");return;}setBLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen,opprettet:new Date().toISOString()},...brev]);setBLoading(false);if(ok){mbNullstill();visLokal("✅ Månedsbrev lagret");setVisning("liste");}};
+    const lagreEndring=async()=>{setBFeil("");if(!valgt)return;setBLoading(true);const ok=await lagre(brev.map(b=>b.id===valgt.id?{...b,tittel:autoTittel(),aar:b_aar,maaned:b_maaned,gjort:b_gjort,kommende:b_kommende,praktisk:b_praktisk,hilsen:b_hilsen}:b));setBLoading(false);if(ok){mbNullstill();visLokal("✅ Endringer lagret");setVisning("liste");}};
     const genererAI=async()=>{setBAiLoading(true);const temaStr=planTema?` Månedstema: «${planTema}».`:"";const prompt=`Skriv et månedsbrev til foreldre fra norsk barnehage for ${MAANEDER[b_maaned-1]} ${b_aar}.${temaStr}\nBruk NØYAKTIG denne strukturen:\n\n## Hva vi har jobbet med\n• [punkt]\n• [punkt]\n• [punkt]\n\n## Kommende aktiviteter\n• [aktivitet/dato]\n• [aktivitet/dato]\n\n## Praktisk informasjon\n• [praktisk info]\n• [praktisk info]\n\nSkriv vennlig og engasjerende. Referer til Rammeplan 2017 og barnehagens pedagogiske arbeid.`;
-    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),31000);
+    const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),12000);
     try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1500}),signal:ctrl.signal});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();const tekst=d?.text?.trim()||"";if(tekst.length>20){
       const norm=(tekst.startsWith("##")?"\n":"")+tekst;
       const deler=norm.split(/\n##\s+/).slice(1);
@@ -243,7 +238,8 @@ export default function MaanedsbrevSide({ ctx }) {
     );
     if(visning==="ny"||visning==="rediger")return(
       <div className="fade">
-        <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+        <UnsavedDialog bekreftDest={mbDest} onBekreft={mbBekreft} onAvbryt={mbAvbryt}/>
+        <button onClick={()=>mbSjekk("liste",setVisning)} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
         <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:14}}>{visning==="ny"?"📨 Nytt månedsbrev":"✏️ Rediger månedsbrev"}</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
           <div><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>ÅR</label><input type="number" value={b_aar} onChange={e=>setBAar(parseInt(e.target.value)||new Date().getFullYear())} style={inputStyle}/></div>
@@ -270,7 +266,7 @@ export default function MaanedsbrevSide({ ctx }) {
           <div style={{fontSize:11,color:C.gr}}>Trykk Generer for å lage brevinnhold for {MAANEDER[b_maaned-1]}{planTema?` med tema «${planTema}»`:""}</div>
         </div>
         {[{label:"📚 HVA VI HAR JOBBET MED",val:b_gjort,setter:setBGjort,ph:"Beskriv hva dere har arbeidet med denne måneden..."},{label:"📅 KOMMENDE AKTIVITETER",val:b_kommende,setter:setBKommende,ph:"Turer, arrangementer, tema-dager..."},{label:"ℹ️ PRAKTISK INFORMASJON",val:b_praktisk,setter:setBPraktisk,ph:"Klær, frister, beskjeder..."}].map(({label,val,setter,ph})=>(
-          <div key={label} style={{marginBottom:10}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>{label}</label><textarea value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={taStyle}/></div>
+          <div key={label} style={{marginBottom:10}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>{label}</label><textarea value={val} onChange={e=>{setter(e.target.value);mbSetHar(true);}} placeholder={ph} style={taStyle}/></div>
         ))}
         <div style={{marginBottom:14}}><label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>HILSEN</label><input value={b_hilsen} onChange={e=>setBHilsen(e.target.value)} placeholder="Eks: Personalet på Revegruppen" style={inputStyle}/></div>
         {b_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:13}}>{b_feil}</div>}

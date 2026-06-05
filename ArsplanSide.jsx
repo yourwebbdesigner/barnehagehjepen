@@ -2,17 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { hentArsplaner, lagreArsplaner, skrivUtGenerell, lastNedPlanPDF } from './api.js';
-
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert. Tillat popup for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}</style></head><body><div class="knapper no-print"><button class="lukk-btn" onclick="window.close()">← Lukk</button><button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button></div>${html}</body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 500);
-}
+import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
+import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { useUnsavedGuard } from './hooks.js';
 function AIKnapper({ seksjonId, aiAktiv, aiLoading, aiTekst, utforSeksjonAI, aksepterForslag, avvisForslag }) {
   const erAktivSeksjon = aiAktiv?.seksjonId === seksjonId;
   const handlinger = [
@@ -65,6 +57,7 @@ export default function ArsplanSide({ ctx }) {
     const [lokalToast, setLokalToast] = useState("");
     const visLokal = (m) => { setLokalToast(m); setTimeout(() => setLokalToast(""), 3000); };
     const [bekreftSletting, setBekreftSletting] = useState(false);
+    const { harEndringer, setHarEndringer, bekreftDest, sjekkNavigasjon, bekreftNavigasjon, avbrytNavigasjon, nullstillGuard } = useUnsavedGuard();
 
     // AI-state
     const [aiAktiv, setAiAktiv] = useState(null); // { seksjonId, handling }
@@ -134,11 +127,11 @@ export default function ArsplanSide({ ctx }) {
       return true;
     };
 
-    const nyPlan = () => { setAp(tomArsplan()); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); setVisning("ny"); };
-    const redigerPlan = (p) => { setAp({ ...p, seksjoner:{...p.seksjoner}, arshjul:{...p.arshjul} }); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); setVisning("rediger"); };
+    const nyPlan = () => { setAp(tomArsplan()); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); nullstillGuard(); setVisning("ny"); };
+    const redigerPlan = (p) => { setAp({ ...p, seksjoner:{...p.seksjoner}, arshjul:{...p.arshjul} }); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); nullstillGuard(); setVisning("rediger"); };
     const lesPlan = (p) => { setValgt(p); setVisning("les"); };
 
-    const oppdaterSeksjon = (id, tekst) => setAp(prev => ({ ...prev, seksjoner: { ...prev.seksjoner, [id]: tekst } }));
+    const oppdaterSeksjon = (id, tekst) => { setAp(prev => ({ ...prev, seksjoner: { ...prev.seksjoner, [id]: tekst } })); setHarEndringer(true); };
     const oppdaterArshjul = (maaned, felt, verdi) => setAp(prev => ({ ...prev, arshjul: { ...prev.arshjul, [maaned]: { ...prev.arshjul[maaned], [felt]: verdi } } }));
 
     const lagreNy = async () => {
@@ -147,7 +140,7 @@ export default function ArsplanSide({ ctx }) {
       const ny = { ...ap, opprettet: new Date().toISOString(), oppdatert: new Date().toISOString() };
       const ok = await lagreListe([ny, ...planer]);
       setLagrer(false);
-      if (ok) { visLokal("✅ Årsplan lagret"); setVisning("liste"); }
+      if (ok) { nullstillGuard(); visLokal("✅ Årsplan lagret"); setVisning("liste"); }
     };
 
     const lagreEndring = async () => {
@@ -156,7 +149,7 @@ export default function ArsplanSide({ ctx }) {
       const oppdatert = planer.map(p => p.id === ap.id ? { ...ap, oppdatert: new Date().toISOString() } : p);
       const ok = await lagreListe(oppdatert);
       setLagrer(false);
-      if (ok) { visLokal("✅ Endringer lagret"); setVisning("liste"); }
+      if (ok) { nullstillGuard(); visLokal("✅ Endringer lagret"); setVisning("liste"); }
     };
 
     const slettPlan = async (id) => {
@@ -173,7 +166,7 @@ export default function ArsplanSide({ ctx }) {
         ? { prompt, max_tokens: maxTokens }
         : { model:"claude-sonnet-4-6", max_tokens: maxTokens, messages:[{ role:"user", content:prompt }] };
       const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 31000);
+      const tid = setTimeout(() => ctrl.abort(), 12000);
       try {
         const r = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:ctrl.signal });
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -281,8 +274,9 @@ export default function ArsplanSide({ ctx }) {
 
       return (
         <div className="fade">
+          <UnsavedDialog bekreftDest={bekreftDest} onBekreft={bekreftNavigasjon} onAvbryt={avbrytNavigasjon}/>
           {lokalToast && <div className="fade" style={{position:"sticky",top:8,zIndex:99,background:"#1a2c45",color:"#fff",padding:"9px 15px",borderRadius:10,fontSize:13,fontWeight:700,textAlign:"center",marginBottom:10,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{lokalToast}</div>}
-          <button onClick={() => setVisning("liste")} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
+          <button onClick={() => sjekkNavigasjon("liste", setVisning)} style={{background:"transparent",border:"none",color:"#2c5b8e",fontSize:13,cursor:"pointer",fontWeight:700,padding:0,marginBottom:14}}>← Tilbake til oversikt</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>{erRediger ? "✏️ Rediger årsplan" : "📆 Ny årsplan"}</div>
           <p style={{color:C.gr,fontSize:12,marginBottom:14,lineHeight:1.5}}>Fyll ut seksjonene og bruk AI-knappene for hjelp. Du bestemmer alltid innholdet.</p>
 

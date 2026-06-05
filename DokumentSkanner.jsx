@@ -345,7 +345,7 @@ export default function DokumentSkanner({ aktivBruker, onFerdig }) {
         const b64 = dataUrl.replace(/^data:image\/jpeg;base64,/, "");
 
         const ocrCtrl = new AbortController();
-        const ocrTid = setTimeout(() => ocrCtrl.abort(), 60000);
+        const ocrTid = setTimeout(() => ocrCtrl.abort(), 30000);
         try {
           const r = await fetch("/api/ai", {
             method: "POST",

@@ -1,24 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as dndCSS } from "@dnd-kit/utilities";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { hentUkeplaner, lagreUkeplaner, komprimerBilde } from './api.js';
-
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert. Tillat popup for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}</style></head><body><div class="knapper no-print"><button class="lukk-btn" onclick="window.close()">← Lukk</button><button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button></div>${html}</body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 500);
-}
+import { C, escapeHTML, skrivUtVindu } from './utils.js';
 function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
   const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
   return(
     <div ref={setNodeRef} style={{transform:dndCSS.Transform.toString(transform),transition,opacity:isDragging?0.5:1,display:"flex",alignItems:"center",gap:5,background:tidBg,borderRadius:6,padding:"4px 7px",marginBottom:3}}>
-      <span {...attributes} {...listeners} style={{cursor:"grab",color:tidCol,fontSize:11,lineHeight:1,touchAction:"none"}}>⠿</span>
+      <span {...attributes} {...listeners} aria-label="Dra for å flytte" role="button" tabIndex={0} style={{cursor:"grab",color:tidCol,fontSize:14,lineHeight:1,touchAction:"none",padding:"4px 3px",minWidth:24,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>⠿</span>
       <span style={{flex:1,fontSize:11,color:"var(--c-t)"}}>{a.tekst}</span>
       <div style={{display:"flex",gap:2,flexShrink:0}}>
         {dager.filter(x=>x!==dag).map(t2=><button key={t2} type="button" title={"Flytt til "+t2} onClick={()=>flyttFn(dag,a.id,t2)} style={{background:"none",border:"none",color:"var(--c-gr)",cursor:"pointer",fontSize:9,padding:"0 2px",lineHeight:1}}>→{t2.slice(0,3)}</button>)}
@@ -29,7 +21,7 @@ function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn 
 }
 
 export default function UkeplanSide({ ctx }) {
-  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalUkeplaner } = ctx;
+  const { aktivBruker, vis, navigerTil, planTema, setPlanTema, setGlobalUkeplaner, preselectPlanId, setPreselectPlanId } = ctx;
 
     const [planer, setPlaner] = useState([]);
     const [lastet, setLastet] = useState(false);
@@ -39,6 +31,16 @@ export default function UkeplanSide({ ctx }) {
     const [lokalToast, setLokalToast] = useState("");
     const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
     const [bekreftSletting, setBekreftSletting] = useState(false);
+    const [harEndringer, setHarEndringer] = useState(false);
+    const [bekreftNavigerBort, setBekreftNavigerBort] = useState(null); // lagrer destinasjon
+
+    // Blokkér nettleserfane-lukking / oppdatering ved ulagrede endringer
+    useEffect(() => {
+      if (!harEndringer) return;
+      const handler = (e) => { e.preventDefault(); e.returnValue = ""; };
+      window.addEventListener("beforeunload", handler);
+      return () => window.removeEventListener("beforeunload", handler);
+    }, [harEndringer]);
 
     // Skjema-state
     const tomDag = () => ({ bilde:"", farge:"", ansvarlig:"", maaltid:"", aktiviteter:[] });
@@ -67,7 +69,7 @@ export default function UkeplanSide({ ctx }) {
     const [nyAktivitet, setNyAktivitet] = useState({});
     const dndSensors = useSensors(
       useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-      useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } })
+      useSensor(TouchSensor,   { activationConstraint: { delay: 150, tolerance: 8 } })
     );
     const DAG_FARGER_DEF = { mandag:"#1565c0",tirsdag:"#0277bd",onsdag:"#6a1b9a",torsdag:"#c62828",fredag:"#2d6a4f" };
     const TID_FARGER = { formiddag:{label:"Formiddag",col:"#1565c0",bg:"#e3f2fd"}, ettermiddag:{label:"Ettermiddag",col:"#6a1b9a",bg:"#f3e5f5"}, notat:{label:"Notat",col:"#5d7390",bg:"#f5f9fd"} };
@@ -93,6 +95,14 @@ export default function UkeplanSide({ ctx }) {
       return () => { avbrutt = true; };
     }, [aktivBruker?.id]);
 
+    // Åpne spesifikk plan fra søkeresultat
+    useEffect(() => {
+      if (!preselectPlanId || !lastet || planer.length === 0) return;
+      const plan = planer.find(p => p.id === preselectPlanId);
+      if (plan) { lesPlan(plan); setPreselectPlanId?.(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [preselectPlanId, lastet, planer.length]);
+
     const lagre = async (oppdatertListe) => {
       const ok = await lagreUkeplaner(aktivBruker.id, oppdatertListe);
       if (!ok) { setUFeil("Kunne ikke lagre – muligens fordi lagring er blokkert i dette miljøet"); return false; }
@@ -105,10 +115,10 @@ export default function UkeplanSide({ ctx }) {
       setValgt(null);
       setUTittel(""); setUUke(""); setUTema(planTema);
       setUDager({
-        mandag: {...tomDag}, tirsdag: {...tomDag}, onsdag: {...tomDag},
-        torsdag: {...tomDag}, fredag: {...tomDag}
+        mandag: tomDag(), tirsdag: tomDag(), onsdag: tomDag(),
+        torsdag: tomDag(), fredag: tomDag()
       });
-      setUFeil(""); setVisning("ny");
+      setUFeil(""); setHarEndringer(false); setVisning("ny");
     };
 
     const redigerPlan = (p) => {
@@ -119,13 +129,14 @@ export default function UkeplanSide({ ctx }) {
         mandag: migrerDag(dg.mandag), tirsdag: migrerDag(dg.tirsdag), onsdag: migrerDag(dg.onsdag),
         torsdag: migrerDag(dg.torsdag), fredag: migrerDag(dg.fredag)
       });
-      setUFeil(""); setVisning("rediger");
+      setUFeil(""); setHarEndringer(false); setVisning("rediger");
     };
 
     const lesPlan = (p) => { setValgt(p); setVisning("les"); };
 
     const oppdaterDag = (dag, felt, verdi) => {
       setUDager(prev => ({ ...prev, [dag]: { ...prev[dag], [felt]: verdi } }));
+      setHarEndringer(true);
     };
 
     const leggTilAktivitet = (dag, tid) => {
@@ -134,6 +145,7 @@ export default function UkeplanSide({ ctx }) {
       const id = Date.now().toString(36)+Math.random().toString(36).slice(2,5);
       setUDager(prev=>({...prev,[dag]:{...prev[dag],aktiviteter:[...(prev[dag].aktiviteter||[]),{id,tid,tekst}]}}));
       setNyAktivitet(p=>({...p,[dag+tid]:""}));
+      setHarEndringer(true);
     };
     const slettAktivitet = (dag, id) => {
       setUDager(prev=>({...prev,[dag]:{...prev[dag],aktiviteter:(prev[dag].aktiviteter||[]).filter(a=>a.id!==id)}}));
@@ -166,7 +178,7 @@ export default function UkeplanSide({ ctx }) {
       const prompt=`Du er pedagog i norsk barnehage. Fyll en ukeplan med tema "${u_tema}" for uke ${u_uke||"?"}.
 Returner KUN gyldig JSON uten markdown:
 {"mandag":{"formiddag":"9:00 Samling","ettermiddag":"12:30 Utelek"},"tirsdag":{"formiddag":"...","ettermiddag":"...","maaltid":"Varm mat"},"onsdag":{"formiddag":"...","ettermiddag":"..."},"torsdag":{"formiddag":"...","ettermiddag":"..."},"fredag":{"formiddag":"...","ettermiddag":"...","notat":"Kortdag"}}`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),30000);
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),12000);
       try{
         const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:800}),signal:ctrl.signal});
         if(!r.ok){const d=await r.json().catch(()=>({}));setUFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}
@@ -177,7 +189,7 @@ Returner KUN gyldig JSON uten markdown:
         const str=v=>typeof v==="string"?v.trim():"";
         const dagNavn=["mandag","tirsdag","onsdag","torsdag","fredag"];
         setUDager(prev=>{const ny={...prev};dagNavn.forEach(dag=>{if(!parsed[dag])return;const p=parsed[dag];const akt=[];const fm=str(p.formiddag);const em=str(p.ettermiddag);const no=str(p.notat);if(fm)akt.push({id:uid(),tid:"formiddag",tekst:fm});if(em)akt.push({id:uid(),tid:"ettermiddag",tekst:em});if(no)akt.push({id:uid(),tid:"notat",tekst:no});ny[dag]={...ny[dag],aktiviteter:akt,maaltid:str(p.maaltid)||ny[dag].maaltid||""};});return ny;});
-        visLokal("✨ AI fylte inn aktiviteter for alle dager");
+        setHarEndringer(true); visLokal("✨ AI fylte inn aktiviteter for alle dager");
       }catch(e){console.error("[AI Ukeplan]",e);setUFeil(e.name==="AbortError"?"⏱ Tidsavbrudd – prøv igjen.":"❌ AI utilgjengelig");}
       finally{clearTimeout(tid);setUAiLoading(false);}
     };
@@ -218,7 +230,7 @@ Returner KUN gyldig JSON uten markdown:
       };
       const ok = await lagre([nyttObjekt, ...planer]);
       setULoading(false);
-      if (ok) { vis("✅ Ukeplan lagret"); setVisning("liste"); }
+      if (ok) { setHarEndringer(false); vis("✅ Ukeplan lagret"); setVisning("liste"); }
     };
 
     const lagreEndring = async () => {
@@ -231,7 +243,7 @@ Returner KUN gyldig JSON uten markdown:
         : p);
       const ok = await lagre(oppdatert);
       setULoading(false);
-      if (ok) { vis("✅ Endringer lagret"); setVisning("liste"); }
+      if (ok) { setHarEndringer(false); vis("✅ Endringer lagret"); setVisning("liste"); }
     };
 
     const slettPlan = async (id) => {
@@ -420,6 +432,18 @@ Returner KUN gyldig JSON uten markdown:
       }
     };
 
+    const dupliser = async (p) => {
+      const kopi = {
+        ...JSON.parse(JSON.stringify(p)), // dyp kopi
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+        tittel: `${p.tittel} (kopi)`,
+        opprettet: new Date().toISOString(),
+        oppdatert: new Date().toISOString(),
+      };
+      const ok = await lagre([kopi, ...planer]);
+      if (ok) { visLokal("✅ Plan duplisert – finn den øverst i listen"); setVisning("liste"); }
+    };
+
     const kopier = async (p) => {
       const erEmoji = (b) => b && !b.startsWith("data:");
       const tekst = ["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {
@@ -460,9 +484,25 @@ Returner KUN gyldig JSON uten markdown:
     // VISNING: Ny / Rediger
     if (visning === "ny" || visning === "rediger") {
       const erRediger = visning === "rediger";
+      const tilbake = () => {
+        if (harEndringer) { setBekreftNavigerBort("liste"); return; }
+        setHarEndringer(false); setVisning("liste");
+      };
       return (
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+          {bekreftNavigerBort && (
+            <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}}>
+              <div style={{background:"var(--c-w)",borderRadius:14,padding:22,maxWidth:340,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+                <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#c62828",marginBottom:8}}>⚠️ Ulagrede endringer</div>
+                <p style={{fontSize:13,color:"var(--c-t)",lineHeight:1.6,marginBottom:16}}>Du har endringer som ikke er lagret. Vil du forlate skjemaet uten å lagre?</p>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setBekreftNavigerBort(null)} style={{flex:1,padding:"11px",background:"var(--c-lg2)",color:"var(--c-t)",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bli her</button>
+                  <button onClick={()=>{setHarEndringer(false);setBekreftNavigerBort(null);setVisning(bekreftNavigerBort);}} style={{flex:1,padding:"11px",background:"#c62828",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Forlat uten å lagre</button>
+                </div>
+              </div>
+            </div>
+          )}
+          <button onClick={tilbake} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger ukeplan":"📅 Ny ukeplan"}</div>
 
           {lokalToast && <div className="fade" style={{background:"#e8f5e9",color:"#2e7d32",padding:"9px 13px",borderRadius:9,fontSize:12,marginBottom:10,fontWeight:700,textAlign:"center"}}>{lokalToast}</div>}
@@ -470,11 +510,11 @@ Returner KUN gyldig JSON uten markdown:
 
           <div style={{background:C.w,borderRadius:14,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
             <label style={labelStil}>Tittel</label>
-            <input type="text" value={u_tittel} onChange={e=>setUTittel(e.target.value)} style={iS} placeholder="F.eks. 'Ukeplan blå avdeling'"/>
+            <input type="text" value={u_tittel} onChange={e=>{setUTittel(e.target.value);setHarEndringer(true);}} style={iS} placeholder="F.eks. 'Ukeplan blå avdeling'"/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:9}}>
               <div>
                 <label style={labelStil}>Uke (nr.)</label>
-                <input type="text" value={u_uke} onChange={e=>setUUke(e.target.value)} style={iS} placeholder="22" inputMode="numeric"/>
+                <input type="text" value={u_uke} onChange={e=>{setUUke(e.target.value);setHarEndringer(true);}} style={iS} placeholder="22" inputMode="numeric"/>
               </div>
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
@@ -483,7 +523,7 @@ Returner KUN gyldig JSON uten markdown:
                     <button type="button" onClick={()=>setPlanTema(u_tema.trim())} style={{background:"none",border:"none",color:"#1565c0",fontSize:10,cursor:"pointer",fontWeight:700,padding:0,fontFamily:"'Nunito',sans-serif"}}>🔗 Sett som felles</button>
                   )}
                 </div>
-                <input type="text" value={u_tema} onChange={e=>setUTema(e.target.value)} style={iS} placeholder={planTema||"F.eks. 17. mai og mangfold"}/>
+                <input type="text" value={u_tema} onChange={e=>{setUTema(e.target.value);setHarEndringer(true);}} style={iS} placeholder={planTema||"F.eks. 17. mai og mangfold"}/>
                 {planTema && !u_tema.trim() && (
                   <div onClick={()=>setUTema(planTema)} style={{fontSize:10,color:"#1565c0",marginTop:3,cursor:"pointer",fontWeight:600}}>← Bruk felles tema: «{planTema}»</div>
                 )}
@@ -614,6 +654,7 @@ Returner KUN gyldig JSON uten markdown:
             <button onClick={()=>lastNed(valgt)} style={{background:"#1565c0",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>💾 Last ned</button>
             <button onClick={()=>kopier(valgt)} style={{background:C.mint,color:C.g,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📋 Kopier tekst</button>
             <button onClick={()=>redigerPlan(valgt)} style={{background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
+            <button onClick={()=>dupliser(valgt)} style={{background:"#e8f5e9",color:"#2e7d32",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📑 Dupliser</button>
           </div>
 
           {["mandag","tirsdag","onsdag","torsdag","fredag"].map(d => {

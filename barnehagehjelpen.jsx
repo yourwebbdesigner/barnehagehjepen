@@ -24,7 +24,8 @@ import ArsplanSide from './ArsplanSide.jsx';
 import DokumentasjonSide from './DokumentasjonSide.jsx';
 import ProfilSide from './ProfilSide.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
-import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon } from './api.js';
+import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
+
 
 const CSS = `
   /* ── TEMA-VARIABLER ─────────────────────────────────────────── */
@@ -582,6 +583,10 @@ const CSS = `
     color: #6fcf97 !important;
   }
 
+  /* Skip-to-content (tilgjengelighet) */
+  .skip-link { position:absolute; top:-60px; left:0; background:var(--c-g); color:#fff; padding:10px 16px; font-weight:700; border-radius:0 0 8px 0; z-index:9999; transition:top 0.2s; text-decoration:none; font-family:'Nunito',sans-serif; }
+  .skip-link:focus { top:0; outline:2px solid #fff; outline-offset:2px; }
+
   /* RESPONSIVT LAYOUT */
   .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }
   .bh-sidebar { position:fixed; top:0; left:0; width:225px; height:100vh; background:var(--c-sidebar); z-index:100; display:flex; flex-direction:column; overflow-y:auto; transition:transform 0.28s ease, background 0.25s; }
@@ -595,6 +600,10 @@ const CSS = `
     .bh-sidebar.open { transform:translateX(0); box-shadow:0 0 32px rgba(0,0,0,0.4); }
     .bh-sidebar-close { display:flex !important; }
     .bh-main { margin-left:0; padding:64px 14px 18px; max-width:100%; }
+    /* Større touch-mål på mobil */
+    .btn { min-height:44px; min-width:44px; }
+    .nb { min-height:44px; }
+    .fav-btn { min-height:44px; min-width:44px; padding:10px; }
     .bh-mobile-header { display:flex; position:fixed; top:0; left:0; right:0; height:52px; background:var(--c-sidebar); z-index:90; align-items:center; padding:0 12px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
     .bh-hamburger { display:flex; align-items:center; justify-content:center; width:44px; height:44px; background:rgba(255,255,255,0.15); border:none; border-radius:9px; cursor:pointer; color:#fff; font-size:20px; padding:0; }
     .bh-hamburger:active { background:rgba(255,255,255,0.28); }
@@ -671,32 +680,8 @@ function Tilbake({ onClick }) {
   return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
 }
 
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
+import { escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert av nettleseren. Tillat popup for barnehagehjelpen.pages.dev for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}
-.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}
-.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
-.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}
-</style></head><body>
-<div class="knapper no-print">
-  <button class="lukk-btn" onclick="window.close()">← Lukk</button>
-  <button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button>
-</div>
-${html}
-</body></html>`);
-  w.document.close();
-  w.focus();
-  setTimeout(() => w.print(), 500);
-}
 
 // Standalone form — fully self-contained so typing NEVER re-renders the parent
 // IMPORTANT: No inner component definitions (like Felt) — those cause the same remount bug
@@ -824,7 +809,7 @@ function SupportSide() {
   );
 }
 
-function PlanleggingSide({ planTema, setPlanTema, navigerTil, antallUkeplaner=0, antallMaanedsplaner=0, antallMaanedsbrev=0, antallArsplaner=0 }) {
+function PlanleggingSide({ planTema, setPlanTema, navigerTil, antallUkeplaner=0, antallMaanedsplaner=0, antallMaanedsbrev=0, antallArsplaner=0, antallKalenderplaner=0 }) {
   return (
     <div className="fade">
       <h1 style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:10}}>📅 Planlegging</h1>
@@ -847,12 +832,13 @@ function PlanleggingSide({ planTema, setPlanTema, navigerTil, antallUkeplaner=0,
         </div>
       </div>
       <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Mine planer</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:12,marginBottom:20}}>
         {[
-          {id:"ukeplan",    ikon:"📋",tittel:"Ukeplan",    farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop", antall:antallUkeplaner},
-          {id:"maanedsplan",ikon:"📋",tittel:"Månedsplan", farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder",  antall:antallMaanedsplaner},
-          {id:"maanedsbrev",ikon:"📨",tittel:"Månedsbrev", farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp",      antall:antallMaanedsbrev},
-          {id:"arsplan",    ikon:"📋",tittel:"Årsplan",    farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn",  antall:antallArsplaner},
+          {id:"ukeplan",       ikon:"📋",tittel:"Ukeplan",        farge:"#1565c0",border:"#90caf9",desc:"Mandag–fredag med drag & drop",     antall:antallUkeplaner},
+          {id:"maanedsplan",   ikon:"📋",tittel:"Månedsplan",     farge:"#6a1b9a",border:"#ce93d8",desc:"4 uker med mål og fagområder",      antall:antallMaanedsplaner},
+          {id:"maanedskalender",ikon:"🗓️",tittel:"Kalender",     farge:"#0277bd",border:"#81d4fa",desc:"Månedsoversikt med hendelser",       antall:antallKalenderplaner},
+          {id:"maanedsbrev",   ikon:"📨",tittel:"Månedsbrev",     farge:"#2d6a4f",border:"#81c995",desc:"Foreldrebrev med AI-hjelp",          antall:antallMaanedsbrev},
+          {id:"arsplan",       ikon:"📆",tittel:"Årsplan",        farge:"#c62828",border:"#ef9a9a",desc:"Årshjul og pedagogisk grunnsyn",      antall:antallArsplaner},
         ].map(({id,ikon,tittel,farge,border,desc,antall})=>(
           <div key={id} className="hover" onClick={()=>navigerTil(id)}
             style={{background:C.w,borderRadius:14,padding:"16px 12px",cursor:"pointer",boxShadow:`0 2px 10px ${farge}18`,border:`2px solid ${border}`,textAlign:"center",position:"relative"}}>
@@ -869,10 +855,10 @@ function PlanleggingSide({ planTema, setPlanTema, navigerTil, antallUkeplaner=0,
       <div style={{fontWeight:800,fontSize:12,color:C.gr,marginBottom:10,textTransform:"uppercase",letterSpacing:0.5}}>Planmaler</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {[
-          {id:"ukeplan",   ikon:"📅",tittel:"Ukeplan",        farge:"#1565c0",bg:"#e3f2fd",desc:"Klassisk Man–Fre tavleplan"},
-          {id:"maanedskalender",ikon:"🗓️",tittel:"Månedskalender",farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
-          {id:"arsplan",   ikon:"📆",tittel:"Årshjul",         farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
-          {id:"ukeplan",   ikon:"🏫",tittel:"Avdelingsplan",  farge:"#2d6a4f",bg:"#e8f5e9",desc:"Avdelingsplan som ukeplan"},
+          {id:"ukeplan",        ikon:"📅",tittel:"Ukeplan",          farge:"#1565c0",bg:"#e3f2fd",desc:"Klassisk Man–Fre tavleplan"},
+          {id:"maanedskalender",ikon:"🗓️",tittel:"Månedskalender",  farge:"#0277bd",bg:"#e1f5fe",desc:"Kalendervisning med hendelser"},
+          {id:"arsplan",        ikon:"📆",tittel:"Årshjul",           farge:"#c62828",bg:"#ffebee",desc:"11 måneder med tema og mål"},
+          {id:"maanedsbrev",    ikon:"📨",tittel:"Månedsbrev",        farge:"#2d6a4f",bg:"#e8f5e9",desc:"AI-assistert foreldrebrev"},
         ].map(({id,ikon,tittel,farge,bg,desc})=>(
           <div key={tittel+"-mal"} className="hover" onClick={()=>navigerTil(id)}
             style={{background:bg,borderRadius:12,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,border:`1.5px solid ${farge}33`}}>
@@ -987,8 +973,10 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [globalUserSanger, setGlobalUserSanger] = useState([]);
   const [globalUserTegneark, setGlobalUserTegneark] = useState([]);
   const [globalAktivitetskort, setGlobalAktivitetskort] = useState([]);
+  const [globalKalenderplaner, setGlobalKalenderplaner] = useState([]);
   const [globalDokumentasjon, setGlobalDokumentasjon] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dataLastet, setDataLastet] = useState(false);
   const [globalSok, setGlobalSok] = useState("");
   const [sokDebounced, setSokDebounced] = useState("");
   useEffect(() => {
@@ -996,10 +984,19 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     return () => clearTimeout(t);
   }, [globalSok]);
   const [planTema, setPlanTema] = useState(() => localStorage.getItem("bh_plan_tema") || "");
+  // Synkroniser planTema fra Supabase ved innlogging (overskriver localStorage-verdi)
+  useEffect(() => {
+    if (!aktivBruker?.id) return;
+    hentPlanTema(aktivBruker.id).then(tema => {
+      if (tema) { setPlanTema(tema); localStorage.setItem("bh_plan_tema", tema); }
+    }).catch(() => {});
+  }, [aktivBruker?.id]);
+  // Lagre planTema til Supabase + localStorage ved endring
   useEffect(() => {
     if (planTema) localStorage.setItem("bh_plan_tema", planTema);
     else localStorage.removeItem("bh_plan_tema");
-  }, [planTema]);
+    if (aktivBruker?.id) lagrePlanTema(aktivBruker.id, planTema).catch(() => {});
+  }, [planTema, aktivBruker?.id]);
 
   const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),3000); };
 
@@ -1074,12 +1071,15 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const aapneRammeplan = (key) => { setRammeSeksjon(key); setValgtFag(null); navigerTil("rammeplan"); setGlobalSok(""); };
   const aapneAktivitetskort = () => { navigerTil("aktivitetskort"); setGlobalSok(""); };
   const aapneDokumentasjon = () => { navigerTil("dokumentasjon"); setGlobalSok(""); };
+  const [preselectPlanId, setPreselectPlanId] = React.useState(null);
+  const aapnePlan = (plan, sidId) => { setPreselectPlanId(plan.id||null); navigerTil(sidId); setGlobalSok(""); };
 
 
   // Last alle brukerdata ved innlogging – én samlet Promise.all for færre round-trips
   useEffect(() => {
     const uid = aktivBruker?.id;
-    if (!uid) return;
+    if (!uid) { setDataLastet(true); return; }
+    setDataLastet(false);
     Promise.all([
       hentFavoritter(uid).catch(() => ({ sanger:[], aktiviteter:[], tegneark:[] })),
       hentUkeplaner(uid).catch(() => []),
@@ -1091,7 +1091,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       hentUserSanger(uid).catch(() => []),
       hentAktivitetskort(uid).catch(() => []),
       hentDokumentasjon(uid).catch(() => []),
-    ]).then(([fav, ukeplaner, maanedsplaner, maanedsbrev, arsplaner, boker, tegneark, sanger, aktivitetskort, dokumentasjon]) => {
+      hentKalenderplaner(uid).catch(() => []),
+    ]).then(([fav, ukeplaner, maanedsplaner, maanedsbrev, arsplaner, boker, tegneark, sanger, aktivitetskort, dokumentasjon, kalenderplaner]) => {
       setFavoritter(fav);
       setGlobalUkeplaner(ukeplaner);
       setGlobalMaanedsplaner(maanedsplaner);
@@ -1102,7 +1103,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       setGlobalUserSanger(sanger);
       setGlobalAktivitetskort(aktivitetskort);
       setGlobalDokumentasjon(dokumentasjon);
-    }).catch(console.error);
+      setGlobalKalenderplaner(kalenderplaner);
+    }).catch(console.error).finally(() => setDataLastet(true));
   }, [aktivBruker?.id]);
 
   // Last skjemaer fra storage når bruker logger inn
@@ -1179,26 +1181,48 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   // Navigasjon: lukk sidebar etter valg på mobil
   const navigerTil = useCallback((s) => { setSide(s); setSidebarOpen(false); }, []);
 
+  // Tastaturnavigasjon: lukk sidebar med Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape" && sidebarOpen) setSidebarOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [sidebarOpen]);
+
   const favTotal = (favoritter.sanger?.length||0) + (favoritter.aktiviteter?.length||0) + (favoritter.tegneark?.length||0);
 
-  const nav = [
-    {id:"hjem",i:"🏠",n:"Hjem"},
-    {id:"sanger",i:"🎵",n:"Sanger & Rim"},
-    {id:"aktiviteter",i:"🏃",n:"Aktiviteter"},
-    {id:"tegneark",i:"🖍️",n:"Tegneark"},
-    {id:"favoritter",i:"⭐",n:"Favoritter",badge:favTotal},
-    {id:"skjema-ny",i:"✏️",n:"Nytt skjema"},
-    {id:"skjemaer",i:"📋",n:"Mine skjemaer",badge:skjemaer.length},
-    {id:"rammeplan",i:"📖",n:"Rammeplan"},
-    {id:"boker",i:"📚",n:"Bøker"},
-    {id:"ai",i:"🤖",n:"AI-assistent"},
-    {id:"planlegging",i:"📅",n:"Planlegging"},
-    {id:"samarbeid",i:"👥",n:"Samarbeid"},
-    {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
-    {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
-    {id:"support",i:"❓",n:"Hjelp & FAQ"},
-    ...(aktivBruker?.admin?[{id:"admin",i:"👑",n:"Admin-panel"}]:[])
+  // Gruppert navigasjon – grupper med label og items
+  const navGrupper = [
+    { label: null, items: [
+      {id:"hjem",i:"🏠",n:"Hjem"},
+    ]},
+    { label: "Innhold", items: [
+      {id:"sanger",i:"🎵",n:"Sanger & Rim"},
+      {id:"aktiviteter",i:"🏃",n:"Aktiviteter"},
+      {id:"tegneark",i:"🖍️",n:"Tegneark"},
+      {id:"rammeplan",i:"📖",n:"Rammeplan"},
+      {id:"boker",i:"📚",n:"Bøker"},
+    ]},
+    { label: "Mine ting", items: [
+      {id:"favoritter",i:"⭐",n:"Favoritter",badge:favTotal},
+      {id:"skjemaer",i:"📋",n:"Mine skjemaer",badge:skjemaer.length},
+      {id:"aktivitetskort",i:"🃏",n:"Aktivitetskort"},
+      {id:"dokumentasjon",i:"📔",n:"Dokumentasjon"},
+    ]},
+    { label: "Planlegging", items: [
+      {id:"planlegging",i:"📅",n:"Planlegging"},
+    ]},
+    { label: "Verktøy", items: [
+      {id:"ai",i:"🤖",n:"AI-assistent"},
+      {id:"skjema-ny",i:"✏️",n:"Nytt skjema"},
+      {id:"samarbeid",i:"👥",n:"Samarbeid"},
+    ]},
+    { label: "Hjelp", items: [
+      {id:"support",i:"❓",n:"Hjelp & FAQ"},
+      ...(aktivBruker?.admin?[{id:"admin",i:"👑",n:"Admin-panel"}]:[]),
+    ]},
   ];
+  // Flat liste for bakoverkompatibilitet med andre steder som bruker nav
+  const nav = navGrupper.flatMap(g => g.items);
 
   // hilsen og dagensTips er modul-nivå-konstanter (se over Barnehagehjelpen)
   const [hils, hikon, hsub] = hilsen();
@@ -1312,6 +1336,9 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     setGlobalMaanedsbrev,
     setGlobalArsplaner,
     setGlobalDokumentasjon,
+    setGlobalKalenderplaner,
+    preselectPlanId,
+    setPreselectPlanId,
     globalUserTegneark,
     setGlobalUserTegneark,
     preselectTegneark,
@@ -1320,7 +1347,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     onLogout,
   };
 
-  const hjemCtx = { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon };
+  const hjemCtx = { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner };
   const skjemaCtx = { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil };
 
   const sider={
@@ -1334,7 +1361,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     profil:<ProfilSide ctx={ctx}/>,
     support:<SupportSide/>,
     dokumentasjon:<DokumentasjonSide ctx={ctx}/>,
-    planlegging:<PlanleggingSide planTema={planTema} setPlanTema={setPlanTema} navigerTil={navigerTil} antallUkeplaner={globalUkeplaner.length} antallMaanedsplaner={globalMaanedsplaner.length} antallMaanedsbrev={globalMaanedsbrev.length} antallArsplaner={globalArsplaner.length}/>,
+    planlegging:<PlanleggingSide planTema={planTema} setPlanTema={setPlanTema} navigerTil={navigerTil} antallUkeplaner={globalUkeplaner.length} antallMaanedsplaner={globalMaanedsplaner.length} antallMaanedsbrev={globalMaanedsbrev.length} antallArsplaner={globalArsplaner.length} antallKalenderplaner={globalKalenderplaner.length}/>,
     maanedsplan:<MaanedsplanSide ctx={ctx}/>,
     maanedsbrev:<MaanedsbrevSide ctx={ctx}/>,
     ukeplan:<UkeplanSide ctx={ctx}/>,
@@ -1348,10 +1375,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   return (
     <>
       <style>{CSS}</style>
+      <a href="#bh-main-content" className="skip-link">Hopp til innhold</a>
       <div className="bh-layout">
         {/* Mobil-header med hamburger */}
         <div className="bh-mobile-header">
-          <button className="bh-hamburger" onClick={()=>setSidebarOpen(true)} aria-label="Åpne meny">☰</button>
+          <button className="bh-hamburger" onClick={()=>setSidebarOpen(true)} aria-label="Åpne navigasjonsmeny" aria-expanded={sidebarOpen} aria-controls="bh-sidebar">☰</button>
           <div className="bh-mobile-title">
             {(() => { const n = nav.find(x => x.id === side); return n ? `${n.i} ${n.n}` : "🌿 Barnehagehjelpen"; })()}
           </div>
@@ -1359,7 +1387,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
         {/* Backdrop på mobil når sidebar er åpen */}
         <div className={`bh-backdrop ${sidebarOpen?"show":""}`} onClick={()=>setSidebarOpen(false)}/>
         {/* Sidebar */}
-        <div className={`bh-sidebar ${sidebarOpen?"open":""}`}>
+        <div id="bh-sidebar" className={`bh-sidebar ${sidebarOpen?"open":""}`} aria-label="Navigasjonsmeny">
           <div style={{padding:"22px 16px 16px",borderBottom:"1px solid rgba(255,255,255,0.12)",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div>
               <div style={{fontFamily:"'Fredoka One',cursive",fontSize:19,color:"#fff",lineHeight:1.2}}>🌿 Barnehage</div>
@@ -1368,15 +1396,32 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
             </div>
             <button onClick={()=>setSidebarOpen(false)} aria-label="Lukk meny" style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",width:30,height:30,borderRadius:7,cursor:"pointer",fontSize:18,display:"none",alignItems:"center",justifyContent:"center"}} className="bh-sidebar-close">✕</button>
           </div>
-          <nav style={{flex:1,padding:"10px 9px"}}>
-            {nav.map(item=>(
-              <button key={item.id} className={`nb ${(side===item.id||(item.id==="planlegging"&&["ukeplan","arsplan","maanedsplan","maanedsbrev"].includes(side)))?"on":""}`} onClick={()=>navigerTil(item.id)}
-                style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 10px",marginBottom:5,background:(side===item.id||(item.id==="planlegging"&&["ukeplan","arsplan","maanedsplan","maanedsbrev"].includes(side)))?"rgba(255,255,255,0.2)":"transparent",borderRadius:8,color:"#fff",fontSize:13,cursor:"pointer",textAlign:"left"}}>
-                <span style={{fontSize:16}}>{item.i}</span>
-                <span style={{fontWeight:(side===item.id||(item.id==="planlegging"&&["ukeplan","arsplan","maanedsplan","maanedsbrev"].includes(side)))?800:600}}>{item.n}</span>
-                {item.badge>0&&<span style={{marginLeft:"auto",background:"#6ba0d9",borderRadius:9,padding:"1px 7px",fontSize:10}}>{item.badge}</span>}
-              </button>
-            ))}
+          <nav role="navigation" aria-label="Hovednavigasjon" style={{flex:1,padding:"8px 9px",overflowY:"auto"}}>
+            {navGrupper.map((gruppe, gi) => {
+              const planSider = ["ukeplan","arsplan","maanedsplan","maanedsbrev","maanedskalender"];
+              return (
+                <div key={gi} style={{marginBottom: gruppe.label ? 6 : 4}}>
+                  {gruppe.label && (
+                    <div role="heading" aria-level={3} style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"1px",padding:"6px 10px 3px",marginTop:gi>0?4:0}}>
+                      {gruppe.label}
+                    </div>
+                  )}
+                  {gruppe.items.map(item => {
+                    const erAktiv = side===item.id || (item.id==="planlegging" && planSider.includes(side));
+                    return (
+                      <button key={item.id} className={`nb ${erAktiv?"on":""}`} onClick={()=>navigerTil(item.id)}
+                        aria-current={erAktiv?"page":undefined}
+                        aria-label={item.badge>0?`${item.n} (${item.badge})`:item.n}
+                        style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",marginBottom:2,background:erAktiv?"rgba(255,255,255,0.2)":"transparent",borderRadius:8,color:"#fff",fontSize:13,cursor:"pointer",textAlign:"left"}}>
+                        <span aria-hidden="true" style={{fontSize:15}}>{item.i}</span>
+                        <span style={{fontWeight:erAktiv?800:600,flex:1}}>{item.n}</span>
+                        {item.badge>0&&<span aria-hidden="true" style={{background:"#6ba0d9",borderRadius:9,padding:"1px 6px",fontSize:10,flexShrink:0}}>{item.badge}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </nav>
           <div style={{padding:"0 12px 14px"}}>
             {/* Mørk modus-bryter */}
@@ -1417,8 +1462,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
             <div style={{background:"rgba(255,255,255,0.1)",borderRadius:9,padding:"9px 11px",fontSize:10,color:"rgba(255,255,255,0.6)",lineHeight:1.5,marginTop:10}}>Alt innhold er koblet til Rammeplan for barnehagen 2017</div>
           </div>
         </div>
-        <main className="bh-main">
-          <div aria-live="polite" aria-atomic="true" style={{position:"fixed",top:70,right:20,zIndex:200,pointerEvents:"none"}}>
+        <main id="bh-main-content" className="bh-main" aria-label="Hovedinnhold">
+          <div role="status" aria-live="polite" aria-atomic="true" style={{position:"fixed",top:70,right:20,zIndex:200,pointerEvents:"none"}}>
             {feedback && <div className="fade" style={{background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
           </div>
           <ErrorBoundary key={side} compact>

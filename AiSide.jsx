@@ -6,7 +6,7 @@ import { AKTIVITETER } from './data/aktiviteter.js';
 import { TEGNEARK } from './data/tegneark.jsx';
 import { ALDER_GRUPPER, ARSTID_HOYTID, VANSKELIGHET, INNHOLDSTYPER, SAMLING_MAL, PROSJEKT_MAL, UKEPLAN_MAL, BARNEHAGE_SYSTEM, AI_EKSEMPLER } from './data/ai-data.js';
 
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
+import { C } from './utils.js';
 function byggPrompt({ type, fagomrade, alder, arstid, vanskelighet, brukertekst, alleFagomrader }) {
   const fag = FAGOMRADER.find(f=>f.id===fagomrade);
   const ald = ALDER_GRUPPER.find(a=>a.id===alder);
@@ -203,6 +203,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
   const [aiFeedback, setAiFeedback] = useState("");
   const [aiVisFilter, setAiVisFilter] = useState(true);
   const [lagringsTittel, setLagringsTittel] = useState("");
+  const [aiCooldown, setAiCooldown] = useState(false);
 
   // Hvis parent sender initialType (f.eks. fra hurtigknapp på Hjem), oppdater type og nullstill prop
   useEffect(() => {
@@ -270,7 +271,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
         };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 31000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     // Hjelpefunksjon: ett forsøk
     const forsok = async () => {
@@ -341,6 +342,8 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
       }
       setAiLoading(false);
       setAiVisFilter(false);
+      setAiCooldown(true);
+      setTimeout(() => setAiCooldown(false), 3000);
     }
   };
 
@@ -507,9 +510,9 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
           <label style={{display:"block",fontWeight:700,color:C.t,fontSize:11,marginBottom:5,marginTop:6}}>✏️ Ekstra ønsker (valgfritt)</label>
           <textarea value={brukertekst} onChange={e=>setBrukertekst(e.target.value)} placeholder="F.eks: 'kobles til bok om Skomakeren', 'med vannlek', 'utendørs'"
             rows={2} style={{width:"100%",border:"1.5px solid #d8e6f5",borderRadius:9,padding:"9px 12px",fontSize:13,color:C.t,background:"#f5f9fd",resize:"vertical",marginBottom:11,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
-          <button className="btn" onClick={genAI} disabled={aiLoading}
-            style={{background:aiLoading?"#ccc":C.g,color:"#fff",padding:"12px 18px",fontSize:14,width:"100%",border:"none",borderRadius:10,cursor:aiLoading?"wait":"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif"}}>
-            {aiLoading?"🤔 Genererer …":"✨ Generer med AI"}
+          <button className="btn" onClick={genAI} disabled={aiLoading || aiCooldown}
+            style={{background:(aiLoading||aiCooldown)?"#ccc":C.g,color:"#fff",padding:"12px 18px",fontSize:14,width:"100%",border:"none",borderRadius:10,cursor:(aiLoading||aiCooldown)?"not-allowed":"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif",transition:"background 0.2s"}}>
+            {aiLoading?"🤔 Genererer …":aiCooldown?"✅ Ferdig – klar om et øyeblikk…":"✨ Generer med AI"}
           </button>
         </div>
       )}
@@ -518,7 +521,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
         <div style={{textAlign:"center",padding:30,background:C.w,borderRadius:12,marginBottom:14}}>
           <div className="spin" style={{margin:"0 auto 12px"}}/>
           <div style={{color:C.gr,fontSize:13,fontWeight:700}}>AI lager noe pedagogisk for deg …</div>
-          <div style={{color:C.gr,fontSize:11,marginTop:5}}>Hvis det tar tid, henter vi fra databasen automatisk</div>
+          <div style={{color:C.gr,fontSize:11,marginTop:5}}>Tar vanligvis 3–8 sek. Henter fra database automatisk om AI er treg.</div>
         </div>
       )}
 

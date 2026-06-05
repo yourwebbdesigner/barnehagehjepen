@@ -4,7 +4,7 @@ import { FAGOMRADER } from './data/rammeplan.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
 import { hentAktivitetskort, lagreNyttAktivitetskort, oppdaterAktivitetskort, slettAktivitetskort, hentKortFavoritter } from './api.js';
 
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
+import { C } from './utils.js';
 
 const KORT_KATEGORIER = [
   { id:"Lek",         ikon:"🎮", bg:"#e3f2fd", txt:"#1565c0" },
@@ -328,7 +328,7 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
     if (!aiPrompt.trim()) return;
     setAiLaster(true);
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 30000);
+    const tid = setTimeout(() => ctrl.abort(), 12000);
     try {
       const system = `Du er en pedagogisk assistent for norske barnehager. Lag et detaljert aktivitetskort. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:
 {"title":"...","description":"...","category":"Lek|Natur|Vann|Bevegelse|Kreativt|Språk|Antall|Musikk|Ute|Rolig|Eksperiment|Sosialt","age_group":"...","materials":"...","steps":"Steg 1: ...\\nSteg 2: ...\\nSteg 3: ...","curriculum_area":["kommunikasjon"],"learning_goal":"...","duration":"...","difficulty":"enkel|middels|avansert","indoor_outdoor":"inne|ute|begge","icon":"🎯","weather_tags":["sol","regn"]}`;

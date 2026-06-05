@@ -1,4 +1,5 @@
 import { supabase } from "./supabase.js";
+import { stripMd } from './utils.js';
 // ═══════════════════════════════════════════
 //  AUTH MODUL – Supabase Auth
 // ═══════════════════════════════════════════
@@ -399,6 +400,21 @@ export const AVATAR_VALG = ["👤","🌿","🌸","🌻","🌳","🌈","🐰","�
 
 // [DATA MOVED] SUPPORT_E_POST, supportMailto, FAQ_DATA → ./data/faq.js
 
+// ─── Felles planTema per bruker – lagres i user_profiles ───
+export async function hentPlanTema(brukerId) {
+  if (!brukerId) return "";
+  try {
+    const { data } = await supabase.from("user_profiles").select("plan_tema").eq("id", brukerId).single();
+    return data?.plan_tema || "";
+  } catch { return ""; }
+}
+export async function lagrePlanTema(brukerId, tema) {
+  if (!brukerId) return;
+  try {
+    await supabase.from("user_profiles").update({ plan_tema: tema || null }).eq("id", brukerId);
+  } catch(e) { console.error("[planTema] Lagring feilet:", e); }
+}
+
 // ─── Favoritter per bruker ───
 export function tomFav() { return { sanger: [], aktiviteter: [], tegneark: [] }; }
 export async function hentFavoritter(brukerId) {
@@ -426,9 +442,18 @@ export async function hentDokumentasjon(brukerId) {
 export async function lagreDokumentasjon(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    const { error: delErr } = await supabase.from("dokumentasjon").delete().eq("user_id", brukerId);
-    if (delErr) throw delErr;
-    if (liste.length > 0) await supabase.from("dokumentasjon").insert(liste.map(d => ({ user_id: brukerId, payload: d })));
+    const { data: eks, error: lesErr } = await supabase.from("dokumentasjon").select("id").eq("user_id", brukerId);
+    if (lesErr) throw lesErr;
+    const gamleIds = (eks||[]).map(r => r.id);
+
+    if (liste.length > 0) {
+      const { error: insertErr } = await supabase.from("dokumentasjon").insert(liste.map(d => ({ user_id: brukerId, payload: d })));
+      if (insertErr) throw insertErr;
+    }
+
+    if (gamleIds.length > 0) {
+      await supabase.from("dokumentasjon").delete().in("id", gamleIds);
+    }
     return true;
   } catch(e) { console.error("[Dokumentasjon] Lagring feilet:", e); return false; }
 }
@@ -437,16 +462,36 @@ export async function lagreDokumentasjon(brukerId, liste) {
 export async function hentUkeplaner(brukerId) {
   if (!brukerId) return [];
   try {
-    const { data } = await supabase.from("ukeplaner").select("payload").eq("user_id", brukerId).order("created_at", { ascending: false });
-    return (data||[]).map(r => r.payload).filter(Boolean);
+    const { data } = await supabase.from("ukeplaner").select("id,payload").eq("user_id", brukerId).order("created_at", { ascending: false });
+    // Dedupliser på payload.id i tilfelle en tidligere lagring la igjen duplikater
+    const sett = new Map();
+    for (const r of (data||[])) {
+      const p = r.payload;
+      if (!p) continue;
+      const key = p.id || r.id;
+      if (!sett.has(key)) sett.set(key, p);
+    }
+    return [...sett.values()];
   } catch { return []; }
 }
 export async function lagreUkeplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    const { error: delErr } = await supabase.from("ukeplaner").delete().eq("user_id", brukerId);
-    if (delErr) throw delErr;
-    if (liste.length > 0) await supabase.from("ukeplaner").insert(liste.map(p => ({ user_id: brukerId, payload: p })));
+    // Steg 1: Les eksisterende rad-IDer FØR vi endrer noe
+    const { data: eks, error: lesErr } = await supabase.from("ukeplaner").select("id").eq("user_id", brukerId);
+    if (lesErr) throw lesErr;
+    const gamleIds = (eks||[]).map(r => r.id);
+
+    // Steg 2: Sett inn NYE rader – hvis dette feiler, er gamle data fortsatt intakte
+    if (liste.length > 0) {
+      const { error: insertErr } = await supabase.from("ukeplaner").insert(liste.map(p => ({ user_id: brukerId, payload: p })));
+      if (insertErr) throw insertErr;
+    }
+
+    // Steg 3: Slett GAMLE rader (nå som nye er trygt lagret)
+    if (gamleIds.length > 0) {
+      await supabase.from("ukeplaner").delete().in("id", gamleIds);
+    }
     return true;
   } catch(e) { console.error("[Ukeplan] Lagring feilet:", e); return false; }
 }
@@ -455,16 +500,32 @@ export async function lagreUkeplaner(brukerId, liste) {
 export async function hentArsplaner(brukerId) {
   if (!brukerId) return [];
   try {
-    const { data } = await supabase.from("arsplaner").select("payload").eq("user_id", brukerId).order("created_at", { ascending: false });
-    return (data||[]).map(r => r.payload).filter(Boolean);
+    const { data } = await supabase.from("arsplaner").select("id,payload").eq("user_id", brukerId).order("created_at", { ascending: false });
+    const sett = new Map();
+    for (const r of (data||[])) {
+      const p = r.payload;
+      if (!p) continue;
+      const key = p.id || r.id;
+      if (!sett.has(key)) sett.set(key, p);
+    }
+    return [...sett.values()];
   } catch { return []; }
 }
 export async function lagreArsplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    const { error: delErr } = await supabase.from("arsplaner").delete().eq("user_id", brukerId);
-    if (delErr) throw delErr;
-    if (liste.length > 0) await supabase.from("arsplaner").insert(liste.map(p => ({ user_id: brukerId, tittel: p.tittel||"", aar: parseInt(p.aar)||new Date().getFullYear(), payload: p })));
+    const { data: eks, error: lesErr } = await supabase.from("arsplaner").select("id").eq("user_id", brukerId);
+    if (lesErr) throw lesErr;
+    const gamleIds = (eks||[]).map(r => r.id);
+
+    if (liste.length > 0) {
+      const { error: insertErr } = await supabase.from("arsplaner").insert(liste.map(p => ({ user_id: brukerId, tittel: p.tittel||"", aar: parseInt(p.aar)||new Date().getFullYear(), payload: p })));
+      if (insertErr) throw insertErr;
+    }
+
+    if (gamleIds.length > 0) {
+      await supabase.from("arsplaner").delete().in("id", gamleIds);
+    }
     return true;
   } catch(e) { console.error("[Årsplan] Lagring feilet:", e); return false; }
 }
@@ -474,23 +535,40 @@ export async function hentMaanedsplaner(brukerId) {
   if (!brukerId) return [];
   try {
     const { data } = await supabase.from("maanedsplaner").select("*").eq("user_id", brukerId).order("aar", { ascending: false }).order("maaned", { ascending: false });
-    return (data||[]).map(r => {
+    // Filtrer ut kalenderplaner (har egen funksjon) og dedupliser på tittel+aar+maaned
+    const sett = new Map();
+    for (const r of (data||[])) {
       let extra = {};
       try { extra = JSON.parse(r.innhold||"{}"); } catch {}
-      return { id: r.id, tittel: r.tittel, aar: r.aar, maaned: r.maaned, tema: r.tema, fagomrader: r.fagomrader||[], opprettet: r.created_at, ...extra };
-    });
+      if (extra.type === "kalender") continue; // Kalenderplaner håndteres separat
+      const key = `${r.tittel}|${r.aar}|${r.maaned}`;
+      if (!sett.has(key)) {
+        sett.set(key, { id: r.id, tittel: r.tittel, aar: r.aar, maaned: r.maaned, tema: r.tema, fagomrader: r.fagomrader||[], opprettet: r.created_at, ...extra });
+      }
+    }
+    return [...sett.values()];
   } catch { return []; }
 }
 export async function lagreMaanedsplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    const { error: delErr } = await supabase.from("maanedsplaner").delete().eq("user_id", brukerId);
-    if (delErr) throw delErr;
+    // Les eksisterende ikke-kalender-rader
+    const { data: eks, error: lesErr } = await supabase.from("maanedsplaner").select("id,innhold").eq("user_id", brukerId);
+    if (lesErr) throw lesErr;
+    const gamleIds = (eks||[]).filter(r => {
+      try { return JSON.parse(r.innhold||"{}").type !== "kalender"; } catch { return true; }
+    }).map(r => r.id);
+
     if (liste.length > 0) {
-      await supabase.from("maanedsplaner").insert(liste.map(p => {
+      const { error: insertErr } = await supabase.from("maanedsplaner").insert(liste.map(p => {
         const { id, tittel, aar, maaned, tema, fagomrader, opprettet, ...rest } = p;
         return { user_id: brukerId, tittel: tittel||"", aar: parseInt(aar)||new Date().getFullYear(), maaned: parseInt(maaned)||1, tema: tema||"", fagomrader: fagomrader||[], innhold: JSON.stringify(rest) };
       }));
+      if (insertErr) throw insertErr;
+    }
+
+    if (gamleIds.length > 0) {
+      await supabase.from("maanedsplaner").delete().in("id", gamleIds);
     }
     return true;
   } catch(e) { console.error("[Månedsplan] Lagring feilet:", e); return false; }
@@ -501,23 +579,35 @@ export async function hentMaanedsbrev(brukerId) {
   if (!brukerId) return [];
   try {
     const { data } = await supabase.from("maanedbrev").select("*").eq("user_id", brukerId).order("aar", { ascending: false }).order("maaned", { ascending: false });
-    return (data||[]).map(r => {
+    const sett = new Map();
+    for (const r of (data||[])) {
       let extra = {};
       try { extra = JSON.parse(r.innhold||"{}"); } catch {}
-      return { id: r.id, tittel: r.tittel, aar: r.aar, maaned: r.maaned, hilsen: r.hilsen, opprettet: r.created_at, ...extra };
-    });
+      const key = `${r.tittel}|${r.aar}|${r.maaned}`;
+      if (!sett.has(key)) {
+        sett.set(key, { id: r.id, tittel: r.tittel, aar: r.aar, maaned: r.maaned, hilsen: r.hilsen, opprettet: r.created_at, ...extra });
+      }
+    }
+    return [...sett.values()];
   } catch { return []; }
 }
 export async function lagreMaanedsbrev(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    const { error: delErr } = await supabase.from("maanedbrev").delete().eq("user_id", brukerId);
-    if (delErr) throw delErr;
+    const { data: eks, error: lesErr } = await supabase.from("maanedbrev").select("id").eq("user_id", brukerId);
+    if (lesErr) throw lesErr;
+    const gamleIds = (eks||[]).map(r => r.id);
+
     if (liste.length > 0) {
-      await supabase.from("maanedbrev").insert(liste.map(b => {
+      const { error: insertErr } = await supabase.from("maanedbrev").insert(liste.map(b => {
         const { id, tittel, aar, maaned, hilsen, opprettet, ...rest } = b;
         return { user_id: brukerId, tittel: tittel||"", aar: parseInt(aar)||new Date().getFullYear(), maaned: parseInt(maaned)||1, hilsen: hilsen||"", innhold: JSON.stringify(rest) };
       }));
+      if (insertErr) throw insertErr;
+    }
+
+    if (gamleIds.length > 0) {
+      await supabase.from("maanedbrev").delete().in("id", gamleIds);
     }
     return true;
   } catch(e) { console.error("[Månedsbrev] Lagring feilet:", e); return false; }
@@ -528,19 +618,32 @@ export async function hentKalenderplaner(brukerId) {
   if (!brukerId) return [];
   try {
     const { data } = await supabase.from("maanedsplaner").select("*").eq("user_id", brukerId).order("aar",{ascending:false}).order("maaned",{ascending:false});
-    return (data||[]).filter(r=>{ try{return JSON.parse(r.innhold||"{}").type==="kalender";}catch{return false;} }).map(r=>{
+    const sett = new Map();
+    for (const r of (data||[])) {
       let extra={};try{extra=JSON.parse(r.innhold||"{}");}catch{}
-      return {id:r.id,tittel:r.tittel,aar:r.aar,maaned:r.maaned,tema:r.tema||"",events:extra.events||{},opprettet:r.created_at};
-    });
+      if (extra.type !== "kalender") continue;
+      const key = `${r.aar}|${r.maaned}`;
+      if (!sett.has(key)) sett.set(key, {id:r.id,tittel:r.tittel,aar:r.aar,maaned:r.maaned,tema:r.tema||"",events:extra.events||{},opprettet:r.created_at});
+    }
+    return [...sett.values()];
   } catch { return []; }
 }
 export async function lagreKalenderplaner(brukerId, liste) {
   if (!brukerId) return false;
   try {
-    const {data:eks}=await supabase.from("maanedsplaner").select("id,innhold").eq("user_id",brukerId);
-    const kIds=(eks||[]).filter(r=>{try{return JSON.parse(r.innhold||"{}").type==="kalender";}catch{return false;}}).map(r=>r.id);
-    if(kIds.length>0) await supabase.from("maanedsplaner").delete().in("id",kIds);
-    if(liste.length>0) await supabase.from("maanedsplaner").insert(liste.map(p=>({user_id:brukerId,tittel:p.tittel||"",aar:parseInt(p.aar)||new Date().getFullYear(),maaned:parseInt(p.maaned)||1,tema:p.tema||"",fagomrader:[],innhold:JSON.stringify({type:"kalender",events:p.events||{}})})));
+    // Les eksisterende kalender-rad-IDer FØR vi endrer noe
+    const { data: eks, error: lesErr } = await supabase.from("maanedsplaner").select("id,innhold").eq("user_id", brukerId);
+    if (lesErr) throw lesErr;
+    const gamleKalIds = (eks||[]).filter(r=>{try{return JSON.parse(r.innhold||"{}").type==="kalender";}catch{return false;}}).map(r=>r.id);
+
+    if (liste.length > 0) {
+      const { error: insertErr } = await supabase.from("maanedsplaner").insert(liste.map(p=>({user_id:brukerId,tittel:p.tittel||"",aar:parseInt(p.aar)||new Date().getFullYear(),maaned:parseInt(p.maaned)||1,tema:p.tema||"",fagomrader:[],innhold:JSON.stringify({type:"kalender",events:p.events||{}})})));
+      if (insertErr) throw insertErr;
+    }
+
+    if (gamleKalIds.length > 0) {
+      await supabase.from("maanedsplaner").delete().in("id", gamleKalIds);
+    }
     return true;
   } catch(e){console.error("[Kalender] Lagring feilet:",e);return false;}
 }

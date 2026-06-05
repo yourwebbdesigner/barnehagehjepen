@@ -442,7 +442,7 @@ function AiFortellingView({ aktivBruker, onLagre, onAvbryt }) {
     if (!form.tema.trim()) { setFeil("Skriv inn tema eller beskrivelse"); return; }
     setGenererer(true); setFeil(""); setResultat(null);
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 35000);
+    const tid = setTimeout(() => ctrl.abort(), 12000);
     try {
       const ekstra = (form.karakterer ? " Karakterer: " + form.karakterer + "." : "") + (form.ønsker ? " Spesielle ønsker: " + form.ønsker + "." : "");
       const system = `Du er en kreativ forfatter av barnebøker for norske barnehager. Skriv en pedagogisk og engasjerende fortelling egnet for barn på ${form.aldersgruppe} år. Lengde: ${lengdeMap[form.lengde]}. Bruk varmt, enkelt bokmål. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:\n{"tittel":"...","beskrivelse":"En setning om hva fortellingen handler om","innhold":"Selve fortellingens tekst med avsnitt adskilt av \\n\\n"}`;

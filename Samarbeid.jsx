@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase.js";
+import { C } from './utils.js';
 
 // ══════════════════════════════════════════
 //  KONSTANTER OG HJELPERE
 // ══════════════════════════════════════════
-const C = {
-  g:"#2c5b8e", lg:"#3a72b0", mint:"#d8e6f5", bg:"#f3f7fc",
-  w:"#ffffff", t:"#1a2c45", gr:"#5d7390", lg2:"#e8eff8",
-};
 
 const SAM_CSS = `
   .sam-presence { background:#e3f2fd; border:1px solid #90caf9; }

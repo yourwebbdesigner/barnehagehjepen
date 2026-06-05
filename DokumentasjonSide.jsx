@@ -4,16 +4,10 @@ import DokumentSkanner from "./DokumentSkanner.jsx";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { hentDokumentasjon, lagreDokumentasjon, skrivUtGenerell } from './api.js';
 
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert. Tillat popup for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}</style></head><body><div class="knapper no-print"><button class="lukk-btn" onclick="window.close()">← Lukk</button><button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button></div>${html}</body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 500);
-}
+import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
+import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { useUnsavedGuard } from './hooks.js';
+
 function Tilbake({ onClick }) {
   return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
 }
@@ -34,6 +28,7 @@ export default function DokumentasjonSide({ ctx }) {
     const [lokalToast, setLokalToast] = useState("");
     const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
     const [bekreftSletting, setBekreftSletting] = useState(false);
+    const { harEndringer: dokHar, setHarEndringer: dokSetHar, bekreftDest: dokDest, sjekkNavigasjon: dokSjekk, bekreftNavigasjon: dokBekreft, avbrytNavigasjon: dokAvbryt, nullstillGuard: dokNullstill } = useUnsavedGuard();
 
     // Skjema-state
     const [d_tittel, setDTittel] = useState("");
@@ -77,7 +72,7 @@ export default function DokumentasjonSide({ ctx }) {
         });
         // Les tekst via Claude Vision
         const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 60000);
+        const tid = setTimeout(() => ctrl.abort(), 30000);
         try {
           const r = await fetch("/api/ai", {
             method: "POST",
@@ -135,13 +130,14 @@ export default function DokumentasjonSide({ ctx }) {
       setValgt(null);
       setDTittel(""); setDDato(new Date().toISOString().slice(0,10));
       setDFag([]); setDFortelling(""); setDRefleksjon(""); setDFeil("");
-      setVisning("ny");
+      dokNullstill(); setVisning("ny");
     };
 
     const redigerDokument = (d) => {
       setValgt(d);
       setDTittel(d.tittel); setDDato(d.dato); setDFag(d.fag || []);
       setDFortelling(d.fortelling); setDRefleksjon(d.refleksjon || "");
+      dokNullstill();
       setDFeil(""); setVisning("rediger");
     };
 
@@ -164,7 +160,7 @@ export default function DokumentasjonSide({ ctx }) {
       };
       const ok = await lagre([nyttDok, ...dok]);
       setDLoading(false);
-      if (ok) { vis("✅ Dokumentasjon lagret"); setVisning("liste"); }
+      if (ok) { dokNullstill(); vis("✅ Dokumentasjon lagret"); setVisning("liste"); }
     };
 
     const lagreEndring = async () => {
@@ -178,7 +174,7 @@ export default function DokumentasjonSide({ ctx }) {
         : d);
       const ok = await lagre(oppdatert);
       setDLoading(false);
-      if (ok) { vis("✅ Endringer lagret"); setVisning("liste"); }
+      if (ok) { dokNullstill(); vis("✅ Endringer lagret"); setVisning("liste"); }
     };
 
     const slettDokument = async (id) => {
@@ -273,7 +269,8 @@ export default function DokumentasjonSide({ ctx }) {
       const erRediger = visning === "rediger";
       return (
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+          <UnsavedDialog bekreftDest={dokDest} onBekreft={dokBekreft} onAvbryt={dokAvbryt}/>
+          <button onClick={()=>dokSjekk("liste",setVisning)} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger dokumentasjon":"📝 Ny dokumentasjon"}</div>
 
           {d_feil && <div className="fade" style={{background:"#fdecea",color:"#c62828",padding:"10px 13px",borderRadius:9,fontSize:12,marginBottom:12,fontWeight:700,borderLeft:"4px solid #c62828"}}>⚠️ {d_feil}</div>}
@@ -281,7 +278,7 @@ export default function DokumentasjonSide({ ctx }) {
 
           <div style={{background:C.w,borderRadius:14,padding:18,boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
             <label style={labelStil}>Tittel</label>
-            <input type="text" value={d_tittel} onChange={e=>setDTittel(e.target.value)} style={iS} placeholder="F.eks. 'Lek med vann i sandkassen'"/>
+            <input type="text" value={d_tittel} onChange={e=>{setDTittel(e.target.value);dokSetHar(true);}} style={iS} placeholder="F.eks. 'Lek med vann i sandkassen'"/>
 
             <label style={labelStil}>Dato</label>
             <div style={{position:"relative",marginBottom:10}}>
@@ -326,7 +323,7 @@ export default function DokumentasjonSide({ ctx }) {
               </button>
               <input ref={skannRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{ kjorOCR(e.target.files?.[0]); e.target.value=""; }}/>
             </div>
-            <textarea value={d_fortelling} onChange={e=>setDFortelling(e.target.value)} rows={7} placeholder="Beskriv konkret hva som skjedde. Hvem var med? Hva gjorde de? Hva ble sagt? Hva la du merke til?" style={{...iS,resize:"vertical",minHeight:130,lineHeight:1.6}}/>
+            <textarea value={d_fortelling} onChange={e=>{setDFortelling(e.target.value);dokSetHar(true);}} rows={7} placeholder="Beskriv konkret hva som skjedde. Hvem var med? Hva gjorde de? Hva ble sagt? Hva la du merke til?" style={{...iS,resize:"vertical",minHeight:130,lineHeight:1.6}}/>
 
             <label style={labelStil}>💭 Refleksjon (valgfritt)</label>
             <textarea value={d_refleksjon} onChange={e=>setDRefleksjon(e.target.value)} rows={5} placeholder="Hva fungerte? Hva kunne vært gjort annerledes? Hva tar du med deg videre? Hvilke fagområder berørte dette?" style={{...iS,resize:"vertical",minHeight:100,lineHeight:1.6}}/>

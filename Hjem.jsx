@@ -7,28 +7,42 @@ import { TEGNEARK } from './data/tegneark.jsx';
 import { DAGENS_TIPS, hilsen } from './data/tips.js';
 import { GlobalSok } from './AktivSide.jsx';
 import { RenderTekst } from './AiSide.jsx';
+import { C, escapeHTML, skrivUtVindu } from './utils.js';
 
 function Tilbake({ onClick }) {
   return <button className="btn" onClick={onClick} style={{background:"var(--c-mint)", color:"var(--c-t)", padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
 }
 
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert. Tillat popup for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}</style></head><body><div class="knapper no-print"><button class="lukk-btn" onclick="window.close()">← Lukk</button><button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button></div>${html}</body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 500);
-}
 function FagTag({ rid }) {
   const f = FAGOMRADER.find(x => x.id === rid);
   if (!f) return null;
   return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
 }
+function DataSkjelett() {
+  return (
+    <div style={{marginBottom:18}}>
+      <div className="skimmer" style={{height:20,width:"60%",marginBottom:10,borderRadius:8}}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+        {[1,2,3,4].map(i=><div key={i} className="skimmer" style={{height:70,borderRadius:12}}/>)}
+      </div>
+    </div>
+  );
+}
+
 export default function Hjem({ ctx }) {
-  const { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon } = ctx;
+  const { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner = [], globalMaanedsplaner = [], globalMaanedsbrev = [], globalArsplaner = [] } = ctx;
+
+  // Bygg liste over siste 3 planer på tvers av alle plantyper
+  const sistePlaner = React.useMemo(() => {
+    const alle = [
+      ...(globalUkeplaner||[]).map(p=>({...p, _type:"ukeplan",     _ikon:"📅", _farge:"#1565c0", _sid:"ukeplan",     _dato: p.oppdatert||p.opprettet||""})),
+      ...(globalMaanedsplaner||[]).map(p=>({...p, _type:"maanedsplan", _ikon:"📋", _farge:"#6a1b9a", _sid:"maanedsplan", _dato: p.opprettet||""})),
+      ...(globalMaanedsbrev||[]).map(p=>({...p, _type:"maanedsbrev", _ikon:"📨", _farge:"#2d6a4f", _sid:"maanedsbrev", _dato: p.opprettet||""})),
+      ...(globalArsplaner||[]).map(p=>({...p, _type:"arsplan",     _ikon:"📆", _farge:"#c62828", _sid:"arsplan",     _dato: p.oppdatert||p.opprettet||""})),
+    ];
+    alle.sort((a,b) => (b._dato||"").localeCompare(a._dato||""));
+    return alle.slice(0, 3);
+  }, [globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner]);
   return (
     <div className="fade">
       {/* HERO */}
@@ -58,6 +72,8 @@ export default function Hjem({ ctx }) {
           ))}
         </div>
       </div>
+      {/* Innlastings-skjelett mens brukerdata hentes */}
+      {!dataLastet && <DataSkjelett />}
 
       {/* GLOBAL SØK */}
       <GlobalSok
@@ -72,6 +88,7 @@ export default function Hjem({ ctx }) {
         aapneRammeplan={aapneRammeplan}
         aapneAktivitetskort={aapneAktivitetskort}
         aapneDokumentasjon={aapneDokumentasjon}
+        aapnePlan={aapnePlan}
         C={C}
       />
 
@@ -111,6 +128,32 @@ export default function Hjem({ ctx }) {
           </div>
         ))}
       </div>
+
+      {/* SISTE PLANER */}
+      {dataLastet && sistePlaner.length > 0 && (
+        <div style={{marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+            <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>🕐 Siste planer</div>
+            <button onClick={()=>navigerTil("planlegging")} style={{background:"#e8eff8",color:C.g,border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Alle planer →</button>
+          </div>
+          <div style={{display:"grid",gap:8}}>
+            {sistePlaner.map((p,i) => (
+              <div key={i} className="hover" onClick={()=>navigerTil(p._sid)}
+                style={{background:C.w,borderRadius:12,padding:"11px 14px",cursor:"pointer",boxShadow:`0 2px 8px ${p._farge}1a`,display:"flex",alignItems:"center",gap:11,borderLeft:`3px solid ${p._farge}`}}>
+                <span style={{fontSize:20,flexShrink:0}}>{p._ikon}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:800,color:C.t,fontSize:13,lineHeight:1.2,wordBreak:"break-word"}}>{p.tittel||"(uten tittel)"}</div>
+                  <div style={{fontSize:10,color:C.gr,marginTop:2}}>
+                    {p.tema ? `Tema: ${p.tema}` : (p.uke ? `Uke ${p.uke}` : "")}
+                    {p._dato ? ` • ${new Date(p._dato).toLocaleDateString("no-NO",{day:"numeric",month:"short"})}` : ""}
+                  </div>
+                </div>
+                <span style={{color:C.gr,fontSize:14,flexShrink:0}}>›</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* PLANLEGGING */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
@@ -161,6 +204,24 @@ export default function Hjem({ ctx }) {
 
 export function MineSkjemaer({ ctx }) {
   const { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil } = ctx;
+  const [sok, setSok] = React.useState("");
+  const [sortering, setSortering] = React.useState("nyest"); // nyest | az | fag
+
+  const filtrert = React.useMemo(() => {
+    let liste = [...skjemaer];
+    if (sok.trim()) {
+      const q = sok.toLowerCase();
+      liste = liste.filter(s =>
+        (s.tittel||"").toLowerCase().includes(q) ||
+        (s.hva||"").toLowerCase().includes(q) ||
+        (s.kategori||"").toLowerCase().includes(q)
+      );
+    }
+    if (sortering === "az") liste.sort((a,b) => (a.tittel||"").localeCompare(b.tittel||"", "no"));
+    // "nyest" er allerede riktig rekkefølge (nyeste øverst fra Supabase)
+    return liste;
+  }, [skjemaer, sok, sortering]);
+
   return (
     <div className="fade">
       <h1 style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>📋 Mine skjemaer</h1>
@@ -170,8 +231,11 @@ export function MineSkjemaer({ ctx }) {
         <div style={{background:C.w,borderRadius:16,padding:28,textAlign:"center",boxShadow:"0 2px 10px rgba(44,91,142,0.07)"}}>
           <div style={{fontSize:40,marginBottom:8}}>📝</div>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:17,color:C.t}}>Ingen skjemaer ennå</div>
-          <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema!</div>
-          <button className="btn" onClick={()=>navigerTil("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
+          <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema koblet til Rammeplanen!</div>
+          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="btn" onClick={()=>navigerTil("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
+            <button className="btn" onClick={()=>navigerTil("ai")} style={{background:"#e8eff8",color:C.t,padding:"10px 18px",fontSize:13}}>🤖 Generer med AI</button>
+          </div>
         </div>
       ):valgtSkjema?(
         <div className="fade" style={{background:C.w,borderRadius:16,padding:20,boxShadow:"0 2px 16px rgba(44,91,142,0.12)"}}>
@@ -232,23 +296,42 @@ export function MineSkjemaer({ ctx }) {
           </div>
         </div>
       ):(
-        <div style={{display:"grid",gap:9}}>
-          {skjemaer.map(s=>(
-            <div key={s.id} className="hover" onClick={()=>setValgtSkjema(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}</div>
-                  {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2}}>{s.hva.substring(0,65)}{s.hva.length>65?"...":""}</div>}
-                  <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
-                    {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
-                    {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+        <>
+          <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
+            <input
+              type="text" value={sok} onChange={e=>setSok(e.target.value)}
+              placeholder="🔍 Søk i skjemaer ..."
+              style={{flex:1,padding:"9px 12px",border:"1.5px solid #d8e6f5",borderRadius:10,fontSize:13,fontFamily:"'Nunito',sans-serif",background:"#f5f9fd",color:C.t,outline:"none"}}
+            />
+            <select value={sortering} onChange={e=>setSortering(e.target.value)}
+              style={{padding:"9px 10px",border:"1.5px solid #d8e6f5",borderRadius:10,fontSize:12,fontFamily:"'Nunito',sans-serif",background:"#f5f9fd",color:C.t,cursor:"pointer",flexShrink:0}}>
+              <option value="nyest">Nyeste først</option>
+              <option value="az">A–Å</option>
+            </select>
+          </div>
+          {filtrert.length === 0 && (
+            <div style={{textAlign:"center",padding:20,color:C.gr,fontSize:13}}>Ingen skjemaer matcher søket</div>
+          )}
+          <div style={{display:"grid",gap:9}}>
+            {filtrert.map(s=>(
+              <div key={s.id} className="hover" onClick={()=>setValgtSkjema(s)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:800,color:C.t,fontSize:14,wordBreak:"break-word"}}>{s.tittel}</div>
+                    {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2,lineHeight:1.4}}>{s.hva.substring(0,70)}{s.hva.length>70?"…":""}</div>}
+                    <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                      {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
+                      {s.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{s.kategori}</span>}
+                      {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
+                    </div>
                   </div>
+                  <span style={{color:C.gr,fontSize:17,marginLeft:7,flexShrink:0}}>›</span>
                 </div>
-                <span style={{color:C.gr,fontSize:17,marginLeft:7}}>›</span>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <button className="btn" onClick={()=>navigerTil("skjema-ny")} style={{width:"100%",marginTop:12,background:C.g,color:"#fff",padding:"12px",fontSize:13,borderRadius:10}}>✏️ Lag nytt skjema</button>
+        </>
       )}
     </div>
   );

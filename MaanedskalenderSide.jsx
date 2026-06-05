@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
-import { hentKalenderplaner, lagreKalenderplaner, hentMaanedsplaner } from './api.js';
+import { hentKalenderplaner, lagreKalenderplaner } from './api.js';
+import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
+import { UnsavedDialog } from './UnsavedDialog.jsx';
+import { useUnsavedGuard } from './hooks.js';
 
-const C = { g:"var(--c-g)", lg:"var(--c-lg)", mint:"var(--c-mint)", bg:"var(--c-bg)", yl:"var(--c-yl)", w:"var(--c-w)", t:"var(--c-t)", gr:"var(--c-gr)", lg2:"var(--c-lg2)" };
-const escapeHTML = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const mdToHtml = (s) => escapeHTML(s).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
-const stripMd = (s) => String(s || "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/^#{1,3}\s+/gm, "").replace(/^[-*]\s+/gm, "• ");
-function skrivUtVindu(html, tittel = "Barnehagehjelpen") {
-  const w = window.open("", "_blank");
-  if (!w) { alert("Popup ble blokkert. Tillat popup for å skrive ut."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>${tittel}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a2a3a;background:#fff;padding:16px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}.knapper{display:flex;gap:10px;margin-bottom:20px;justify-content:center}.print-btn{padding:9px 24px;background:#2c5b8e;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}.lukk-btn{padding:9px 18px;background:#e8eff8;color:#2c5b8e;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:bold}</style></head><body><div class="knapper no-print"><button class="lukk-btn" onclick="window.close()">← Lukk</button><button class="print-btn" onclick="window.print()">🖨️ Skriv ut</button></div>${html}</body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 500);
-}
 export default function MaanedskalenderSide({ ctx }) {
-  const { aktivBruker, navigerTil, planTema, setGlobalMaanedsplaner } = ctx;
+  const { aktivBruker, navigerTil, planTema, setGlobalKalenderplaner } = ctx;
 
     const MAANEDER_KAL = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
     const UKEDAGER = ["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
@@ -32,6 +25,7 @@ export default function MaanedskalenderSide({ ctx }) {
     const visLokal=m=>{setLokalToast(m);setTimeout(()=>setLokalToast(""),3000);};
     const [bekreftSletting,setBekreftSletting]=useState(false);
     const [printModus,setPrintModus]=useState(false);
+    const { harEndringer: kalHar, setHarEndringer: kalSetHar, bekreftDest: kalDest, sjekkNavigasjon: kalSjekk, bekreftNavigasjon: kalBekreft, avbrytNavigasjon: kalAvbryt, nullstillGuard: kalNullstill } = useUnsavedGuard();
     const [k_tittel,setKTittel]=useState("");
     const [k_aar,setKAar]=useState(new Date().getFullYear());
     const [k_maaned,setKMaaned]=useState(new Date().getMonth()+1);
@@ -49,15 +43,16 @@ export default function MaanedskalenderSide({ ctx }) {
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
 
-    const lagre=async(liste)=>{const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}setPlaner(liste);hentMaanedsplaner(aktivBruker.id).then(setGlobalMaanedsplaner).catch(console.error);return true;};
+    const lagre=async(liste)=>{const ok=await lagreKalenderplaner(aktivBruker.id,liste);if(!ok){setKFeil("Kunne ikke lagre");return false;}setPlaner(liste);if(setGlobalKalenderplaner)setGlobalKalenderplaner(liste);kalNullstill();return true;};
 
-    const nyPlan=()=>{setValgt(null);setKTittel("");setKAar(new Date().getFullYear());setKMaaned(new Date().getMonth()+1);setKTema(planTema);setKEvents({});setKFeil("");setVisning("ny");};
-    const redigerPlan=p=>{setValgt(p);setKTittel(p.tittel||"");setKAar(p.aar);setKMaaned(p.maaned);setKTema(p.tema||"");setKEvents(p.events||{});setKFeil("");setVisning("rediger");};
+    const nyPlan=()=>{setValgt(null);setKTittel("");setKAar(new Date().getFullYear());setKMaaned(new Date().getMonth()+1);setKTema(planTema);setKEvents({});setKFeil("");kalNullstill();setVisning("ny");};
+    const redigerPlan=p=>{setValgt(p);setKTittel(p.tittel||"");setKAar(p.aar);setKMaaned(p.maaned);setKTema(p.tema||"");setKEvents(p.events||{});setKFeil("");kalNullstill();setVisning("rediger");};
 
     const leggTilEvent=()=>{
       if(!nyEvent.tekst.trim())return;
       const ikon=nyEvent.ikon||EVENT_TYPER[nyEvent.type]?.ikon||"📅";
       const event={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),type:nyEvent.type,tekst:nyEvent.tekst.trim(),ikon};
+      kalSetHar(true);
       setKEvents(prev=>({...prev,[aktivDag]:[...(prev[aktivDag]||[]),event]}));
       setNyEvent({type:"aktivitet",tekst:"",ikon:""});
     };
@@ -73,7 +68,7 @@ export default function MaanedskalenderSide({ ctx }) {
       const mNavn=MAANEDER_KAL[k_maaned-1];
       const antallDager=new Date(k_aar,k_maaned,0).getDate();
       const prompt=`Du er pedagog i norsk barnehage. Lag en fullstendig månedsoversikt for ${mNavn} ${k_aar} (${antallDager} dager) med tema "${k_tema}".\nDekk ALLE hverdager (mandag–fredag) med minst én hendelse per dag – ca. 18–22 hendelser totalt.\nTyper: aktivitet (daglig pedagogisk aktivitet), tur (uteaktivitet/tur), bursdag (markering), praktisk (info til foreldre).\nReturner KUN gyldig JSON uten markdown, eksempel:\n{"events":{"1":[{"type":"aktivitet","tekst":"Samlingsstund: tema ${k_tema}","ikon":"🎨"}],"2":[{"type":"tur","tekst":"Skogstur","ikon":"🌲"}],"3":[{"type":"aktivitet","tekst":"Forming og kreativitet","ikon":"✂️"}]}}\nBruk dagtall som nøkler (1–${antallDager}). Hopp over lørdager og søndager. Varier aktivitetene gjennom måneden.`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),31000);
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),12000);
       try{
         const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1100}),signal:ctrl.signal});
         if(!r.ok){const d=await r.json().catch(()=>({}));setKFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}
@@ -195,7 +190,8 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
       const erRediger=visning==="rediger";
       return(
         <div className="fade">
-          <button onClick={()=>setVisning("liste")} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
+          <UnsavedDialog bekreftDest={kalDest} onBekreft={kalBekreft} onAvbryt={kalAvbryt}/>
+          <button onClick={()=>kalSjekk("liste",setVisning)} style={{background:"none",border:"none",color:C.g,cursor:"pointer",fontWeight:700,fontSize:13,padding:"0 0 12px",display:"flex",alignItems:"center",gap:5}}>← Tilbake</button>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:20,color:C.t,marginBottom:14}}>{erRediger?"✏️ Rediger kalender":"🗓 Ny månedskalender"}</div>
           {k_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"9px 12px",fontSize:12,marginBottom:12}}>{k_feil}</div>}
           <div style={{background:C.w,borderRadius:13,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
