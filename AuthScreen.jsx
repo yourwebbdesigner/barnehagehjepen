@@ -555,43 +555,71 @@ export default function AuthScreen({ onLoginSuccess }) {
 export function AdminPanel({ aktivBruker }) {
   const [brukere, setBrukere] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [feedback, setFeedback] = useState("");
-  const [bekreftSlett, setBekreftSlett] = useState(null);  // id på bruker som skal bekreftes slettet
+  const [lastFeil, setLastFeil] = useState("");
+  const [feedback, setFeedback] = useState({ tekst: "", feil: false });
+  const [bekreftSlett, setBekreftSlett] = useState(null);
+  const [aktivOp, setAktivOp] = useState(null); // { id, type } for per-rad loading
 
-  const visM = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""), 3000); };
+  const tolkFeil = (error) => {
+    if (!error) return "Ukjent feil";
+    const msg = error.message || "";
+    const kode = error.code || "";
+    if (!navigator.onLine) return "Ingen internettforbindelse – sjekk nettverket ditt";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "Nettverksfeil – klarte ikke nå serveren";
+    if (kode === "42501" || msg.includes("insufficient_privilege") || msg.includes("permission denied"))
+      return "Tilgangsfeil – du har ikke rettigheter til denne handlingen (RLS-policy blokkert)";
+    if (kode === "23503" || msg.includes("foreign key")) return "Kan ikke slette – brukeren har tilknyttet data som blokkerer sletting";
+    if (kode === "23505" || msg.includes("unique")) return "Konflikt – verdien er allerede i bruk";
+    if (kode === "PGRST301" || msg.includes("JWT")) return "Sesjonen er utløpt – logg inn på nytt";
+    if (kode === "PGRST116") return "Ingen treff – brukeren finnes ikke lenger";
+    return msg || "Ukjent feil";
+  };
+
+  const visM = (tekst, feil = false) => {
+    setFeedback({ tekst, feil });
+    setTimeout(() => setFeedback({ tekst: "", feil: false }), 5000);
+  };
 
   const last = async () => {
     setLoading(true);
-    try {
-      const { data } = await supabase.from("user_profiles").select("*").order("created_at");
+    setLastFeil("");
+    const { data, error } = await supabase.from("user_profiles").select("*").order("created_at");
+    if (error) {
+      console.error("Admin: feil ved lasting av brukere:", error);
+      setLastFeil(tolkFeil(error));
+    } else {
       setBrukere(data || []);
-    } catch (e) {
-      console.error("Admin: feil ved lasting av brukere:", e);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => { last(); }, []);
 
   const slettBruker = async (id) => {
-    if (id === aktivBruker?.id) { visM("⚠️ Kan ikke slette deg selv"); return; }
+    if (id === aktivBruker?.id) { visM("⚠️ Kan ikke slette deg selv", true); return; }
     setBekreftSlett(id);
   };
 
   const utforSletting = async () => {
     if (!bekreftSlett) return;
+    setAktivOp({ id: bekreftSlett, type: "slett" });
     const { error } = await supabase.from("user_profiles").delete().eq("id", bekreftSlett);
     setBekreftSlett(null);
-    if (error) { visM("⚠️ Sletting feilet: " + error.message); return; }
+    setAktivOp(null);
+    if (error) { visM("⚠️ Sletting feilet: " + tolkFeil(error), true); return; }
     visM("✅ Brukerprofil slettet – husk å slette auth-kontoen i Supabase Dashboard");
     last();
   };
 
   const settAdmin = async (id, verdi) => {
+    setAktivOp({ id, type: "admin" });
     const { error } = await supabase.from("user_profiles").update({ is_admin: verdi }).eq("id", id);
-    if (error) { visM("⚠️ Oppdatering feilet: " + error.message); return; }
-    visM(verdi?"✅ Gjort til admin":"✅ Fjernet admin-rettigheter");
+    setAktivOp(null);
+    if (error) {
+      visM("⚠️ " + (verdi ? "Kunne ikke gi admin-rettigheter: " : "Kunne ikke fjerne admin-rettigheter: ") + tolkFeil(error), true);
+      return;
+    }
+    visM(verdi ? "✅ Gjort til admin" : "✅ Fjernet admin-rettigheter");
     last();
   };
 
@@ -599,10 +627,24 @@ export function AdminPanel({ aktivBruker }) {
     <div className="fade">
       <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#1a2c45",marginBottom:3}}>👑 Admin-panel</div>
       <p style={{color:"#5d7390",fontSize:12,marginBottom:14}}>Administrer brukerkontoer ({brukere.length} totalt)</p>
-      {feedback && <div className="fade" style={{marginBottom:12,background:"#d8e6f5",borderRadius:8,padding:"9px 13px",color:"#2c5b8e",fontWeight:700,fontSize:12}}>{feedback}</div>}
+      {feedback.tekst && (
+        <div className="fade" style={{marginBottom:12,background:feedback.feil?"#fdecea":"#d8e6f5",borderRadius:8,padding:"9px 13px",color:feedback.feil?"#c62828":"#2c5b8e",fontWeight:700,fontSize:12}}>
+          {feedback.tekst}
+        </div>
+      )}
       {loading && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>}
-      {!loading && brukere.length === 0 && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}>Ingen brukere</div>}
-      {!loading && brukere.map(u => (
+      {!loading && lastFeil && (
+        <div style={{padding:"14px 16px",background:"#fdecea",borderRadius:10,color:"#c62828",fontSize:12,fontWeight:700,marginBottom:10}}>
+          ⚠️ Kunne ikke laste brukere: {lastFeil}
+          <button onClick={last} style={{display:"block",marginTop:8,background:"#c62828",color:"#fff",border:"none",borderRadius:7,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+            Prøv igjen
+          </button>
+        </div>
+      )}
+      {!loading && !lastFeil && brukere.length === 0 && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}>Ingen brukere</div>}
+      {!loading && !lastFeil && brukere.map(u => {
+        const opptatt = aktivOp?.id === u.id;
+        return (
         <div key={u.id} style={{background:C.lg2,borderRadius:12,padding:"13px 15px",marginBottom:9,boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,gap:8}}>
             <div>
@@ -614,17 +656,18 @@ export function AdminPanel({ aktivBruker }) {
           <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
             {u.id !== aktivBruker.id && (
               <>
-                <button onClick={()=>settAdmin(u.id, !u.is_admin)} style={{background:"#e8eff8",color:"#2c5b8e",padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>
-                  {u.is_admin?"Fjern admin":"Gjør til admin"}
+                <button onClick={()=>settAdmin(u.id, !u.is_admin)} disabled={opptatt} style={{background:"#e8eff8",color:"#2c5b8e",padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:opptatt?"default":"pointer",fontWeight:700,opacity:opptatt?0.6:1}}>
+                  {opptatt && aktivOp?.type==="admin" ? "Lagrer…" : u.is_admin?"Fjern admin":"Gjør til admin"}
                 </button>
-                <button onClick={()=>slettBruker(u.id)} style={{background:"#fdecea",color:"#c62828",padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>
-                  🗑 Slett
+                <button onClick={()=>slettBruker(u.id)} disabled={opptatt} style={{background:"#fdecea",color:"#c62828",padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:opptatt?"default":"pointer",fontWeight:700,opacity:opptatt?0.6:1}}>
+                  {opptatt && aktivOp?.type==="slett" ? "Sletter…" : "🗑 Slett"}
                 </button>
               </>
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
       <div style={{background:"#fff8e1",borderRadius:10,padding:"10px 12px",fontSize:11,color:"#795548",borderLeft:"4px solid #f4a261",marginTop:14,lineHeight:1.6}}>
         <strong>⚠️ Viktig om sletting:</strong> «Slett»-knappen fjerner brukerprofilen og all data, men selve innloggingskontoen (e-post + passord) lever videre i Supabase Auth. For å hindre brukeren i å logge inn igjen må du også slette auth-kontoen i <strong>Supabase Dashboard → Authentication → Users</strong>.
       </div>
@@ -646,8 +689,8 @@ export function AdminPanel({ aktivBruker }) {
                 ⚠️ Innloggingskontoen slettes <strong>ikke</strong> automatisk. Gå til Supabase Dashboard → Authentication → Users for å blokkere tilgang helt.
               </p>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setBekreftSlett(null)} style={{flex:1,padding:"11px",background:"#e8eff8",color:"#1a2c45",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
-                <button onClick={utforSletting} style={{flex:1,padding:"11px",background:"#c62828",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Slett</button>
+                <button onClick={()=>setBekreftSlett(null)} disabled={!!aktivOp} style={{flex:1,padding:"11px",background:"#e8eff8",color:"#1a2c45",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:aktivOp?"default":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aktivOp?0.6:1}}>Avbryt</button>
+                <button onClick={utforSletting} disabled={!!aktivOp} style={{flex:1,padding:"11px",background:"#c62828",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:aktivOp?"default":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aktivOp?0.7:1}}>{aktivOp ? "Sletter…" : "🗑 Slett"}</button>
               </div>
             </div>
           </div>
