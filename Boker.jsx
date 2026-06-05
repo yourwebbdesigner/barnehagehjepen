@@ -7,8 +7,8 @@ const CSS = `
   @keyframes bk-fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
   .bk-kort {
-    background: #fff;
-    border: 1.5px solid #e8eff8;
+    background: var(--c-card);
+    border: 1.5px solid var(--c-divider);
     border-radius: 16px;
     padding: 16px;
     display: flex;
@@ -47,26 +47,26 @@ const CSS = `
   .bk-btn:disabled { opacity: 0.6; cursor: default; }
   .bk-btn-hoved { background: linear-gradient(135deg,#2c5b8e,#4178bd); color:#fff; box-shadow:0 3px 10px rgba(44,91,142,0.3); }
   .bk-btn-hoved:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 5px 16px rgba(44,91,142,0.35); }
-  .bk-btn-sek { background:#e8eff8; color:#2c5b8e; }
-  .bk-btn-sek:hover:not(:disabled) { background:#d0e0f0; }
+  .bk-btn-sek { background:var(--c-lg2); color:var(--c-g); }
+  .bk-btn-sek:hover:not(:disabled) { filter:brightness(0.92); }
   .bk-btn-fare { background:#fdecea; color:#c62828; }
   .bk-btn-fare:hover:not(:disabled) { background:#f8d7d7; }
 
   .bk-input {
     width: 100%;
     padding: 11px 13px;
-    border: 1.5px solid #d8e6f5;
+    border: 1.5px solid var(--c-input-border);
     border-radius: 10px;
     font-family: 'Nunito', sans-serif;
     font-size: 14px;
-    color: #1a2c45;
-    background: #f5f9fd;
+    color: var(--c-t);
+    background: var(--c-input-bg);
     box-sizing: border-box;
     outline: none;
     transition: border-color 0.15s;
     margin-bottom: 12px;
   }
-  .bk-input:focus { border-color:#4178bd; background:#fff; }
+  .bk-input:focus { border-color:#4178bd; background:var(--c-w); }
 
   .bk-grid {
     display: grid;
@@ -293,13 +293,13 @@ function BokDetalj({ bok, erFav, onFav, kanRedigere, onRediger, onSlett, onTilba
       </div>
 
       {bok.beskrivelse && (
-        <div style={{ background:"#f5f9fd", borderRadius:12, padding:"12px 15px", marginBottom:16, fontSize:14, color:"#3d5a7a", lineHeight:1.6, fontStyle:"italic" }}>
+        <div style={{ background:"var(--c-lg2)", borderRadius:12, padding:"12px 15px", marginBottom:16, fontSize:14, color:"var(--c-gr)", lineHeight:1.6, fontStyle:"italic" }}>
           {bok.beskrivelse}
         </div>
       )}
 
       {bok.innhold && (
-        <div style={{ background:"#fff", border:"1.5px solid #e8eff8", borderRadius:14, padding:"22px", lineHeight:1.85, color:"#2a3e58", fontSize:15, whiteSpace:"pre-wrap", fontFamily:"'Nunito',sans-serif" }}>
+        <div style={{ background:"var(--c-card)", border:"1.5px solid var(--c-divider)", borderRadius:14, padding:"22px", lineHeight:1.85, color:"var(--c-t)", fontSize:15, whiteSpace:"pre-wrap", fontFamily:"'Nunito',sans-serif" }}>
           {bok.innhold}
         </div>
       )}
@@ -545,12 +545,12 @@ function AiFortellingView({ aktivBruker, onLagre, onAvbryt }) {
         </>
       ) : (
         <div className="bk-fade">
-          <div style={{ background:"linear-gradient(135deg,#f0f7ff,#e8f0fb)", border:"1.5px solid #c4d6ec", borderRadius:16, padding:20, marginBottom:16 }}>
-            <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"#1a2c45", marginBottom:6 }}>{resultat.tittel}</div>
+          <div style={{ background:"var(--c-lg2)", border:"1.5px solid var(--c-divider)", borderRadius:16, padding:20, marginBottom:16 }}>
+            <div style={{ fontFamily:"'Fredoka One',cursive", fontSize:22, color:"var(--c-t)", marginBottom:6 }}>{resultat.tittel}</div>
             {resultat.beskrivelse && (
-              <div style={{ fontSize:13, color:"#5d7390", fontStyle:"italic", marginBottom:14 }}>{resultat.beskrivelse}</div>
+              <div style={{ fontSize:13, color:"var(--c-gr)", fontStyle:"italic", marginBottom:14 }}>{resultat.beskrivelse}</div>
             )}
-            <div style={{ background:"#fff", borderRadius:12, padding:"18px 20px", fontSize:15, lineHeight:1.9, color:"#2a3e58", whiteSpace:"pre-wrap", fontFamily:"'Nunito',sans-serif", border:"1px solid #e8eff8", maxHeight:440, overflowY:"auto" }}>
+            <div style={{ background:"var(--c-card)", borderRadius:12, padding:"18px 20px", fontSize:15, lineHeight:1.9, color:"var(--c-t)", whiteSpace:"pre-wrap", fontFamily:"'Nunito',sans-serif", border:"1px solid var(--c-divider)", maxHeight:440, overflowY:"auto" }}>
               {resultat.innhold}
             </div>
           </div>
@@ -661,12 +661,12 @@ export default function BokerSide({ aktivBruker }) {
         {/* Slett-modal */}
         {slettBekreft && (
           <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.4)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:20 }}>
-            <div style={{ background:"#fff", borderRadius:18, padding:28, maxWidth:360, width:"100%", textAlign:"center", boxShadow:"0 8px 40px rgba(0,0,0,0.22)" }}>
+            <div style={{ background:"var(--c-card)", borderRadius:18, padding:28, maxWidth:360, width:"100%", textAlign:"center", boxShadow:"0 8px 40px rgba(0,0,0,0.22)" }}>
               <div style={{ fontSize:36, marginBottom:12 }}>🗑️</div>
-              <div style={{ fontWeight:800, color:"#1a2c45", marginBottom:8, fontSize:16 }}>
+              <div style={{ fontWeight:800, color:"var(--c-t)", marginBottom:8, fontSize:16 }}>
                 Slett «{slettBekreft.tittel}»?
               </div>
-              <div style={{ fontSize:13, color:"#5d7390", marginBottom:22 }}>Dette kan ikke angres.</div>
+              <div style={{ fontSize:13, color:"var(--c-gr)", marginBottom:22 }}>Dette kan ikke angres.</div>
               <div style={{ display:"flex", gap:10 }}>
                 <button onClick={() => setSlettBekreft(null)} className="bk-btn bk-btn-sek" style={{ flex:1 }}>Avbryt</button>
                 <button onClick={håndterSlettBekreft} className="bk-btn bk-btn-fare" style={{ flex:1 }}>Slett</button>
@@ -696,10 +696,10 @@ export default function BokerSide({ aktivBruker }) {
             </div>
 
             {/* Tabs */}
-            <div style={{ display:"flex", gap:4, background:"#e8eff8", borderRadius:11, padding:4, marginBottom:14 }}>
+            <div style={{ display:"flex", gap:4, background:"var(--c-lg2)", borderRadius:11, padding:4, marginBottom:14 }}>
               {[["alle","📚 Alle"], ["favoritter","⭐ Favoritter"]].map(([id, navn]) => (
                 <button key={id} onClick={() => setAktivTab(id)}
-                  style={{ flex:1, padding:"8px", background:aktivTab===id ? "#fff" : "transparent", border:"none", borderRadius:8, fontSize:13, fontWeight:800, color:aktivTab===id ? "#2c5b8e" : "#5d7390", cursor:"pointer", boxShadow:aktivTab===id ? "0 1px 4px rgba(0,0,0,0.08)" : "none", fontFamily:"'Nunito',sans-serif" }}>
+                  style={{ flex:1, padding:"8px", background:aktivTab===id ? "var(--c-w)" : "transparent", border:"none", borderRadius:8, fontSize:13, fontWeight:800, color:aktivTab===id ? "var(--c-g)" : "var(--c-gr)", cursor:"pointer", boxShadow:aktivTab===id ? "0 1px 4px rgba(0,0,0,0.08)" : "none", fontFamily:"'Nunito',sans-serif" }}>
                   {navn}{id==="favoritter" && favorittIds.length > 0 ? ` (${favorittIds.length})` : ""}
                 </button>
               ))}
