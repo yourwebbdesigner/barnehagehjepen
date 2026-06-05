@@ -317,7 +317,7 @@ export default function RammeplanSide({ ctx }) {
                     <span style={{background:C.g,color:"#fff",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800,flexShrink:0,whiteSpace:"nowrap"}}>{p.nr}</span>
                     <div style={{fontWeight:800,color:C.t,fontSize:14}}>{p.tittel}</div>
                   </div>
-                  <div style={{fontSize:12,color:C.t,lineHeight:1.75,fontStyle:"italic",borderLeft:"3px solid #d8e6f5",paddingLeft:12}}>{p.tekst}</div>
+                  <div style={{fontSize:12,color:C.t,lineHeight:1.75,fontStyle:"italic",borderLeft:"3px solid var(--c-divider)",paddingLeft:12}}>{p.tekst}</div>
                 </div>
               ))}
             </div>
@@ -362,7 +362,7 @@ export default function RammeplanSide({ ctx }) {
                 <div key={i} style={{background:C.w,borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 7px rgba(44,91,142,0.07)",borderLeft:"4px solid "+o.farge}}>
                   <div style={{fontWeight:800,color:o.farge,fontSize:14,marginBottom:4}}>{o.ikon} {o.navn}</div>
                   <div style={{fontSize:12,color:C.t,lineHeight:1.7,marginBottom:8}}>{o.innhold}</div>
-                  <div style={{background:"#f5f9fd",borderRadius:8,padding:10}}>
+                  <div style={{background:"var(--c-lg2)",borderRadius:8,padding:10}}>
                     <div style={{fontWeight:800,color:C.t,fontSize:10,marginBottom:6}}>TILTAK OG RETTIGHETER</div>
                     {o.tiltak.map((t,j)=>(
                       <div key={j} style={{display:"flex",gap:7,marginBottom:4,alignItems:"flex-start"}}>

@@ -64,7 +64,7 @@ export function MaanedsplanSide({ ctx }) {
       else{setMFeil("AI returnerte innhold uten gjenkjennbar struktur – prøv igjen.");}
     }else{setMFeil("AI ga for kort svar – prøv igjen.");}}catch(e){console.error("[AI Månedsplan]",e);setMFeil(e.name==="AbortError"?"⏱ AI brukte for lang tid – prøv igjen.":e.name==="TypeError"?"❌ Nettverksfeil – sjekk internett og prøv igjen.":"❌ "+e.message);}finally{clearTimeout(tid);setMAiLoading(false);};};
     const toggleFag=(f)=>{setMFag(p=>p.includes(f)?p.filter(x=>x!==f):[...p,f]);mpSetHar(true);};
-    const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
+    const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
     if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 10px"}}/>Laster...</div>;
     if(visning==="les"&&valgt)return(
@@ -221,7 +221,7 @@ export default function MaanedsbrevSide({ ctx }) {
       visLokal("✅ AI-innhold generert");
     }}catch(e){console.error("[AI Månedsbrev]",e);visLokal(e.name==="AbortError"?"⏱ AI-tidsavbrudd":"ℹ️ AI ikke tilgjengelig");}finally{clearTimeout(tid);setBAiLoading(false);};};
     const kopierBrev=(b)=>{const tekst=`${b.tittel}\n\n${b.gjort?"Vi har jobbet med:\n"+b.gjort+"\n\n":""}${b.kommende?"Kommende:\n"+b.kommende+"\n\n":""}${b.praktisk?"Praktisk info:\n"+b.praktisk+"\n\n":""}${b.hilsen?"Hilsen,\n"+b.hilsen:""}`.trim();navigator.clipboard?.writeText(tekst).then(()=>visLokal("✅ Kopiert")).catch(()=>visLokal("ℹ️ Kopiering ikke støttet"));};
-    const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
+    const inputStyle={width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",outline:"none"};
     const taStyle={...inputStyle,resize:"vertical",minHeight:90};
     if(!lastet)return <div style={{padding:24,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 10px"}}/>Laster...</div>;
     if(visning==="les"&&valgt)return(

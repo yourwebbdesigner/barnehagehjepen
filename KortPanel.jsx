@@ -127,7 +127,7 @@ function KortModal({ kort, onLagre, onLukk }) {
           <label style={lS}>Fagområder (rammeplan)</label>
           <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:12, marginTop:4 }}>
             {FAGOMRADER.map(f => (
-              <button key={f.id} onClick={()=>toggleFag(f.id)} style={{ padding:"4px 10px", borderRadius:20, border:form.curriculum_area.includes(f.id)?`2px solid ${f.farge}`:"1.5px solid #c4d6ec", background:form.curriculum_area.includes(f.id)?f.lys:"#fff", color:form.curriculum_area.includes(f.id)?f.farge:C.gr, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'Nunito',sans-serif" }}>
+              <button key={f.id} onClick={()=>toggleFag(f.id)} style={{ padding:"4px 10px", borderRadius:20, border:form.curriculum_area.includes(f.id)?`2px solid ${f.farge}`:"1.5px solid var(--c-input-border)", background:form.curriculum_area.includes(f.id)?f.lys:"var(--c-w)", color:form.curriculum_area.includes(f.id)?f.farge:C.gr, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'Nunito',sans-serif" }}>
                 {f.ikon} {f.id}
               </button>
             ))}
@@ -139,7 +139,7 @@ function KortModal({ kort, onLagre, onLukk }) {
           </label>
 
           {/* Forhåndsvisning av kortet */}
-          <div style={{ background:"#f8fbff", borderRadius:12, padding:12, marginBottom:14, border:"1.5px solid #d8e6f5" }}>
+          <div style={{ background:"var(--c-lg2)", borderRadius:12, padding:12, marginBottom:14, border:"1.5px solid var(--c-divider)" }}>
             <div style={{ fontSize:10, fontWeight:800, color:C.gr, marginBottom:8 }}>FORHÅNDSVISNING</div>
             <div style={{ background:C.w, borderRadius:12, overflow:"hidden", boxShadow:"0 2px 8px rgba(44,91,142,0.09)", maxWidth:240 }}>
               <div style={{ height:5, background:kat.txt }}/>
