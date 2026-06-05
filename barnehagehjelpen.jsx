@@ -743,7 +743,7 @@ function SupportSide() {
               <span style={{color:C.g,fontSize:16,transform:aapenFaq===i?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
             </button>
             {aapenFaq===i && (
-              <div className="fade" style={{padding:"0 15px 13px",fontSize:13,color:C.t,lineHeight:1.7,borderTop:"1px solid #e8eff8",paddingTop:11}}>
+              <div className="fade" style={{padding:"0 15px 13px",fontSize:13,color:C.t,lineHeight:1.7,borderTop:"1px solid var(--c-divider)",paddingTop:11,whiteSpace:"pre-wrap"}}>
                 {item.svar}
               </div>
             )}
