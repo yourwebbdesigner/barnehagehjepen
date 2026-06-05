@@ -87,7 +87,6 @@ export default function ArsplanSide({ ctx }) {
       { id:"april",     navn:"April",     ikon:"🐣", farge:"#f39c12" },
       { id:"mai",       navn:"Mai",       ikon:"🇳🇴", farge:"#c0392b" },
       { id:"juni",      navn:"Juni",      ikon:"☀️", farge:"#f1c40f" },
-      { id:"juli",      navn:"Juli",      ikon:"🏖️", farge:"#e67e22" },
     ];
 
     const skrivUtArsplan = (p) => {
