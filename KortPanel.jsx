@@ -31,7 +31,7 @@ const KORT_IKONER = [
 ];
 import { Tilbake, FagTag } from './components.jsx';
 function KortModal({ kort, onLagre, onLukk }) {
-  const iS = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"9px 13px", fontSize:13, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", marginBottom:10 };
+  const iS = { width:"100%", border:"1.5px solid var(--c-input-border)", borderRadius:9, padding:"9px 13px", fontSize:13, background:"var(--c-input-bg)", color:"var(--c-t)", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", marginBottom:10 };
   const lS = { fontSize:11, fontWeight:800, color:C.gr, display:"block", marginBottom:3, marginTop:8 };
   const [form, setForm] = useState({
     title: kort?.title || "",
@@ -69,7 +69,7 @@ function KortModal({ kort, onLagre, onLukk }) {
           <label style={lS}>Ikon</label>
           <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:8, maxHeight:116, overflowY:"auto", padding:"2px 0" }}>
             {KORT_IKONER.map(i => (
-              <button key={i} onClick={() => opd("icon", i)} style={{ width:34, height:34, borderRadius:8, border:form.icon===i?"2px solid #2c5b8e":"1.5px solid #c4d6ec", background:form.icon===i?"#e8eff8":"#fff", fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{i}</button>
+              <button key={i} onClick={() => opd("icon", i)} style={{ width:34, height:34, borderRadius:8, border:form.icon===i?"2px solid var(--c-g)":"1.5px solid var(--c-input-border)", background:form.icon===i?"var(--c-lg2)":"var(--c-card)", fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{i}</button>
             ))}
           </div>
 

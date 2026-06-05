@@ -19,7 +19,7 @@ function VilkaarModal({ type, onLukk }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 18, maxWidth: 560, width: "100%",
+          background: "var(--c-card)", borderRadius: 18, maxWidth: 560, width: "100%",
           maxHeight: "88vh", display: "flex", flexDirection: "column",
           boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
           fontFamily: "'Nunito', sans-serif",
@@ -299,8 +299,8 @@ export default function AuthScreen({ onLoginSuccess }) {
 
   const inputStil = {
     width: "100%", padding: "12px 13px", fontSize: 14,
-    border: "1.5px solid #d8e6f5", borderRadius: 10,
-    background: "#f5f9fd", color: "#1a2c45",
+    border: "1.5px solid var(--c-input-border)", borderRadius: 10,
+    background: "var(--c-input-bg)", color: "var(--c-t)",
     fontFamily: "'Nunito',sans-serif", boxSizing: "border-box",
     marginBottom: 10,
   };
@@ -324,15 +324,15 @@ export default function AuthScreen({ onLoginSuccess }) {
             <div style={{fontSize:13,opacity:0.85,marginTop:5}}>Rammeplan 2017 – din pedagogiske medhjelper</div>
           </div>
 
-          <div style={{background:"#fff",borderRadius:18,padding:22,boxShadow:"0 8px 30px rgba(0,0,0,0.2)"}}>
+          <div style={{background:"var(--c-card)",borderRadius:18,padding:22,boxShadow:"0 8px 30px rgba(0,0,0,0.2)"}}>
             {!bekreftEpostAdresse && modus !== "glemt" && (
-              <div style={{display:"flex",background:"#e8eff8",borderRadius:11,padding:4,marginBottom:18}}>
+              <div style={{display:"flex",background:"var(--c-lg2)",borderRadius:11,padding:4,marginBottom:18}}>
                 <button onClick={()=>skiftModus("login")} type="button"
-                  style={{flex:1,padding:"9px",background:modus==="login"?"#fff":"transparent",border:"none",borderRadius:8,fontSize:13,fontWeight:800,color:modus==="login"?"#2c5b8e":"#5d7390",cursor:"pointer",boxShadow:modus==="login"?"0 1px 4px rgba(0,0,0,0.08)":"none",fontFamily:"'Nunito',sans-serif"}}>
+                  style={{flex:1,padding:"9px",background:modus==="login"?"var(--c-w)":"transparent",border:"none",borderRadius:8,fontSize:13,fontWeight:800,color:modus==="login"?"var(--c-g)":"var(--c-gr)",cursor:"pointer",boxShadow:modus==="login"?"0 1px 4px rgba(0,0,0,0.08)":"none",fontFamily:"'Nunito',sans-serif"}}>
                   🔑 Logg inn
                 </button>
                 <button onClick={()=>skiftModus("register")} type="button"
-                  style={{flex:1,padding:"9px",background:modus==="register"?"#fff":"transparent",border:"none",borderRadius:8,fontSize:13,fontWeight:800,color:modus==="register"?"#2c5b8e":"#5d7390",cursor:"pointer",boxShadow:modus==="register"?"0 1px 4px rgba(0,0,0,0.08)":"none",fontFamily:"'Nunito',sans-serif"}}>
+                  style={{flex:1,padding:"9px",background:modus==="register"?"var(--c-w)":"transparent",border:"none",borderRadius:8,fontSize:13,fontWeight:800,color:modus==="register"?"var(--c-g)":"var(--c-gr)",cursor:"pointer",boxShadow:modus==="register"?"0 1px 4px rgba(0,0,0,0.08)":"none",fontFamily:"'Nunito',sans-serif"}}>
                   ✨ Ny konto
                 </button>
               </div>
@@ -680,16 +680,16 @@ export function AdminPanel({ aktivBruker }) {
         const brukerSomSlettes = brukere.find(u => u.id === bekreftSlett);
         return (
           <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBekreftSlett(null)}>
-            <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:22,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:"var(--c-card)",borderRadius:14,padding:22,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
               <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:"#c62828",marginBottom:10}}>🗑 Slette bruker?</div>
-              <p style={{fontSize:13,color:"#1a2c45",lineHeight:1.6,marginBottom:8}}>
+              <p style={{fontSize:13,color:"var(--c-t)",lineHeight:1.6,marginBottom:8}}>
                 Vil du slette <strong>{brukerSomSlettes?.brukernavn || "denne brukeren"}</strong>? All profildata og innhold slettes permanent.
               </p>
               <p style={{fontSize:11,color:"#795548",lineHeight:1.6,marginBottom:16,background:"#fff8e1",borderRadius:7,padding:"8px 10px"}}>
                 ⚠️ Innloggingskontoen slettes <strong>ikke</strong> automatisk. Gå til Supabase Dashboard → Authentication → Users for å blokkere tilgang helt.
               </p>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setBekreftSlett(null)} disabled={!!aktivOp} style={{flex:1,padding:"11px",background:"#e8eff8",color:"#1a2c45",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:aktivOp?"default":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aktivOp?0.6:1}}>Avbryt</button>
+                <button onClick={()=>setBekreftSlett(null)} disabled={!!aktivOp} style={{flex:1,padding:"11px",background:"var(--c-lg2)",color:"var(--c-t)",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:aktivOp?"default":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aktivOp?0.6:1}}>Avbryt</button>
                 <button onClick={utforSletting} disabled={!!aktivOp} style={{flex:1,padding:"11px",background:"#c62828",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:aktivOp?"default":"pointer",fontFamily:"'Nunito',sans-serif",opacity:aktivOp?0.7:1}}>{aktivOp ? "Sletter…" : "🗑 Slett"}</button>
               </div>
             </div>
