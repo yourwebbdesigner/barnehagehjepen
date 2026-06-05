@@ -1,32 +1,33 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import BokerSide from "./Boker.jsx";
+import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
 import Velkomst from "./Velkomst.jsx";
-import SamarbeidSide from "./Samarbeid.jsx";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER, RE } from './data/rammeplan.js';
 import { SANGER } from './data/sanger.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
 import { SUPPORT_E_POST, supportMailto, FAQ_DATA } from './data/faq.js';
 import { hilsen, DAGENS_TIPS } from './data/tips.js';
-import RammeplanSide from './RammeplanSide.jsx';
 import TegnearkSide, { hentUserTegneark } from './TegnearkSide.jsx';
 import { SvgPlaceholder, TEGNEARK } from './data/tegneark.jsx';
 import SangerSideComp, { hentUserSanger } from './SangerSide.jsx';
 import AktivSideComp from './AktivSide.jsx';
 import AiSideComp from './AiSide.jsx';
 import AuthScreen, { AdminPanel } from './AuthScreen.jsx';
-import AktivitetskortPanel from './KortPanel.jsx';
-import { MaanedsplanSide } from './PlanSider.jsx';
-import MaanedsbrevSide from './PlanSider.jsx';
-import UkeplanSide from './UkeplanSide.jsx';
-import MaanedskalenderSide from './MaanedskalenderSide.jsx';
-import ArsplanSide from './ArsplanSide.jsx';
-import DokumentasjonSide from './DokumentasjonSide.jsx';
-import ProfilSide from './ProfilSide.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
 import { Tilbake, FagTag } from './components.jsx';
 import { escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
+
+const BokerSide = React.lazy(() => import('./Boker.jsx'));
+const SamarbeidSide = React.lazy(() => import('./Samarbeid.jsx'));
+const RammeplanSide = React.lazy(() => import('./RammeplanSide.jsx'));
+const AktivitetskortPanel = React.lazy(() => import('./KortPanel.jsx'));
+const MaanedsbrevSide = React.lazy(() => import('./PlanSider.jsx'));
+const MaanedsplanSide = React.lazy(() => import('./PlanSider.jsx').then(m => ({ default: m.MaanedsplanSide })));
+const UkeplanSide = React.lazy(() => import('./UkeplanSide.jsx'));
+const MaanedskalenderSide = React.lazy(() => import('./MaanedskalenderSide.jsx'));
+const ArsplanSide = React.lazy(() => import('./ArsplanSide.jsx'));
+const DokumentasjonSide = React.lazy(() => import('./DokumentasjonSide.jsx'));
+const ProfilSide = React.lazy(() => import('./ProfilSide.jsx'));
 
 
 const CSS = `
@@ -1469,11 +1470,13 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
             {feedback && <div className="fade" style={{background:C.g,color:"#fff",borderRadius:9,padding:"10px 16px",fontWeight:700,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.18)"}}>{feedback}</div>}
           </div>
           <ErrorBoundary key={side} compact>
-            {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
-             : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
-             : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
-             : (sider[side]||<Hjem ctx={hjemCtx}/>)
-            }
+            <Suspense fallback={<div className="fade" style={{padding:40,textAlign:"center",color:"var(--c-gr)"}}>Laster...</div>}>
+              {side==="sanger" ? <SangerSideComp favoritter={favoritter} toggleFav={toggleFav} aktivBruker={aktivBruker} onNyUserSang={(ny) => setGlobalUserSanger(p => [ny, ...p])} preselectId={preselectSang} clearPreselect={()=>setPreselectSang(null)}/>
+               : side==="aktiviteter" ? <AktivSideComp preselectId={preselectAktiv} clearPreselect={()=>setPreselectAktiv(null)} favoritter={favoritter} toggleFav={toggleFav}/>
+               : side==="skjema-ny" ? <NyttSkjemaForm onSave={s=>setSkjemaer(p=>[s,...p])} onNavigate={setSide}/>
+               : (sider[side]||<Hjem ctx={hjemCtx}/>)
+              }
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>

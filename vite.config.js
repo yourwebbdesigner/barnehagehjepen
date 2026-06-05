@@ -69,10 +69,12 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-supabase": ["@supabase/supabase-js"],
-          "vendor-dnd": ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
-          "vendor-pdf": ["jspdf"],
+        manualChunks(id) {
+          if (id.includes("@supabase/supabase-js")) return "vendor-supabase";
+          if (id.includes("@dnd-kit")) return "vendor-dnd";
+          if (id.includes("jspdf")) return "vendor-pdf";
+          if (id.includes("/data/tegneark")) return "data-tegneark";
+          if (id.includes("/data/aktiviteter") || id.includes("/data/sanger") || id.includes("/data/rammeplan") || id.includes("/data/ai-data")) return "data-content";
         },
       },
     },
