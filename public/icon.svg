@@ -1,4 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="110" fill="#2c5b8e"/>
-  <text x="256" y="340" font-size="300" text-anchor="middle" dominant-baseline="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">🌿</text>
+  <!-- Full bleed background – OS klipper til sin form (sirkel/avrundet) -->
+  <rect width="512" height="512" fill="#2c5b8e"/>
+  <!-- Emoji innenfor safe zone (80% av bredden = 409px, sentrert) -->
+  <text
+    x="256" y="295"
+    font-size="290"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif"
+  >🌿</text>
 </svg>

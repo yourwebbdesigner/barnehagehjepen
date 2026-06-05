@@ -68,17 +68,20 @@ export default defineConfig({
     lokalAIPlugin(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg"],
+      includeAssets: ["icon.svg", "favicon.ico", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "Barnehagehjelpen",
         short_name: "Barnehagehjelpen",
         description: "Pedagogisk verktøy for barnehageansatte",
         theme_color: "#2c5b8e",
-        background_color: "#f5f9fd",
+        background_color: "#2c5b8e",
         display: "standalone",
         start_url: "/",
         icons: [
-          { src: "icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any maskable" },
+          { src: "pwa-64x64.png",            sizes: "64x64",   type: "image/png" },
+          { src: "pwa-192x192.png",           sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png",           sizes: "512x512", type: "image/png" },
+          { src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
