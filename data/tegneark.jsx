@@ -1060,7 +1060,7 @@ const SvgFuglSang = ()=>(
     <path d="M72 162 Q52 186 44 176 Q56 186 72 176Z" fill="#d8f3dc"/>
     <line x1="132" y1="152" x2="110" y2="248"/><line x1="164" y1="152" x2="186" y2="248"/>
     <line x1="110" y1="248" x2="88" y2="248" strokeWidth="3"/><line x1="186" y1="248" x2="208" y2="248" strokeWidth="3"/>
-    {[[260,38],[278,52],[272,22],[290,40]].map(([x,y])=>(<text key={x+y} x={x} y={y} fontSize="20" fill={S.s} stroke="none" fontFamily="serif">♪</text>))}
+    {[[260,38],[278,52],[272,22],[290,40]].map(([x,y])=>(<text key={`${x}-${y}`} x={x} y={y} fontSize="20" fill={S.s} stroke="none" fontFamily="serif">♪</text>))}
   </svg>
 );
 const SvgRumpetroll = ()=>(
