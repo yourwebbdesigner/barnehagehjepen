@@ -35,11 +35,11 @@ function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
     if (!form.tema.trim()) return;
     setGenererer(true); setFeil(null); setResultat(null);
     const sjangerTekst = {sang:"sang",rim:"rim",regle:"regle"}[form.sjanger]||"sang";
-    const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag en original ${sjangerTekst} for barn i alderen ${form.aldersgruppe} år.\n\nTema: ${form.tema}\nAntall vers: ${form.antallVers}${form.melodi?"\nMelodi/toneleie: "+form.melodi:""}${form.fagomrade?"\nKobling til fagområde: "+form.fagomrade:""}${form.ekstra?"\nØnsker: "+form.ekstra:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på sangen",\n  "tekst": "hele teksten med vers og evt. refreng, formatert med linjeskift",\n  "kategori": "${form.sjanger}",\n  "alder": "${form.aldersgruppe} år",\n  "melodi": "eventuell melodi-anbefaling eller null",\n  "tips": "pedagogisk tips til pedagogen eller null",\n  "rammeplan": ["id-er fra: kropp_bevegelse, kunst_kultur, natur_miljo, antall_rom_form, etikk_religion, naerlighet_vennskap, kommunikasjon_sprak"]\n}`;
+    const prompt = `Lag en original ${sjangerTekst} for barn i alderen ${form.aldersgruppe} år.\n\nTema: ${form.tema}\nAntall vers: ${form.antallVers}${form.melodi?"\nMelodi/toneleie: "+form.melodi:""}${form.fagomrade?"\nKobling til fagområde: "+form.fagomrade:""}${form.ekstra?"\nØnsker: "+form.ekstra:""}\n\nSvar KUN med gyldig JSON:\n{\n  "tittel": "tittel på sangen",\n  "tekst": "hele teksten med vers og evt. refreng, formatert med linjeskift",\n  "kategori": "${form.sjanger}",\n  "alder": "${form.aldersgruppe} år",\n  "melodi": "eventuell melodi-anbefaling eller null",\n  "tips": "pedagogisk tips til pedagogen eller null",\n  "rammeplan": ["id-er fra: kropp_bevegelse, kunst_kultur, natur_miljo, antall_rom_form, etikk_religion, naerlighet_vennskap, kommunikasjon_sprak"]\n}`;
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 12000);
+    const tid = setTimeout(() => ctrl.abort(), 28000);
     try {
-      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer og forfatter av barnesanger. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:1200 }), signal: ctrl.signal });
+      const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer og forfatter av barnesanger. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:700 }), signal: ctrl.signal });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
       if (json.error) throw new Error(json.error);

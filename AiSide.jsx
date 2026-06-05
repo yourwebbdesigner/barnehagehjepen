@@ -271,7 +271,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
         };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    const timeoutId = setTimeout(() => controller.abort(), 28000);
 
     // Hjelpefunksjon: ett forsøk
     const forsok = async () => {
@@ -521,7 +521,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
         <div style={{textAlign:"center",padding:30,background:C.w,borderRadius:12,marginBottom:14}}>
           <div className="spin" style={{margin:"0 auto 12px"}}/>
           <div style={{color:C.gr,fontSize:13,fontWeight:700}}>AI lager noe pedagogisk for deg …</div>
-          <div style={{color:C.gr,fontSize:11,marginTop:5}}>Tar vanligvis 3–8 sek. Henter fra database automatisk om AI er treg.</div>
+          <div style={{color:C.gr,fontSize:11,marginTop:5}}>Tar vanligvis 5–15 sek. Henter fra database automatisk om AI er treg.</div>
         </div>
       )}
 

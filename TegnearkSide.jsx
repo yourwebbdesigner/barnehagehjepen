@@ -35,9 +35,9 @@ function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
   const generer = async () => {
     if (!form.tema.trim()) return;
     setGenererer(true); setFeil(null); setResultat(null);
-    const prompt = `Du er en kreativ pedagog i en norsk barnehage. Lag et tegneark-opplegg for barn i alderen ${form.alder} år.\n\nTema: ${form.tema}${form.fagomrade?"\nFagområde: "+form.fagomrade:""}${form.vanskelighet?"\nVanskelighetsgrad: "+form.vanskelighet:""}\n\nSvar KUN med gyldig JSON (ingen markdown, ingen forklaring):\n{\n  "tittel": "tittel på tegnearket",\n  "ikon": "ett passende emoji",\n  "oppgave": "fire nummererte tegnetrinn (1. ... 2. ... 3. ... 4. ...)",\n  "samtale": "tre åpne samtalespørsmål separert med spørsmålstegn",\n  "mal": "rammeplanmål – én setning",\n  "kategori": "passende kategori (dyr/natur/mennesker/mat/sport/teknologi/romfart/musikk/festlig/folelser)",\n  "alder": "${form.alder} år",\n  "rammeplan": ["id-er fra: kropp, kunst, natur, antall, etikk, naermiljo, kommunikasjon"]\n}`;
+    const prompt = `Lag et tegneark-opplegg for barn i alderen ${form.alder} år.\n\nTema: ${form.tema}${form.fagomrade?"\nFagområde: "+form.fagomrade:""}${form.vanskelighet?"\nVanskelighetsgrad: "+form.vanskelighet:""}\n\nSvar KUN med gyldig JSON:\n{\n  "tittel": "tittel på tegnearket",\n  "ikon": "ett passende emoji",\n  "oppgave": "fire nummererte tegnetrinn (1. ... 2. ... 3. ... 4. ...)",\n  "samtale": "tre åpne samtalespørsmål separert med spørsmålstegn",\n  "mal": "rammeplanmål – én setning",\n  "kategori": "passende kategori (dyr/natur/mennesker/mat/sport/teknologi/romfart/musikk/festlig/folelser)",\n  "alder": "${form.alder} år",\n  "rammeplan": ["id-er fra: kropp, kunst, natur, antall, etikk, naermiljo, kommunikasjon"]\n}`;
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 12000);
+    const tid = setTimeout(() => ctrl.abort(), 28000);
     try {
       const res = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ system:"Du er en erfaren barnehagelærer. Skriv alltid på norsk bokmål. Svar KUN med gyldig JSON.", prompt, max_tokens:800 }), signal: ctrl.signal });
       if (!res.ok) throw new Error("HTTP " + res.status);

@@ -68,7 +68,7 @@ export default function MaanedskalenderSide({ ctx }) {
       const mNavn=MAANEDER_KAL[k_maaned-1];
       const antallDager=new Date(k_aar,k_maaned,0).getDate();
       const prompt=`Du er pedagog i norsk barnehage. Lag en fullstendig månedsoversikt for ${mNavn} ${k_aar} (${antallDager} dager) med tema "${k_tema}".\nDekk ALLE hverdager (mandag–fredag) med minst én hendelse per dag – ca. 18–22 hendelser totalt.\nTyper: aktivitet (daglig pedagogisk aktivitet), tur (uteaktivitet/tur), bursdag (markering), praktisk (info til foreldre).\nReturner KUN gyldig JSON uten markdown, eksempel:\n{"events":{"1":[{"type":"aktivitet","tekst":"Samlingsstund: tema ${k_tema}","ikon":"🎨"}],"2":[{"type":"tur","tekst":"Skogstur","ikon":"🌲"}],"3":[{"type":"aktivitet","tekst":"Forming og kreativitet","ikon":"✂️"}]}}\nBruk dagtall som nøkler (1–${antallDager}). Hopp over lørdager og søndager. Varier aktivitetene gjennom måneden.`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),12000);
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),28000);
       try{
         const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:1100}),signal:ctrl.signal});
         if(!r.ok){const d=await r.json().catch(()=>({}));setKFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}

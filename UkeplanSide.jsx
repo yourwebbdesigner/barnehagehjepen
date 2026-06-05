@@ -178,7 +178,7 @@ export default function UkeplanSide({ ctx }) {
       const prompt=`Du er pedagog i norsk barnehage. Fyll en ukeplan med tema "${u_tema}" for uke ${u_uke||"?"}.
 Returner KUN gyldig JSON uten markdown:
 {"mandag":{"formiddag":"9:00 Samling","ettermiddag":"12:30 Utelek"},"tirsdag":{"formiddag":"...","ettermiddag":"...","maaltid":"Varm mat"},"onsdag":{"formiddag":"...","ettermiddag":"..."},"torsdag":{"formiddag":"...","ettermiddag":"..."},"fredag":{"formiddag":"...","ettermiddag":"...","notat":"Kortdag"}}`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),12000);
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),28000);
       try{
         const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:800}),signal:ctrl.signal});
         if(!r.ok){const d=await r.json().catch(()=>({}));setUFeil("❌ "+(d.error||"Serverfeil "+r.status));return;}

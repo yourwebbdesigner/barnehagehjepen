@@ -166,7 +166,7 @@ export default function ArsplanSide({ ctx }) {
         ? { prompt, max_tokens: maxTokens }
         : { model:"claude-sonnet-4-6", max_tokens: maxTokens, messages:[{ role:"user", content:prompt }] };
       const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 12000);
+      const tid = setTimeout(() => ctrl.abort(), 28000);
       try {
         const r = await fetch(AI_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:ctrl.signal });
         if (!r.ok) throw new Error("HTTP " + r.status);

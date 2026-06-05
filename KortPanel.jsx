@@ -328,11 +328,11 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
     if (!aiPrompt.trim()) return;
     setAiLaster(true);
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 12000);
+    const tid = setTimeout(() => ctrl.abort(), 28000);
     try {
       const system = `Du er en pedagogisk assistent for norske barnehager. Lag et detaljert aktivitetskort. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:
 {"title":"...","description":"...","category":"Lek|Natur|Vann|Bevegelse|Kreativt|Språk|Antall|Musikk|Ute|Rolig|Eksperiment|Sosialt","age_group":"...","materials":"...","steps":"Steg 1: ...\\nSteg 2: ...\\nSteg 3: ...","curriculum_area":["kommunikasjon"],"learning_goal":"...","duration":"...","difficulty":"enkel|middels|avansert","indoor_outdoor":"inne|ute|begge","icon":"🎯","weather_tags":["sol","regn"]}`;
-      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt, max_tokens: 2500 }), signal: ctrl.signal });
+      const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt: aiPrompt, max_tokens: 800 }), signal: ctrl.signal });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const d = await r.json();
       const tekst = d.text || "";
