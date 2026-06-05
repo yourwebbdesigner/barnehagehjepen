@@ -511,7 +511,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
 
           <label style={{display:"block",fontWeight:700,color:C.t,fontSize:11,marginBottom:5,marginTop:6}}>✏️ Ekstra ønsker (valgfritt)</label>
           <textarea value={brukertekst} onChange={e=>setBrukertekst(e.target.value)} placeholder="F.eks: 'kobles til bok om Skomakeren', 'med vannlek', 'utendørs'"
-            rows={2} style={{width:"100%",border:"1.5px solid #d8e6f5",borderRadius:9,padding:"9px 12px",fontSize:13,color:C.t,background:"#f5f9fd",resize:"vertical",marginBottom:11,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
+            rows={2} style={{width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:9,padding:"9px 12px",fontSize:13,color:C.t,background:"var(--c-input-bg)",resize:"vertical",marginBottom:11,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
           <button className="btn" onClick={genAI} disabled={aiLoading || aiCooldown}
             style={{background:(aiLoading||aiCooldown)?"#ccc":C.g,color:"#fff",padding:"12px 18px",fontSize:14,width:"100%",border:"none",borderRadius:10,cursor:(aiLoading||aiCooldown)?"not-allowed":"pointer",fontWeight:800,fontFamily:"'Nunito',sans-serif",transition:"background 0.2s"}}>
             {aiLoading?"🤔 Genererer …":aiCooldown?"✅ Ferdig – klar om et øyeblikk…":"✨ Generer med AI"}
@@ -685,7 +685,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
               )}
               <button className="btn" onClick={kopierResultat} style={{background:C.mint,color:C.g,padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>📋 Kopier</button>
               {aiBrukteFallback && <button className="btn" onClick={()=>{setAiResultat("");setAiBrukteFallback(false);genAI();}} disabled={aiCooldown} style={{background:"#fff3e0",color:"#e65100",padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>↩ Prøv AI igjen</button>}
-              <button className="btn" onClick={nullstill} style={{background:"#e8eff8",color:C.t,padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>🔄 Ny</button>
+              <button className="btn" onClick={nullstill} style={{background:"var(--c-lg2)",color:C.t,padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>🔄 Ny</button>
             </div>
           </div>
           <RenderTekst tekst={aiResultat} />

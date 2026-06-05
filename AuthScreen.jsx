@@ -468,8 +468,8 @@ export default function AuthScreen({ onLoginSuccess }) {
 
                 {/* Vilkår-samtykke */}
                 <div style={{
-                  background: vilkaarAkseptert ? "#f0f7ff" : "#f8f9fc",
-                  border: `1.5px solid ${vilkaarAkseptert ? "#4178bd" : "#d8e6f5"}`,
+                  background: vilkaarAkseptert ? "#f0f7ff" : "var(--c-lg2)",
+                  border: `1.5px solid ${vilkaarAkseptert ? "#4178bd" : "var(--c-input-border)"}`,
                   borderRadius: 10, padding: "12px 14px", marginBottom: 14, marginTop: 4,
                   transition: "border-color 0.2s, background 0.2s",
                 }}>
@@ -656,7 +656,7 @@ export function AdminPanel({ aktivBruker }) {
           <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
             {u.id !== aktivBruker.id && (
               <>
-                <button onClick={()=>settAdmin(u.id, !u.is_admin)} disabled={opptatt} style={{background:"#e8eff8",color:"#2c5b8e",padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:opptatt?"default":"pointer",fontWeight:700,opacity:opptatt?0.6:1}}>
+                <button onClick={()=>settAdmin(u.id, !u.is_admin)} disabled={opptatt} style={{background:"var(--c-lg2)",color:C.g,padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:opptatt?"default":"pointer",fontWeight:700,opacity:opptatt?0.6:1}}>
                   {opptatt && aktivOp?.type==="admin" ? "Lagrer…" : u.is_admin?"Fjern admin":"Gjør til admin"}
                 </button>
                 <button onClick={()=>slettBruker(u.id)} disabled={opptatt} style={{background:"#fdecea",color:"#c62828",padding:"5px 10px",fontSize:11,border:"none",borderRadius:7,cursor:opptatt?"default":"pointer",fontWeight:700,opacity:opptatt?0.6:1}}>

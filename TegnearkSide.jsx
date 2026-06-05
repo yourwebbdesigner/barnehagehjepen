@@ -25,7 +25,7 @@ function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
   const [resultat, setResultat] = useState(null);
   const [feil, setFeil] = useState(null);
   const [lagrer, setLagrer] = useState(false);
-  const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
+  const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:9,padding:"9px 13px",fontSize:13,background:"var(--c-input-bg)",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
   const generer = async () => {
     if (!form.tema.trim()) return;
     setGenererer(true); setFeil(null); setResultat(null);
@@ -104,7 +104,7 @@ function AiTegnearkView({ aktivBruker, onLagre, onAvbryt }) {
         </>
       ) : (
         <div className="fade">
-          <div style={{background:"#f5f9fd",borderRadius:12,padding:18,marginBottom:16,border:"1.5px solid #c4d6ec"}}>
+          <div style={{background:"var(--c-lg2)",borderRadius:12,padding:18,marginBottom:16,border:"1.5px solid var(--c-divider)"}}>
             <div style={{fontWeight:800,fontSize:18,color:C.t,marginBottom:2}}>{resultat.ikon} {resultat.tittel}</div>
             <div style={{fontSize:11,color:C.gr,marginBottom:14}}>{resultat.kategori} · {resultat.alder}</div>
             <div style={{background:"#fff9c4",borderRadius:9,padding:"10px 13px",marginBottom:10}}>
@@ -422,7 +422,7 @@ ${innhold}
               <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"#e8f5e9",color:C.t,padding:"12px",fontSize:13,fontWeight:700}}>📋 Kopier tekst</button>
               {kanDele
                 ? <button className="btn" onClick={()=>del(valgtT)} style={{background:"#fff3e0",color:"#e65100",padding:"12px",fontSize:13,fontWeight:700}}>📤 Del</button>
-                : <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"#e8eff8",color:C.t,padding:"12px",fontSize:13,fontWeight:700}}>📋 Kopier (igjen)</button>
+                : <button className="btn" onClick={()=>kopier(valgtT)} style={{background:"var(--c-lg2)",color:C.t,padding:"12px",fontSize:13,fontWeight:700}}>📋 Kopier (igjen)</button>
               }
             </div>
             {valgtT._erMin && <button className="btn" onClick={()=>slettMin(valgtT._dbId)} style={{width:"100%",marginTop:8,padding:"10px",fontSize:13,background:"#ffebee",color:"#c62828",fontWeight:700}}>🗑️ Slett mitt tegneark</button>}

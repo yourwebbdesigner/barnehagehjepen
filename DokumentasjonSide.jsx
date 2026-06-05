@@ -9,7 +9,7 @@ import { UnsavedDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 import { Tilbake, FagTag } from './components.jsx';
 export default function DokumentasjonSide({ ctx }) {
-  const { aktivBruker, vis, setGlobalDokumentasjon } = ctx;
+  const { aktivBruker, vis, setGlobalDokumentasjon, preselectDokumentasjonId, setPreselectDokumentasjonId } = ctx;
 
     const [dok, setDok] = useState([]);
     const [lastet, setLastet] = useState(false);
@@ -110,6 +110,12 @@ export default function DokumentasjonSide({ ctx }) {
       })();
       return () => { avbrutt = true; };
     }, [aktivBruker?.id]);
+
+    useEffect(() => {
+      if (!preselectDokumentasjonId || dok.length === 0) return;
+      const funnet = dok.find(d => d.id === preselectDokumentasjonId);
+      if (funnet) { setValgt(funnet); setVisning("les"); setPreselectDokumentasjonId?.(null); }
+    }, [preselectDokumentasjonId, dok]);
 
     const lagre = async (oppdatertListe) => {
       const ok = await lagreDokumentasjon(aktivBruker.id, oppdatertListe);
@@ -235,7 +241,7 @@ export default function DokumentasjonSide({ ctx }) {
     });
     const synligDok = filtrert.slice(0, visMaks);
 
-    const iS = {width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:14,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
+    const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:10,padding:"11px 13px",fontSize:14,background:"var(--c-input-bg)",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
     const labelStil = {display:"block",fontWeight:700,color:C.t,fontSize:12,marginBottom:5};
 
     if (!lastet) return <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>;
@@ -349,7 +355,7 @@ export default function DokumentasjonSide({ ctx }) {
             </div>
 
             <div style={{fontWeight:800,color:C.t,fontSize:13,marginBottom:6,marginTop:6}}>📖 PRAKSISFORTELLING</div>
-            <div style={{background:"#f5f9fd",borderRadius:10,padding:"13px 15px",fontSize:14,color:C.t,lineHeight:1.7,whiteSpace:"pre-wrap",marginBottom:14}}>{valgt.fortelling}</div>
+            <div style={{background:"var(--c-lg2)",borderRadius:10,padding:"13px 15px",fontSize:14,color:C.t,lineHeight:1.7,whiteSpace:"pre-wrap",marginBottom:14}}>{valgt.fortelling}</div>
 
             {valgt.refleksjon && (
               <>

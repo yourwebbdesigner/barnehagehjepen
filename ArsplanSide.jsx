@@ -10,7 +10,7 @@ function AIKnapper({ seksjonId, aiAktiv, aiLoading, aiTekst, utforSeksjonAI, aks
   const erAktivSeksjon = aiAktiv?.seksjonId === seksjonId;
   const handlinger = [
     { id:"start",        label:"✨ Hjelp meg starte",  bg:"linear-gradient(135deg,#2c5b8e,#4178bd)", col:"#fff" },
-    { id:"profesjonell", label:"✨ Mer profesjonell",   bg:"#e8eff8", col:C.g },
+    { id:"profesjonell", label:"✨ Mer profesjonell",   bg:"var(--c-lg2)", col:C.g },
     { id:"rammeplan",    label:"✨ Tilpass Rammeplan",  bg:"#d8f3dc", col:"#2d6a4f" },
     { id:"forkort",      label:"✨ Forkort teksten",    bg:"#fff8e1", col:"#795548" },
     { id:"alternativ",   label:"✨ Gi flere forslag",   bg:"#f3e5f5", col:"#6a1b9a" },
@@ -273,7 +273,7 @@ export default function ArsplanSide({ ctx }) {
     const aksepterForslag = (seksjonId) => { oppdaterSeksjon(seksjonId, aiTekst); setAiTekst(""); setAiAktiv(null); visLokal("✅ Forslag lagt inn"); };
     const avvisForslag = () => { setAiTekst(""); setAiAktiv(null); };
 
-    const iS = { width:"100%", border:"1.5px solid #d8e6f5", borderRadius:10, padding:"11px 13px", fontSize:13, background:"#f5f9fd", color:C.t, fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", outline:"none", resize:"vertical" };
+    const iS = { width:"100%", border:"1.5px solid var(--c-input-border)", borderRadius:10, padding:"11px 13px", fontSize:13, background:"var(--c-input-bg)", color:C.t, fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", outline:"none", resize:"vertical" };
     const labelStil = { display:"block", fontWeight:700, color:C.t, fontSize:12, marginBottom:5 };
 
     if (!lastet) return <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>;
@@ -367,11 +367,11 @@ export default function ArsplanSide({ ctx }) {
               const mData = ap.arshjul?.[m.id] || { tema:"", aktiviteter:"", notat:"" };
               const erAiMaaned = aiAktiv?.seksjonId === "arshjul_" + m.id && aiLoading;
               return (
-                <div key={m.id} style={{background:"#f5f9fd",borderRadius:11,padding:11,marginBottom:10,borderLeft:`3px solid ${m.farge}`}}>
+                <div key={m.id} style={{background:"var(--c-lg2)",borderRadius:11,padding:11,marginBottom:10,borderLeft:`3px solid ${m.farge}`}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:8,flexWrap:"wrap"}}>
                     <div style={{fontWeight:800,color:m.farge,fontSize:13}}>{m.ikon} {m.navn}</div>
                     <button disabled={aiLoading} onClick={() => utforArshjulAI(m.id)}
-                      style={{background:"rgba(44,91,142,0.08)",color:C.g,border:"1px solid #d8e6f5",borderRadius:7,padding:"4px 9px",fontSize:10,fontWeight:700,cursor:aiLoading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",whiteSpace:"nowrap",opacity:aiLoading?0.55:1}}>
+                      style={{background:"rgba(44,91,142,0.08)",color:C.g,border:"1px solid var(--c-divider)",borderRadius:7,padding:"4px 9px",fontSize:10,fontWeight:700,cursor:aiLoading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",whiteSpace:"nowrap",opacity:aiLoading?0.55:1}}>
                       {erAiMaaned ? "⏳..." : "✨ Forslag"}
                     </button>
                   </div>
@@ -411,7 +411,7 @@ export default function ArsplanSide({ ctx }) {
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
             <button onClick={()=>skrivUtArsplan(valgt)} style={{background:"#e3f2fd",color:"#1565c0",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
             <button onClick={()=>{const sek=SEKSJONER.filter(s=>valgt.seksjoner?.[s.id]?.trim()).map(s=>({label:`${s.ikon} ${s.navn}`,tekst:valgt.seksjoner[s.id]}));lastNedPlanPDF({tittel:valgt.tittel||"Årsplan",meta:[valgt.barnehage,valgt.avdeling,valgt.alder,valgt.aar].filter(Boolean).join(" • "),seksjoner:sek});}} style={{background:"#e8f5e9",color:"#2e7d32",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📄 PDF</button>
-            <button onClick={() => redigerPlan(valgt)} style={{background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
+            <button onClick={() => redigerPlan(valgt)} style={{background:"var(--c-lg2)",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
             {bekreftSletting
               ? <div style={{display:"flex",gap:6}}>
                   <button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px 6px",fontSize:11,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft</button>
@@ -447,7 +447,7 @@ export default function ArsplanSide({ ctx }) {
                     {d.tema && <div style={{fontSize:12,fontWeight:700,color:C.t,marginBottom:2}}>Tema: {d.tema}</div>}
                     {d.aktiviteter && <div style={{fontSize:12,color:C.t,whiteSpace:"pre-wrap",lineHeight:1.5,marginBottom:d.notat?2:0}}>{d.aktiviteter}</div>}
                     {d.notat && <div style={{fontSize:11,color:C.gr,fontStyle:"italic"}}>{d.notat}</div>}
-                    <div style={{height:1,background:"#e8eff8",marginTop:10}}/>
+                    <div style={{height:1,background:"var(--c-divider)",marginTop:10}}/>
                   </div>
                 );
               })}
@@ -480,7 +480,7 @@ export default function ArsplanSide({ ctx }) {
 
         {planer.length > 0 && (
           <input type="text" value={sok} onChange={e => setSok(e.target.value)} placeholder="🔍 Søk i årsplaner …"
-            style={{width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:13,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:12,outline:"none"}}/>
+            style={{width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:10,padding:"11px 13px",fontSize:13,background:"var(--c-input-bg)",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:12,outline:"none"}}/>
         )}
 
         {planer.length === 0 ? (
@@ -500,7 +500,7 @@ export default function ArsplanSide({ ctx }) {
               <div key={p.id} className="hover" onClick={() => lesPlan(p)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:5}}>
                   <div style={{fontWeight:800,color:C.t,fontSize:14,lineHeight:1.3,flex:1,wordBreak:"break-word"}}>📆 {p.tittel}</div>
-                  {p.aar && <div style={{fontSize:10,color:C.gr,whiteSpace:"nowrap",flexShrink:0,background:"#e8eff8",padding:"2px 8px",borderRadius:7,fontWeight:700}}>{p.aar}</div>}
+                  {p.aar && <div style={{fontSize:10,color:C.gr,whiteSpace:"nowrap",flexShrink:0,background:"var(--c-lg2)",padding:"2px 8px",borderRadius:7,fontWeight:700}}>{p.aar}</div>}
                 </div>
                 {(p.barnehage || p.avdeling) && <div style={{fontSize:12,color:C.gr,lineHeight:1.5}}>{p.barnehage}{p.avdeling ? " • " + p.avdeling : ""}</div>}
                 {p.alder && <div style={{fontSize:11,color:C.gr,marginTop:2}}>👶 {p.alder}</div>}

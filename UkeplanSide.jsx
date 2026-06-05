@@ -500,7 +500,7 @@ Returner KUN gyldig JSON uten markdown:
       return p.tittel.toLowerCase().includes(s) || (p.tema||"").toLowerCase().includes(s);
     });
 
-    const iS = {width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:14,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
+    const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:10,padding:"11px 13px",fontSize:14,background:"var(--c-input-bg)",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
     const labelStil = {display:"block",fontWeight:700,color:C.t,fontSize:12,marginBottom:5};
 
     if (!lastet) return <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>;
@@ -578,10 +578,10 @@ Returner KUN gyldig JSON uten markdown:
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     {dagBilde ? (<>
-                      {erEmoji?<span style={{fontSize:22,lineHeight:1}}>{dagBilde}</span>:<img src={dagBilde} alt="" style={{width:32,height:32,borderRadius:6,objectFit:"cover",border:"1px solid #d8e6f5"}}/>}
+                      {erEmoji?<span style={{fontSize:22,lineHeight:1}}>{dagBilde}</span>:<img src={dagBilde} alt="" style={{width:32,height:32,borderRadius:6,objectFit:"cover",border:"1px solid var(--c-divider)"}}/>}
                       <button type="button" aria-label="Slett bilde" onClick={()=>oppdaterDag(d,"bilde","")} style={{background:"#fdecea",color:"#c62828",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,padding:0}}>✕</button>
                     </>) : (
-                      <button type="button" onClick={()=>setBildevelgerForDag(d)} style={{background:"#e8eff8",color:dagFarge,border:"none",borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"'Nunito',sans-serif"}}>📷 Bilde</button>
+                      <button type="button" onClick={()=>setBildevelgerForDag(d)} style={{background:"var(--c-lg2)",color:dagFarge,border:"none",borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"'Nunito',sans-serif"}}>📷 Bilde</button>
                     )}
                   </div>
                 </div>
@@ -609,7 +609,7 @@ Returner KUN gyldig JSON uten markdown:
                         </SortableContext>
                       </DndContext>
                       <div style={{display:"flex",gap:5,marginTop:2}}>
-                        <input value={nyAktivitet[d+tid]||""} onChange={e=>setNyAktivitet(p=>({...p,[d+tid]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&leggTilAktivitet(d,tid)} placeholder={`+ Legg til ${tidInfo.label.toLowerCase()}...`} style={{flex:1,padding:"5px 8px",borderRadius:7,border:"1.5px dashed #d0dff0",fontSize:11,fontFamily:"'Nunito',sans-serif",background:tidInfo.bg,color:C.t,outline:"none"}}/>
+                        <input value={nyAktivitet[d+tid]||""} onChange={e=>setNyAktivitet(p=>({...p,[d+tid]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&leggTilAktivitet(d,tid)} placeholder={`+ Legg til ${tidInfo.label.toLowerCase()}...`} style={{flex:1,padding:"5px 8px",borderRadius:7,border:"1.5px dashed var(--c-input-border)",fontSize:11,fontFamily:"'Nunito',sans-serif",background:tidInfo.bg,color:C.t,outline:"none"}}/>
                         <button type="button" onClick={()=>leggTilAktivitet(d,tid)} style={{background:tidInfo.col,color:"#fff",border:"none",borderRadius:7,padding:"5px 10px",cursor:"pointer",fontSize:11,fontWeight:700}}>+</button>
                       </div>
                     </div>
@@ -622,22 +622,22 @@ Returner KUN gyldig JSON uten markdown:
           {/* BILDEVELGER-MODAL */}
           {bildevelgerForDag && (
             <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBildevelgerForDag(null)} onKeyDown={e=>e.key==="Escape"&&setBildevelgerForDag(null)} tabIndex={-1}>
-              <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:18,maxWidth:420,width:"100%",maxHeight:"85vh",overflowY:"auto",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+              <div onClick={e=>e.stopPropagation()} style={{background:"var(--c-card)",borderRadius:14,padding:18,maxWidth:420,width:"100%",maxHeight:"85vh",overflowY:"auto",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
                 <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.t,marginBottom:6}}>📷 Velg bilde for {bildevelgerForDag.charAt(0).toUpperCase()+bildevelgerForDag.slice(1)}</div>
                 <p style={{fontSize:12,color:C.gr,marginBottom:14,lineHeight:1.5}}>Velg en emoji nedenfor, eller last opp et eget bilde.</p>
 
                 <div style={{fontSize:11,fontWeight:800,color:C.t,marginBottom:6,textTransform:"uppercase",letterSpacing:0.4}}>Emoji-bibliotek</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(40px, 1fr))",gap:5,marginBottom:14,maxHeight:220,overflowY:"auto",padding:6,background:"#f5f9fd",borderRadius:9}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(40px, 1fr))",gap:5,marginBottom:14,maxHeight:220,overflowY:"auto",padding:6,background:"var(--c-lg2)",borderRadius:9}}>
                   {EMOJI_BIBLIOTEK.map(e => (
                     <button key={e} type="button" onClick={()=>settBilde(bildevelgerForDag, e)}
-                      style={{fontSize:22,padding:"6px 4px",background:"#fff",border:"1px solid #e8eff8",borderRadius:6,cursor:"pointer",lineHeight:1,fontFamily:"inherit"}}>
+                      style={{fontSize:22,padding:"6px 4px",background:"var(--c-w)",border:"1px solid var(--c-divider)",borderRadius:6,cursor:"pointer",lineHeight:1,fontFamily:"inherit"}}>
                       {e}
                     </button>
                   ))}
                 </div>
 
                 <div style={{fontSize:11,fontWeight:800,color:C.t,marginBottom:6,textTransform:"uppercase",letterSpacing:0.4}}>Eller last opp eget bilde</div>
-                <label style={{display:"block",padding:"11px",background:"#e8eff8",color:C.t,borderRadius:9,cursor:bildeOpplaster?"wait":"pointer",fontSize:12,fontWeight:700,textAlign:"center",marginBottom:10}}>
+                <label style={{display:"block",padding:"11px",background:"var(--c-lg2)",color:C.t,borderRadius:9,cursor:bildeOpplaster?"wait":"pointer",fontSize:12,fontWeight:700,textAlign:"center",marginBottom:10}}>
                   {bildeOpplaster ? "⏳ Behandler ..." : "📁 Velg bilde fra enheten"}
                   <input type="file" accept="image/*" disabled={bildeOpplaster}
                     onChange={e=>lastOppBilde(bildevelgerForDag, e.target.files?.[0])}
@@ -645,7 +645,7 @@ Returner KUN gyldig JSON uten markdown:
                 </label>
 
                 <button type="button" onClick={()=>setBildevelgerForDag(null)}
-                  style={{width:"100%",padding:"10px",background:"transparent",color:C.gr,border:"1px solid #e8eff8",borderRadius:9,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>
+                  style={{width:"100%",padding:"10px",background:"transparent",color:C.gr,border:"1px solid var(--c-divider)",borderRadius:9,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>
                   Avbryt
                 </button>
               </div>
@@ -677,7 +677,7 @@ Returner KUN gyldig JSON uten markdown:
             <button onClick={()=>skrivUt(valgt)} style={{background:"#2c5b8e",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🖨️ Skriv ut</button>
             <button onClick={()=>lastNed(valgt)} style={{background:"#1565c0",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>💾 Last ned</button>
             <button onClick={()=>kopier(valgt)} style={{background:C.mint,color:C.g,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📋 Kopier tekst</button>
-            <button onClick={()=>redigerPlan(valgt)} style={{background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
+            <button onClick={()=>redigerPlan(valgt)} style={{background:"var(--c-lg2)",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✏️ Rediger</button>
             <button onClick={()=>dupliser(valgt)} style={{background:"#e8f5e9",color:"#2e7d32",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📑 Dupliser</button>
           </div>
 
@@ -692,9 +692,9 @@ Returner KUN gyldig JSON uten markdown:
               <div key={d} style={{background:C.w,borderRadius:11,padding:13,marginBottom:10,boxShadow:"0 1px 5px rgba(44,91,142,0.06)",borderLeft:`3px solid ${dagFarge}`}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                   <div style={{fontWeight:800,color:dagFarge,fontSize:14,flex:1}}>{dagN}</div>
-                  {data.ansvarlig&&<span style={{fontSize:10,color:C.gr,background:"#f5f9fd",borderRadius:6,padding:"2px 7px"}}>{data.ansvarlig}</span>}
+                  {data.ansvarlig&&<span style={{fontSize:10,color:C.gr,background:"var(--c-lg2)",borderRadius:6,padding:"2px 7px"}}>{data.ansvarlig}</span>}
                   {data.maaltid&&<span style={{fontSize:10,color:"#f57c00",background:"#fff3e0",borderRadius:6,padding:"2px 7px"}}>🍽 {data.maaltid}</span>}
-                  {data.bilde && (erEmoji?<span style={{fontSize:24,lineHeight:1}}>{data.bilde}</span>:<img src={data.bilde} alt="" style={{width:38,height:38,borderRadius:7,objectFit:"cover",border:"1px solid #d8e6f5"}}/>)}
+                  {data.bilde && (erEmoji?<span style={{fontSize:24,lineHeight:1}}>{data.bilde}</span>:<img src={data.bilde} alt="" style={{width:38,height:38,borderRadius:7,objectFit:"cover",border:"1px solid var(--c-divider)"}}/>)}
                 </div>
                 {!harInnhold ? (
                   <div style={{fontSize:12,color:C.gr,fontStyle:"italic"}}>– ingen plan –</div>
@@ -722,7 +722,7 @@ Returner KUN gyldig JSON uten markdown:
           {bekreftSletting
             ? <div style={{display:"flex",gap:8,marginTop:8}}>
                 <button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft sletting</button>
-                <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+                <button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"var(--c-lg2)",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
               </div>
             : <button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif",width:"100%",marginTop:8}}>🗑 Slett ukeplan</button>
           }
@@ -760,7 +760,7 @@ Returner KUN gyldig JSON uten markdown:
               <div key={p.id} className="hover" onClick={()=>lesPlan(p)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:5}}>
                   <div style={{fontWeight:800,color:C.t,fontSize:14,lineHeight:1.3,flex:1,wordBreak:"break-word"}}>{p.tittel}</div>
-                  {p.uke && <div style={{fontSize:10,color:C.gr,whiteSpace:"nowrap",flexShrink:0,background:"#e8eff8",padding:"2px 8px",borderRadius:7,fontWeight:700}}>Uke {p.uke}</div>}
+                  {p.uke && <div style={{fontSize:10,color:C.gr,whiteSpace:"nowrap",flexShrink:0,background:"var(--c-lg2)",padding:"2px 8px",borderRadius:7,fontWeight:700}}>Uke {p.uke}</div>}
                 </div>
                 {p.tema && <div style={{fontSize:12,color:C.gr,lineHeight:1.5}}>{p.tema}</div>}
               </div>

@@ -692,7 +692,7 @@ function NyttSkjemaForm({ onSave, onNavigate }) {
     setTimeout(() => { setMsg(""); onNavigate("skjemaer"); }, 1200);
   };
 
-  const iStyle = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"10px 12px", fontSize:13, color:C.t, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box" };
+  const iStyle = { width:"100%", border:"1.5px solid var(--c-input-border)", borderRadius:9, padding:"10px 12px", fontSize:13, color:C.t, background:"var(--c-input-bg)", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box" };
   const lStyle = { display:"block", fontWeight:700, color:C.t, fontSize:12, marginBottom:4 };
 
   return (
@@ -1065,8 +1065,10 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const aapneAktivitet = (a) => { setPreselectAktiv(a.id); navigerTil("aktiviteter"); setGlobalSok(""); };
   const aapneFagomrade = (f) => { setValgtFag(f); setRammeSeksjon("fagomrader"); navigerTil("rammeplan"); setGlobalSok(""); };
   const aapneRammeplan = (key) => { setRammeSeksjon(key); setValgtFag(null); navigerTil("rammeplan"); setGlobalSok(""); };
-  const aapneAktivitetskort = () => { navigerTil("aktivitetskort"); setGlobalSok(""); };
-  const aapneDokumentasjon = () => { navigerTil("dokumentasjon"); setGlobalSok(""); };
+  const [preselectAktivitetskortId, setPreselectAktivitetskortId] = useState(null);
+  const [preselectDokumentasjonId, setPreselectDokumentasjonId] = useState(null);
+  const aapneAktivitetskort = (k) => { setPreselectAktivitetskortId(k?.id||null); navigerTil("aktivitetskort"); setGlobalSok(""); };
+  const aapneDokumentasjon = (d) => { setPreselectDokumentasjonId(d?.id||null); navigerTil("dokumentasjon"); setGlobalSok(""); };
   const [preselectPlanId, setPreselectPlanId] = React.useState(null);
   const aapnePlan = (plan, sidId) => { setPreselectPlanId(plan.id||null); navigerTil(sidId); setGlobalSok(""); };
 
@@ -1339,6 +1341,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     setGlobalArsplaner,
     setGlobalDokumentasjon,
     setGlobalKalenderplaner,
+    preselectDokumentasjonId,
+    setPreselectDokumentasjonId,
     preselectPlanId,
     setPreselectPlanId,
     globalUserTegneark,
@@ -1371,7 +1375,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     maanedskalender:<MaanedskalenderSide ctx={ctx}/>,
     arsplan:<ArsplanSide ctx={ctx}/>,
     boker:<BokerSide aktivBruker={aktivBruker}/>,
-    aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)}/>,
+    aktivitetskort:<AktivitetskortPanel aktivBruker={aktivBruker} onOppdater={()=>hentAktivitetskort(aktivBruker.id).then(setGlobalAktivitetskort).catch(console.error)} preselectKortId={preselectAktivitetskortId} clearPreselectKort={()=>setPreselectAktivitetskortId(null)}/>,
     samarbeid:<SamarbeidSide aktivBruker={aktivBruker}/>,
   };
 

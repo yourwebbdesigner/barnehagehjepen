@@ -165,7 +165,7 @@ function KortModal({ kort, onLagre, onLukk }) {
 // ═══════════════════════════════════════════
 //  AKTIVITETSKORT – Hoveddpanel
 // ═══════════════════════════════════════════
-export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
+export default function AktivitetskortPanel({ aktivBruker, onOppdater, preselectKortId, clearPreselectKort }) {
   const [kort, setKort] = useState([]);
   const [laster, setLaster] = useState(true);
   const [visning, setVisning] = useState("grid");
@@ -187,7 +187,7 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
   const [valgtForPrint, setValgtForPrint] = useState(new Set());
 
   const vis = (m) => { setFeedback(m); setTimeout(()=>setFeedback(""),2800); };
-  const iS = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"9px 13px", fontSize:13, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box" };
+  const iS = { width:"100%", border:"1.5px solid var(--c-input-border)", borderRadius:9, padding:"9px 13px", fontSize:13, background:"var(--c-input-bg)", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box" };
 
   useEffect(() => {
     if (!aktivBruker?.id) return;
@@ -204,6 +204,12 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
       }
     })();
   }, [aktivBruker?.id]);
+
+  useEffect(() => {
+    if (!preselectKortId || kort.length === 0) return;
+    const funnet = kort.find(k => k.id === preselectKortId);
+    if (funnet) { setValgtKort(funnet); clearPreselectKort?.(); }
+  }, [preselectKortId, kort]);
 
   const toggleFavKort = async (kortId) => {
     if (!aktivBruker?.id) return;
@@ -380,7 +386,7 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
             </div>
             <div style={{ display:"flex", gap:7, flexWrap:"wrap", marginBottom:14 }}>
               <span className="tag" style={{ background:kat.bg, color:kat.txt }}>{kat.ikon} {valgtKort.category}</span>
-              {valgtKort.age_group && <span className="tag" style={{ background:"#e8eff8", color:C.g }}>👶 {valgtKort.age_group}</span>}
+              {valgtKort.age_group && <span className="tag" style={{ background:"var(--c-lg2)", color:C.g }}>👶 {valgtKort.age_group}</span>}
               {valgtKort.duration && <span className="tag" style={{ background:"#e3f2fd", color:"#1565c0" }}>⏱ {valgtKort.duration}</span>}
               {valgtKort.difficulty && <span className="tag" style={{ background:"#f3e5f5", color:"#6a1b9a" }}>📊 {valgtKort.difficulty}</span>}
               {valgtKort.indoor_outdoor && <span className="tag" style={{ background:"#f1f8e9", color:"#33691e" }}>{valgtKort.indoor_outdoor==="inne"?"🏠 Inne":valgtKort.indoor_outdoor==="ute"?"🌳 Ute":"🏠🌳 Begge"}</span>}
@@ -550,7 +556,7 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
                   <div style={{ fontSize:11, color:C.gr, lineHeight:1.5, marginBottom:8 }}>{(k.description||"").substring(0,80)}{(k.description||"").length>80?"...":""}</div>
                   <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                     <span className="tag" style={{ background:kat.bg, color:kat.txt, fontSize:10 }}>{kat.ikon} {k.category}</span>
-                    {k.age_group && <span className="tag" style={{ background:"#e8eff8", color:C.g, fontSize:10 }}>👶 {k.age_group}</span>}
+                    {k.age_group && <span className="tag" style={{ background:"var(--c-lg2)", color:C.g, fontSize:10 }}>👶 {k.age_group}</span>}
                     {k.duration && <span className="tag" style={{ background:"#e3f2fd", color:"#1565c0", fontSize:10 }}>⏱ {k.duration}</span>}
                     {k.is_draft && <span className="tag" style={{ background:"#fff3cd", color:"#856404", fontSize:10 }}>Utkast</span>}
                   </div>
@@ -577,7 +583,7 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
                     <div style={{ color:C.gr, fontSize:11, marginBottom:5 }}>{(k.description||"").substring(0,90)}{(k.description||"").length>90?"...":""}</div>
                     <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
                       <span className="tag" style={{ background:kat.bg, color:kat.txt, fontSize:10 }}>{k.category}</span>
-                      {k.age_group && <span className="tag" style={{ background:"#e8eff8", color:C.g, fontSize:10 }}>{k.age_group}</span>}
+                      {k.age_group && <span className="tag" style={{ background:"var(--c-lg2)", color:C.g, fontSize:10 }}>{k.age_group}</span>}
                       {k.duration && <span className="tag" style={{ background:"#e3f2fd", color:"#1565c0", fontSize:10 }}>{k.duration}</span>}
                       {k.is_draft && <span className="tag" style={{ background:"#fff3cd", color:"#856404", fontSize:10 }}>Utkast</span>}
                       {k.is_public && <span className="tag" style={{ background:"#e8f5e9", color:"#2e7d32", fontSize:10 }}>🌍</span>}

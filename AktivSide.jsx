@@ -22,7 +22,7 @@ export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAkti
             padding:"11px 38px 11px 38px",
             fontSize:14,
             background:C.w,
-            border:"1.5px solid #d8e6f5",
+            border:"1.5px solid var(--c-input-border)",
             borderRadius:11,
             color:C.t,
             fontFamily:"'Nunito',sans-serif",
@@ -202,7 +202,7 @@ export default function AktivSideComp({ preselectId, clearPreselect, favoritter,
     if (preselectId && clearPreselect) clearPreselect();
   }, [preselectId, clearPreselect]);
   const favSet = new Set(favoritter?.aktiviteter || []);
-  const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
+  const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:9,padding:"9px 13px",fontSize:13,background:"var(--c-input-bg)",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
   const data = AKTIVITETER.filter(a=>{
     const matchSok = !sok||a.tittel.toLowerCase().includes(sok.toLowerCase())||a.hva.toLowerCase().includes(sok.toLowerCase());
     if (filter==="favoritter") return favSet.has(a.id) && matchSok;
@@ -242,7 +242,7 @@ export default function AktivSideComp({ preselectId, clearPreselect, favoritter,
           </div>
           <div style={{display:"flex",gap:7,marginBottom:14,flexWrap:"wrap"}}>
             <span className="tag" style={{background:C.mint,color:C.g}}>{valgt.kategori}</span>
-            <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>👶 {valgt.alder}</span>
+            <span className="tag" style={{background:"var(--c-lg2)",color:C.g}}>👶 {valgt.alder}</span>
             {valgt.tid&&<span className="tag" style={{background:"#e3f2fd",color:"#1565c0"}}>⏱ {valgt.tid}</span>}
             {valgt.gruppe&&<span className="tag" style={{background:"#f3e5f5",color:"#6a1b9a"}}>👥 {valgt.gruppe}</span>}
           </div>
@@ -267,7 +267,7 @@ export default function AktivSideComp({ preselectId, clearPreselect, favoritter,
                   <div style={{color:C.gr,fontSize:11,marginTop:2}}>{(a.hva||"").substring(0,70)}{(a.hva||"").length>70?"...":""}</div>
                   <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                     <span className="tag" style={{background:C.mint,color:C.g}}>{a.kategori}</span>
-                    <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{a.alder}</span>
+                    <span className="tag" style={{background:"var(--c-lg2)",color:C.g}}>{a.alder}</span>
                     {(a.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>

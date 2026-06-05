@@ -24,7 +24,7 @@ function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
   const [resultat, setResultat] = useState(null);
   const [feil, setFeil] = useState(null);
   const [lagrer, setLagrer] = useState(false);
-  const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
+  const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:9,padding:"9px 13px",fontSize:13,background:"var(--c-input-bg)",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
   const generer = async () => {
     if (!form.tema.trim()) return;
     setGenererer(true); setFeil(null); setResultat(null);
@@ -121,7 +121,7 @@ function AiSangerView({ aktivBruker, onLagre, onAvbryt }) {
         </>
       ) : (
         <div className="fade">
-          <div style={{background:"#f5f9fd",borderRadius:12,padding:18,marginBottom:16,border:"1.5px solid #c4d6ec"}}>
+          <div style={{background:"var(--c-lg2)",borderRadius:12,padding:18,marginBottom:16,border:"1.5px solid var(--c-input-border)"}}>
             <div style={{fontWeight:800,fontSize:18,color:C.t,marginBottom:4}}>{resultat.tittel}</div>
             <div style={{fontSize:11,color:C.gr,marginBottom:14}}>{resultat.kategori} · {resultat.alder}{resultat.melodi?" · 🎼 "+resultat.melodi:""}</div>
             <pre style={{whiteSpace:"pre-wrap",fontFamily:"'Nunito',sans-serif",fontSize:15,lineHeight:2,color:C.t,marginBottom:12}}>{resultat.tekst}</pre>
@@ -173,7 +173,7 @@ export default function SangerSideComp({ favoritter, toggleFav, aktivBruker, onN
 
   const userSangerMapped = userSanger.map(s => ({ id:"user_"+s.id, tittel:s.tittel, tekst:s.tekst, kategori:s.kategori, alder:s.alder, melodi:s.melodi, tips:s.tips, rammeplan:s.rammeplan||[], _dbId:s.id, _erMin:true }));
   const alleData = [...userSangerMapped, ...SANGER];
-  const iS = {width:"100%",border:"1.5px solid #c4d6ec",borderRadius:9,padding:"9px 13px",fontSize:13,background:"#f5f9fd",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
+  const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:9,padding:"9px 13px",fontSize:13,background:"var(--c-input-bg)",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"};
   const data = alleData.filter(s=>{
     if (filter==="mine") return !!s._erMin && (!sok||s.tittel.toLowerCase().includes(sok.toLowerCase()));
     if (filter==="favoritter") return favSet.has(s.id) && (!sok||s.tittel.toLowerCase().includes(sok.toLowerCase()));
@@ -241,7 +241,7 @@ export default function SangerSideComp({ favoritter, toggleFav, aktivBruker, onN
                   <div style={{fontWeight:800,color:C.t,fontSize:14}}>{s.tittel}{s._erMin&&<span style={{marginLeft:6,fontSize:10,background:"#ede9fe",color:"#6d28d9",borderRadius:6,padding:"1px 6px",fontWeight:700}}>🤖</span>}</div>
                   <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
                     <span className="tag" style={{background:C.mint,color:C.g}}>{s.kategori}</span>
-                    <span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{s.alder}</span>
+                    <span className="tag" style={{background:"var(--c-lg2)",color:C.g}}>{s.alder}</span>
                     {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                   </div>
                 </div>

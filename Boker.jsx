@@ -188,8 +188,8 @@ function kortDato(dato) {
   return new Date(dato).toLocaleDateString("nb-NO", { day:"numeric", month:"short", year:"numeric" });
 }
 
-const labelStil = { display:"block", fontWeight:700, fontSize:12, color:"#1a2c45", marginBottom:4 };
-const inputBase = { width:"100%", padding:"11px 13px", border:"1.5px solid #d8e6f5", borderRadius:10, fontFamily:"'Nunito',sans-serif", fontSize:14, color:"#1a2c45", background:"#f5f9fd", boxSizing:"border-box", outline:"none", marginBottom:12 };
+const labelStil = { display:"block", fontWeight:700, fontSize:12, color:"var(--c-t)", marginBottom:4 };
+const inputBase = { width:"100%", padding:"11px 13px", border:"1.5px solid var(--c-input-border)", borderRadius:10, fontFamily:"'Nunito',sans-serif", fontSize:14, color:"var(--c-t)", background:"var(--c-input-bg)", boxSizing:"border-box", outline:"none", marginBottom:12 };
 
 // ── BOK-KORT ───────────────────────────────────────────────────────────────
 
@@ -515,7 +515,7 @@ function AiFortellingView({ aktivBruker, onLagre, onAvbryt }) {
           <div style={{ display:"flex", gap:8, marginBottom:14 }}>
             {[["kort","📄 Kort","~5 min"],["medium","📃 Medium","~10 min"],["lang","📜 Lang","~15 min"]].map(([v,e,t]) => (
               <button key={v} type="button" onClick={() => set("lengde", v)}
-                style={{ flex:1, padding:"10px 6px", border:"1.5px solid", borderColor:form.lengde===v?"#2c5b8e":"#d8e6f5", borderRadius:10, background:form.lengde===v?"#e8f0fb":"#f5f9fd", fontFamily:"'Nunito',sans-serif", fontSize:12, fontWeight:800, color:form.lengde===v?"#2c5b8e":"#5d7390", cursor:"pointer", textAlign:"center", lineHeight:1.6 }}>
+                style={{ flex:1, padding:"10px 6px", border:"1.5px solid", borderColor:form.lengde===v?"#2c5b8e":"var(--c-input-border)", borderRadius:10, background:form.lengde===v?"#e8f0fb":"var(--c-lg2)", fontFamily:"'Nunito',sans-serif", fontSize:12, fontWeight:800, color:form.lengde===v?"#2c5b8e":"var(--c-gr)", cursor:"pointer", textAlign:"center", lineHeight:1.6 }}>
                 {e}<br/><span style={{ fontWeight:600, fontSize:10 }}>{t}</span>
               </button>
             ))}
@@ -532,7 +532,7 @@ function AiFortellingView({ aktivBruker, onLagre, onAvbryt }) {
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:16 }}>
             {["En liten ulv som vil bli venn med sauene","Et barn som mister bamsen sin og finner nye venner","Prinsessen som ikke ville sove","Trollet som lærte å dele"].map(eks => (
               <button key={eks} type="button" onClick={() => set("tema", eks)}
-                style={{ padding:"5px 10px", borderRadius:20, border:"1px solid #c4d6ec", background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", fontSize:11, color:"#2c5b8e", cursor:"pointer" }}>
+                style={{ padding:"5px 10px", borderRadius:20, border:"1px solid var(--c-input-border)", background:"var(--c-lg2)", fontFamily:"'Nunito',sans-serif", fontSize:11, color:"var(--c-g)", cursor:"pointer" }}>
                 {eks}
               </button>
             ))}
@@ -706,7 +706,7 @@ export default function BokerSide({ aktivBruker }) {
             </div>
 
             {/* Søk */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, background:"#f5f9fd", border:"1.5px solid #d8e6f5", borderRadius:12, padding:"10px 14px", marginBottom:14 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, background:"var(--c-lg2)", border:"1.5px solid var(--c-divider)", borderRadius:12, padding:"10px 14px", marginBottom:14 }}>
               <span style={{ fontSize:16, color:"#8898ad" }}>🔍</span>
               <input value={søk} onChange={e => setSøk(e.target.value)}
                 placeholder="Søk etter tittel, forfatter..."
