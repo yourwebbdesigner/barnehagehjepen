@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import fs from "fs";
 import path from "path";
 
@@ -62,7 +63,47 @@ function lokalAIPlugin() {
 }
 
 export default defineConfig({
-  plugins: [react(), lokalAIPlugin()],
+  plugins: [
+    react(),
+    lokalAIPlugin(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["icon.svg"],
+      manifest: {
+        name: "Barnehagehjelpen",
+        short_name: "Barnehagehjelpen",
+        description: "Pedagogisk verktøy for barnehageansatte",
+        theme_color: "#2c5b8e",
+        background_color: "#f5f9fd",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          { src: "icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any maskable" },
+        ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,woff,woff2}"],
+        navigateFallback: "index.html",
+        runtimeCaching: [
+          {
+            // Supabase API – NetworkFirst med fallback til cache
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-api",
+              networkTimeoutSeconds: 8,
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // AI-kall – aldri cache
+            urlPattern: /\/api\/ai/,
+            handler: "NetworkOnly",
+          },
+        ],
+      },
+    }),
+  ],
   base: "./",
   build: {
     outDir: "dist",
