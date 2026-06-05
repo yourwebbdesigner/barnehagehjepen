@@ -625,14 +625,14 @@ export function AdminPanel({ aktivBruker }) {
 
   return (
     <div className="fade">
-      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:"#1a2c45",marginBottom:3}}>👑 Admin-panel</div>
-      <p style={{color:"#5d7390",fontSize:12,marginBottom:14}}>Administrer brukerkontoer ({brukere.length} totalt)</p>
+      <div style={{fontFamily:"'Fredoka One',cursive",fontSize:22,color:C.t,marginBottom:3}}>👑 Admin-panel</div>
+      <p style={{color:C.gr,fontSize:12,marginBottom:14}}>Administrer brukerkontoer ({brukere.length} totalt)</p>
       {feedback.tekst && (
         <div className="fade" style={{marginBottom:12,background:feedback.feil?"#fdecea":"#d8e6f5",borderRadius:8,padding:"9px 13px",color:feedback.feil?"#c62828":"#2c5b8e",fontWeight:700,fontSize:12}}>
           {feedback.tekst}
         </div>
       )}
-      {loading && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>}
+      {loading && <div style={{padding:18,textAlign:"center",color:C.gr}}><div className="spin" style={{margin:"0 auto 8px"}}/>Laster ...</div>}
       {!loading && lastFeil && (
         <div style={{padding:"14px 16px",background:"#fdecea",borderRadius:10,color:"#c62828",fontSize:12,fontWeight:700,marginBottom:10}}>
           ⚠️ Kunne ikke laste brukere: {lastFeil}
@@ -641,16 +641,16 @@ export function AdminPanel({ aktivBruker }) {
           </button>
         </div>
       )}
-      {!loading && !lastFeil && brukere.length === 0 && <div style={{padding:18,textAlign:"center",color:"#5d7390"}}>Ingen brukere</div>}
+      {!loading && !lastFeil && brukere.length === 0 && <div style={{padding:18,textAlign:"center",color:C.gr}}>Ingen brukere</div>}
       {!loading && !lastFeil && brukere.map(u => {
         const opptatt = aktivOp?.id === u.id;
         return (
         <div key={u.id} style={{background:C.lg2,borderRadius:12,padding:"13px 15px",marginBottom:9,boxShadow:"0 2px 7px rgba(44,91,142,0.07)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,gap:8}}>
             <div>
-              <div style={{fontWeight:800,color:"#1a2c45",fontSize:14}}>{u.brukernavn} {u.is_admin&&<span style={{background:"#fff9c4",color:"#795548",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>👑 ADMIN</span>}{u.id===aktivBruker.id&&<span style={{background:"#d8f3dc",color:"#1b5e47",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>DU</span>}</div>
-              <div style={{fontSize:11,color:"#5d7390",marginTop:2}}>📧 {u.epost}</div>
-              <div style={{fontSize:10,color:"#5d7390",marginTop:2}}>📅 Opprettet: {u.created_at ? new Date(u.created_at).toLocaleDateString("no-NO") : "–"}</div>
+              <div style={{fontWeight:800,color:C.t,fontSize:14}}>{u.brukernavn} {u.is_admin&&<span style={{background:"#fff9c4",color:"#795548",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>👑 ADMIN</span>}{u.id===aktivBruker.id&&<span style={{background:"#d8f3dc",color:"#1b5e47",borderRadius:8,padding:"1px 7px",fontSize:9,marginLeft:5,fontWeight:800}}>DU</span>}</div>
+              <div style={{fontSize:11,color:C.gr,marginTop:2}}>📧 {u.epost}</div>
+              <div style={{fontSize:10,color:C.gr,marginTop:2}}>📅 Opprettet: {u.created_at ? new Date(u.created_at).toLocaleDateString("no-NO") : "–"}</div>
             </div>
           </div>
           <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
