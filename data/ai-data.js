@@ -2,6 +2,16 @@
 //  AI PLANLEGGING – aldersgrupper, årstider, maler og system-prompt
 // ═══════════════════════════════════════════
 
+// Sanitize user input before injecting into AI prompts to prevent prompt injection
+export function sanitizeForPrompt(str, maxLen = 300) {
+  if (!str) return "";
+  return String(str)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, maxLen);
+}
+
 export const ALDER_GRUPPER = [
   { id:"0-2", navn:"Småbarn (0-2 år)", fokus:"Sansing, trygghet, motorikk, kroppsspråk, enkle ord" },
   { id:"2-3", navn:"Toåringer (2-3 år)", fokus:"Setninger, parallelllek, grovmotorikk, gjenkjennelse" },

@@ -3,6 +3,7 @@ import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { hentArsplaner, lagreArsplaner, skrivUtGenerell, lastNedPlanPDF } from './api.js';
 import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
+import { sanitizeForPrompt } from './data/ai-data.js';
 import { UnsavedDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 function AIKnapper({ seksjonId, aiAktiv, aiLoading, aiTekst, utforSeksjonAI, aksepterForslag, avvisForslag }) {
@@ -185,7 +186,7 @@ export default function ArsplanSide({ ctx }) {
     const byggSeksjonPrompt = (seksjonId, handling, plan) => {
       const s = SEKSJONER.find(x => x.id === seksjonId);
       const eks = plan?.seksjoner?.[seksjonId] || "";
-      const ctx = `Barnehage: "${plan?.barnehage||"ikke oppgitt"}". Avdeling: "${plan?.avdeling||"ikke oppgitt"}". Alder: "${plan?.alder||"ikke oppgitt"}". Barnehageår: ${plan?.aar||"2025/2026"}.${planTema?` Overordnet satsningsområde/tema for barnehagen: «${planTema}». La dette temaet prege innholdet.`:""}`;
+      const ctx = `Barnehage: "${sanitizeForPrompt(plan?.barnehage,80)||"ikke oppgitt"}". Avdeling: "${sanitizeForPrompt(plan?.avdeling,80)||"ikke oppgitt"}". Alder: "${sanitizeForPrompt(plan?.alder,40)||"ikke oppgitt"}". Barnehageår: ${plan?.aar||"2025/2026"}.${planTema?` Overordnet satsningsområde/tema for barnehagen: «${sanitizeForPrompt(planTema,150)}». La dette temaet prege innholdet.`:""}`;
       const base = `Du er en erfaren norsk barnehagelærer med dyp kjennskap til Rammeplan for barnehagen (2017). Svar ALLTID på norsk bokmål. Svar kun med selve teksten – ingen innledning eller kommentarer rundt teksten.\n\nKontekst: ${ctx}\nSeksjon: ${s?.navn} – ${s?.beskrivelse}\n\n`;
       if (handling === "start") return base + `Lag et pedagogisk og gjennomarbeidet førsteutkast for seksjonen "${s?.navn}" i årsplanen. Teksten skal:\n- Være konkret og direkte anvendbar for barnehagepersonalet\n- Forankres i Rammeplan for barnehagen 2017 med korrekt fagspråk\n- Ha varmt, profesjonelt og inviterende språk\n- Være 150–300 ord\n\nLever kun selve teksten for seksjonen.`;
       if (handling === "profesjonell") return base + `Eksisterende tekst:\n${eks}\n\nForbedre teksten. Gjør språket mer presist, profesjonelt og pedagogisk forankret. Behold alt meningsinnhold. Svar med den forbedrede teksten.`;
@@ -210,7 +211,7 @@ export default function ArsplanSide({ ctx }) {
       const sesId = "arshjul_" + maaned;
       setAiAktiv({ seksjonId: sesId, handling:"maaned" });
       setAiLoading(true);
-      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${planTema}».`:""}`;
+      const ctx = `Barnehage: "${sanitizeForPrompt(ap?.barnehage,80)||"ikke oppgitt"}". Avdeling: "${sanitizeForPrompt(ap?.avdeling,80)||"ikke oppgitt"}". Alder: "${sanitizeForPrompt(ap?.alder,40)||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${sanitizeForPrompt(planTema,150)}».`:""}`;
       const sesong = { august:"sommer/høst", september:"tidlig høst", oktober:"midthøst", november:"senhøst", desember:"vinter/jul", januar:"vinter", februar:"vinter/karneval", mars:"vinter/vår", april:"vår/påske", mai:"vår/17. mai", juni:"sommer" };
       const m = MANEDER.find(x => x.id === maaned);
       const prompt = `Du er en erfaren norsk barnehagelærer. Svar kun med JSON – ingen annen tekst, ingen markdown.\nLag et pedagogisk forslag for ${m?.navn} (årstid: ${sesong[maaned]||maaned}) for en norsk barnehage.\nKontekst: ${ctx}\nFormat: {"tema":"...","aktiviteter":"...","notat":"..."}\n- tema: ett inspirerende månedstema (maks 6 ord)\n- aktiviteter: 3–4 konkrete aktiviteter koblet til Rammeplanen (2–3 linjer)\n- notat: 1–2 pedagogiske merknader til personalet`;
@@ -236,7 +237,7 @@ export default function ArsplanSide({ ctx }) {
     const utforKomplettArshjul = async () => {
       setAiAktiv({ seksjonId:"arshjul_alle", handling:"alle" });
       setAiLoading(true);
-      const ctx = `Barnehage: "${ap?.barnehage||"ikke oppgitt"}". Avdeling: "${ap?.avdeling||"ikke oppgitt"}". Alder: "${ap?.alder||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${planTema}». La dette gjennomsyre årshjulet.`:""}`;
+      const ctx = `Barnehage: "${sanitizeForPrompt(ap?.barnehage,80)||"ikke oppgitt"}". Avdeling: "${sanitizeForPrompt(ap?.avdeling,80)||"ikke oppgitt"}". Alder: "${sanitizeForPrompt(ap?.alder,40)||"ikke oppgitt"}".${planTema?` Satsningsområde/tema: «${sanitizeForPrompt(planTema,150)}». La dette gjennomsyre årshjulet.`:""}`;
       const prompt = `Du er en erfaren norsk barnehagelærer. Svar kun med JSON – ingen annen tekst.\nLag et komplett årshjul for barnehageåret august–juni. Kontekst: ${ctx}\nKrav: tema maks 6 ord. aktiviteter: 2 aktiviteter på EN LINJE atskilt med " | ", med fagområde i parentes, f.eks. "Skogstur og naturobservasjon (Natur og miljø) | Samlingsstund om årstider (Kommunikasjon)". notat: 1 setning.\nFormat (alle 11 måneder):\n{"august":{"tema":"...","aktiviteter":"...","notat":"..."},"september":{"tema":"...","aktiviteter":"...","notat":"..."},"oktober":{"tema":"...","aktiviteter":"...","notat":"..."},"november":{"tema":"...","aktiviteter":"...","notat":"..."},"desember":{"tema":"...","aktiviteter":"...","notat":"..."},"januar":{"tema":"...","aktiviteter":"...","notat":"..."},"februar":{"tema":"...","aktiviteter":"...","notat":"..."},"mars":{"tema":"...","aktiviteter":"...","notat":"..."},"april":{"tema":"...","aktiviteter":"...","notat":"..."},"mai":{"tema":"...","aktiviteter":"...","notat":"..."},"juni":{"tema":"...","aktiviteter":"...","notat":"..."}}`;
       await kallAI(prompt, (tekst) => {
         setAiLoading(false);

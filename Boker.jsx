@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
+import { sanitizeForPrompt } from './data/ai-data.js';
 
 const CSS = `
   .bk-fade { animation: bk-fadeIn 0.3s ease both; }
@@ -444,18 +445,23 @@ function AiFortellingView({ aktivBruker, onLagre, onAvbryt }) {
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), 28000);
     try {
-      const ekstra = (form.karakterer ? " Karakterer: " + form.karakterer + "." : "") + (form.ønsker ? " Spesielle ønsker: " + form.ønsker + "." : "");
+      const ekstra = (form.karakterer ? " Karakterer: " + sanitizeForPrompt(form.karakterer, 100) + "." : "") + (form.ønsker ? " Spesielle ønsker: " + sanitizeForPrompt(form.ønsker, 200) + "." : "");
       const system = `Du er en kreativ forfatter av barnebøker for norske barnehager. Skriv en pedagogisk og engasjerende fortelling egnet for barn på ${form.aldersgruppe} år. Lengde: ${lengdeMap[form.lengde]}. Bruk varmt, enkelt bokmål. Svar KUN med et JSON-objekt (ingen annen tekst) i dette formatet:\n{"tittel":"...","beskrivelse":"En setning om hva fortellingen handler om","innhold":"Selve fortellingens tekst med avsnitt adskilt av \\n\\n"}`;
-      const prompt = `Tema: ${form.tema}.${ekstra} Kategori: ${form.kategori}. Aldersgruppe: ${form.aldersgruppe} år.`;
+      const prompt = `Tema: ${sanitizeForPrompt(form.tema, 100)}.${ekstra} Kategori: ${form.kategori}. Aldersgruppe: ${form.aldersgruppe} år.`;
       const r = await fetch("/api/ai", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ system, prompt, max_tokens:1400 }), signal: ctrl.signal });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const d = await r.json();
       const jsonMatch = (d.text || "").match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Ugyldig svar fra AI");
-      setResultat(JSON.parse(jsonMatch[0]));
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed.tittel || !parsed.innhold) throw new Error("AI-svar manglet påkrevde felt (tittel/innhold)");
+      setResultat(parsed);
     } catch (e) {
       console.error("[AI Fortelling]", e);
-      setFeil(e.name === "AbortError" ? "AI brukte for lang tid – prøv igjen." : "AI-generering feilet – prøv igjen. " + (e.message || ""));
+      if (e.name === "AbortError") setFeil("AI brukte for lang tid – prøv igjen.");
+      else if (e.message?.includes("manglet")) setFeil("AI ga et ufullstendig svar – prøv igjen.");
+      else if (e.message?.startsWith("HTTP")) setFeil("Serverfeil (" + e.message + ") – prøv igjen.");
+      else setFeil("AI-generering feilet – prøv igjen.");
     } finally { clearTimeout(tid); setGenererer(false); }
   };
 
@@ -576,6 +582,7 @@ export default function BokerSide({ aktivBruker }) {
   const [aktivBok, setAktivBok] = useState(null);
   const [slettBekreft, setSlettBekreft] = useState(null);
   const [melding, setMelding] = useState("");
+  const [visMaks, setVisMaks] = useState(20);
   const kanRedigere = (bok) => aktivBruker?.admin || bok?.user_id === aktivBruker?.id;
 
   useEffect(() => { last(); }, [aktivBruker?.id]);
@@ -637,6 +644,7 @@ export default function BokerSide({ aktivBruker }) {
     }
     return true;
   });
+  const synligBoker = filtrert.slice(0, visMaks);
 
   return (
     <>
@@ -739,18 +747,25 @@ export default function BokerSide({ aktivBruker }) {
                 </div>
               </div>
             ) : (
-              <div className="bk-grid">
-                {filtrert.map(b => (
-                  <BokKort key={b.id} bok={b}
-                    erFav={favorittIds.includes(b.id)}
-                    onFav={håndterFav}
-                    onAapne={bok => { setAktivBok(bok); setVisning("detalj"); }}
-                    kanRedigere={kanRedigere(b)}
-                    onRediger={bok => { setAktivBok(bok); setVisning("rediger"); }}
-                    onSlett={håndterSlettKlikk}
-                    />
-                ))}
-              </div>
+              <>
+                <div className="bk-grid">
+                  {synligBoker.map(b => (
+                    <BokKort key={b.id} bok={b}
+                      erFav={favorittIds.includes(b.id)}
+                      onFav={håndterFav}
+                      onAapne={bok => { setAktivBok(bok); setVisning("detalj"); }}
+                      kanRedigere={kanRedigere(b)}
+                      onRediger={bok => { setAktivBok(bok); setVisning("rediger"); }}
+                      onSlett={håndterSlettKlikk}
+                      />
+                  ))}
+                </div>
+                {filtrert.length > visMaks && (
+                  <button onClick={()=>setVisMaks(v=>v+20)} style={{width:"100%",marginTop:12,padding:"11px",background:"#f0f5ff",color:"#2c5b8e",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>
+                    Vis flere ({filtrert.length - visMaks} gjenstår)
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

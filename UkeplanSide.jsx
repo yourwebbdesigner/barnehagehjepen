@@ -6,6 +6,7 @@ import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { hentUkeplaner, lagreUkeplaner, komprimerBilde } from './api.js';
 import { C, escapeHTML, skrivUtVindu } from './utils.js';
+import { sanitizeForPrompt } from './data/ai-data.js';
 function SortableAktivitetItem({ a, tidCol, tidBg, dager, dag, slettFn, flyttFn }) {
   const {attributes,listeners,setNodeRef,transform,transition,isDragging}=useSortable({id:a.id});
   return(
@@ -175,7 +176,8 @@ export default function UkeplanSide({ ctx }) {
     const fyllMedAI = async () => {
       if(!u_tema.trim()){setUFeil("Skriv et tema først");return;}
       setUAiLoading(true);setUFeil("");
-      const prompt=`Du er pedagog i norsk barnehage. Fyll en ukeplan med tema "${u_tema}" for uke ${u_uke||"?"}.
+      const sikkertTema = sanitizeForPrompt(u_tema, 100);
+      const prompt=`Du er pedagog i norsk barnehage. Fyll en ukeplan med tema "${sikkertTema}" for uke ${u_uke||"?"}.
 Returner KUN gyldig JSON uten markdown:
 {"mandag":{"formiddag":"9:00 Samling","ettermiddag":"12:30 Utelek"},"tirsdag":{"formiddag":"...","ettermiddag":"...","maaltid":"Varm mat"},"onsdag":{"formiddag":"...","ettermiddag":"..."},"torsdag":{"formiddag":"...","ettermiddag":"..."},"fredag":{"formiddag":"...","ettermiddag":"...","notat":"Kortdag"}}`;
       const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),28000);

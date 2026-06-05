@@ -25,6 +25,7 @@ export default function DokumentasjonSide({ ctx }) {
     const [valgt, setValgt] = useState(null);
     const [sok, setSok] = useState("");
     const [filterFag, setFilterFag] = useState("alle");
+    const [visMaks, setVisMaks] = useState(20);
     const [lokalToast, setLokalToast] = useState("");
     const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
     const [bekreftSletting, setBekreftSletting] = useState(false);
@@ -240,6 +241,7 @@ export default function DokumentasjonSide({ ctx }) {
       }
       return true;
     });
+    const synligDok = filtrert.slice(0, visMaks);
 
     const iS = {width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:14,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
     const labelStil = {display:"block",fontWeight:700,color:C.t,fontSize:12,marginBottom:5};
@@ -398,11 +400,11 @@ export default function DokumentasjonSide({ ctx }) {
 
         {dok.length > 0 && (
           <>
-            <input type="text" value={sok} onChange={e=>setSok(e.target.value)} placeholder="🔍 Søk i dokumentasjon ..." style={{...iS,marginBottom:8}}/>
+            <input type="text" value={sok} onChange={e=>{setSok(e.target.value);setVisMaks(20);}} placeholder="🔍 Søk i dokumentasjon ..." style={{...iS,marginBottom:8}}/>
             <div style={{display:"flex",gap:5,marginBottom:14,overflowX:"auto",paddingBottom:3}}>
-              <button onClick={()=>setFilterFag("alle")} style={{padding:"5px 10px",fontSize:11,background:filterFag==="alle"?C.t:"#e8eff8",color:filterFag==="alle"?"#fff":C.t,border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>Alle</button>
+              <button onClick={()=>{setFilterFag("alle");setVisMaks(20);}} style={{padding:"5px 10px",fontSize:11,background:filterFag==="alle"?C.t:"#e8eff8",color:filterFag==="alle"?"#fff":C.t,border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>Alle</button>
               {FAGOMRADER.map(f=>(
-                <button key={f.id} onClick={()=>setFilterFag(f.id)} style={{padding:"5px 10px",fontSize:11,background:filterFag===f.id?f.farge:"#e8eff8",color:filterFag===f.id?"#fff":C.t,border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{f.ikon} {f.navn}</button>
+                <button key={f.id} onClick={()=>{setFilterFag(f.id);setVisMaks(20);}} style={{padding:"5px 10px",fontSize:11,background:filterFag===f.id?f.farge:"#e8eff8",color:filterFag===f.id?"#fff":C.t,border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{f.ikon} {f.navn}</button>
               ))}
             </div>
           </>
@@ -419,7 +421,7 @@ export default function DokumentasjonSide({ ctx }) {
         ) : (
           <div style={{display:"grid",gap:9}}>
             <div style={{fontSize:11,color:C.gr}}>{filtrert.length} av {dok.length} dokumentasjoner</div>
-            {filtrert.map(d => (
+            {synligDok.map(d => (
               <div key={d.id} className="hover" onClick={()=>lesDokument(d)} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:5}}>
                   <div style={{fontWeight:800,color:C.t,fontSize:14,lineHeight:1.3,flex:1,wordBreak:"break-word"}}>{d.tittel}</div>
@@ -434,6 +436,11 @@ export default function DokumentasjonSide({ ctx }) {
                 )}
               </div>
             ))}
+            {filtrert.length > visMaks && (
+              <button onClick={()=>setVisMaks(v=>v+20)} style={{width:"100%",padding:"11px",background:"#f0f5ff",color:"#2c5b8e",border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>
+                Vis flere ({filtrert.length - visMaks} gjenstår)
+              </button>
+            )}
           </div>
         )}
 

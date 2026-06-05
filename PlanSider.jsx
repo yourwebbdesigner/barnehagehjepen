@@ -4,6 +4,7 @@ import { FAGOMRADER } from './data/rammeplan.js';
 import { hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, skrivUtGenerell, lastNedPlanPDF } from './api.js';
 import { RenderTekst } from './AiSide.jsx';
 import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
+import { sanitizeForPrompt } from './data/ai-data.js';
 import { UnsavedDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 
@@ -43,7 +44,7 @@ export function MaanedsplanSide({ ctx }) {
     const autoTittel=()=>m_tittel.trim()||`${MAANEDER[m_maaned-1]} ${m_aar}`;
     const lagreNy=async()=>{setMFeil("");if(!m_tema.trim()){setMFeil("Skriv et tema");return;}setMLoading(true);const ok=await lagre([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat,opprettet:new Date().toISOString()},...planer]);setMLoading(false);if(ok){mpNullstill();visLokal("✅ Månedsplan lagret");setVisning("liste");}};
     const lagreEndring=async()=>{setMFeil("");if(!valgt)return;setMLoading(true);const ok=await lagre(planer.map(p=>p.id===valgt.id?{...p,tittel:autoTittel(),aar:m_aar,maaned:m_maaned,tema:m_tema.trim(),fagomrader:m_fag,uke1:m_uker[0],uke2:m_uker[1],uke3:m_uker[2],uke4:m_uker[3],notat:m_notat}:p));setMLoading(false);if(ok){mpNullstill();visLokal("✅ Endringer lagret");setVisning("liste");}};
-    const genererAI=async()=>{if(!m_tema.trim()){setMFeil("Skriv et tema først");return;}setMAiLoading(true);setMFeil("");const fagNavn=m_fag.filter(Boolean).map(f=>FAGOMRADER.find(x=>x.id===f)?.navn.split(",")[0]||f).join(", ")||"generelt";const prompt=`Lag en kort månedsoversikt for norsk barnehage. Tema: "${m_tema}". Fagområder: ${fagNavn}.\nSkriv KUN dette (ingen innledning, ingen forklaring):\n\n## Uke 1\n[undertema + 2-3 korte aktiviteter + 1 mål, maks 5 linjer]\n\n## Uke 2\n[samme]\n\n## Uke 3\n[samme]\n\n## Uke 4\n[samme]`;
+    const genererAI=async()=>{if(!m_tema.trim()){setMFeil("Skriv et tema først");return;}setMAiLoading(true);setMFeil("");const fagNavn=m_fag.filter(Boolean).map(f=>FAGOMRADER.find(x=>x.id===f)?.navn.split(",")[0]||f).join(", ")||"generelt";const sikkertTema=sanitizeForPrompt(m_tema,100);const prompt=`Lag en kort månedsoversikt for norsk barnehage. Tema: "${sikkertTema}". Fagområder: ${fagNavn}.\nSkriv KUN dette (ingen innledning, ingen forklaring):\n\n## Uke 1\n[undertema + 2-3 korte aktiviteter + 1 mål, maks 5 linjer]\n\n## Uke 2\n[samme]\n\n## Uke 3\n[samme]\n\n## Uke 4\n[samme]`;
     const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),28000);
     try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,max_tokens:900}),signal:ctrl.signal});
     if(!r.ok){let msg="Serverfeil "+r.status;try{const e=await r.json();if(e?.error)msg=e.error;}catch{}setMFeil("❌ "+msg);return;}

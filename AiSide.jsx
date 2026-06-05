@@ -4,7 +4,7 @@ import { FAGOMRADER } from './data/rammeplan.js';
 import { SANGER } from './data/sanger.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
 import { TEGNEARK } from './data/tegneark.jsx';
-import { ALDER_GRUPPER, ARSTID_HOYTID, VANSKELIGHET, INNHOLDSTYPER, SAMLING_MAL, PROSJEKT_MAL, UKEPLAN_MAL, BARNEHAGE_SYSTEM, AI_EKSEMPLER } from './data/ai-data.js';
+import { ALDER_GRUPPER, ARSTID_HOYTID, VANSKELIGHET, INNHOLDSTYPER, SAMLING_MAL, PROSJEKT_MAL, UKEPLAN_MAL, BARNEHAGE_SYSTEM, AI_EKSEMPLER, sanitizeForPrompt } from './data/ai-data.js';
 
 import { C } from './utils.js';
 function byggPrompt({ type, fagomrade, alder, arstid, vanskelighet, brukertekst, alleFagomrader }) {
@@ -65,7 +65,7 @@ function byggPrompt({ type, fagomrade, alder, arstid, vanskelighet, brukertekst,
   };
   sys += `═══ FORMAT FOR SVARET ═══\n${formater[type] || formater.fritekst}\n\n`;
   sys += `═══ KRAV ═══\n• Kortfattet og direkte – følg ordgrensene i formatet\n• Konkret og praktisk – kan brukes i morgen uten videre bearbeiding\n• Norsk bokmål, varmt og profesjonelt språk\n• Spørsmål til barn: åpne og undrende, aldri ja/nei-spørsmål\n• I gjennomføringsstegene: beskriv kun hva personalet gjør konkret\n\n`;
-  if (brukertekst && brukertekst.trim()) sys += `═══ BRUKERENS EKSTRA ØNSKE ═══\n${brukertekst.trim()}\n\n`;
+  if (brukertekst && brukertekst.trim()) sys += `═══ BRUKERENS EKSTRA ØNSKE ═══\n${sanitizeForPrompt(brukertekst, 500)}\n\n`;
   sys += `Lever et komplett, brukbart svar nå.`;
   return { system: BARNEHAGE_SYSTEM, user: sys };
 }
@@ -204,6 +204,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
   const [aiVisFilter, setAiVisFilter] = useState(true);
   const [lagringsTittel, setLagringsTittel] = useState("");
   const [aiCooldown, setAiCooldown] = useState(false);
+  const [aiBrukteFallback, setAiBrukteFallback] = useState(false);
 
   // Hvis parent sender initialType (f.eks. fra hurtigknapp på Hjem), oppdater type og nullstill prop
   useEffect(() => {
@@ -227,7 +228,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
   const visMelding = (m) => { setAiFeedback(m); setTimeout(()=>setAiFeedback(""), 3000); };
 
   const genAI = async () => {
-    setAiLoading(true); setAiResultat(""); setAiFeedback(""); setLagringsTittel("");
+    setAiLoading(true); setAiResultat(""); setAiFeedback(""); setLagringsTittel(""); setAiBrukteFallback(false);
 
     // Konverter fagomrade-array til parametere som passer eksisterende prompt-bygging.
     // Primær = første valgte (eller "alle" hvis ingen). Ekstra = de andre valgte fagområdene
@@ -337,6 +338,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
       setAiResultat(resultat);
       if (feilGrunn) {
         visMelding(`ℹ️ Brukte database (${feilGrunn})`);
+        setAiBrukteFallback(true);
       } else {
         visMelding("✅ Generert med AI");
       }
@@ -682,6 +684,7 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
                 }} style={{background:"#e3f2fd",color:"#1565c0",padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>💾 Lagre</button>
               )}
               <button className="btn" onClick={kopierResultat} style={{background:C.mint,color:C.g,padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>📋 Kopier</button>
+              {aiBrukteFallback && <button className="btn" onClick={()=>{setAiResultat("");setAiBrukteFallback(false);genAI();}} disabled={aiCooldown} style={{background:"#fff3e0",color:"#e65100",padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>↩ Prøv AI igjen</button>}
               <button className="btn" onClick={nullstill} style={{background:"#e8eff8",color:C.t,padding:"6px 11px",fontSize:11,border:"none",borderRadius:7,cursor:"pointer",fontWeight:700}}>🔄 Ny</button>
             </div>
           </div>

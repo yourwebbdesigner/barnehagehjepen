@@ -85,10 +85,15 @@ const CSS = `
   .nb { cursor:pointer; border:none; font-family:'Nunito',sans-serif; transition:all 0.2s; min-height:40px; }
   .nb:hover { background:rgba(255,255,255,0.18)!important; }
   .nb.on { background:rgba(255,255,255,0.22)!important; font-weight:800; }
-  .btn { cursor:pointer; border:none; border-radius:11px; font-family:'Nunito',sans-serif; font-weight:700; transition:all 0.18s ease; }
+  .btn { cursor:pointer; border:none; border-radius:11px; font-family:'Nunito',sans-serif; font-weight:700; transition:all 0.18s ease; min-height:44px; }
   .btn:hover { filter:brightness(1.08); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
   .btn:active { transform:translateY(0); transition-duration:0.06s; }
   .btn:focus-visible { outline: 2px solid #2c5b8e; outline-offset: 2px; }
+  @media (max-width: 600px) {
+    input, textarea, select { font-size: 16px !important; }
+    .btn { min-height: 44px; }
+    .nb { min-height: 44px !important; }
+  }
   .tag { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; }
   .spin { border:3px solid var(--c-spin-bg); border-top:3px solid var(--c-spin-fg); border-radius:50%; width:26px; height:26px; animation:spin 0.8s linear infinite; }
   input:focus-visible, textarea:focus-visible, select:focus-visible { outline:2px solid var(--c-lg) !important; outline-offset: 2px !important; border-radius: 6px; }
