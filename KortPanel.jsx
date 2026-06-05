@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase.js";
 import { FAGOMRADER } from './data/rammeplan.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
@@ -599,8 +599,6 @@ export default function AktivitetskortPanel({ aktivBruker, onOppdater }) {
     </div>
   );
 }
-
-// [DATA MOVED] hilsen, DAGENS_TIPS → ./data/tips.js
 
 // ── Modul-nivå komponenter (stabile referanser – monteres ikke på nytt ved parent-render) ──
 

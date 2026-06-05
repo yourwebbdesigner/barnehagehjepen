@@ -398,7 +398,6 @@ export function passordStyrke(p) {
 export const AVATAR_VALG = ["👤","🌿","🌸","🌻","🌳","🌈","🐰","🐱","🐶","🐻","🦊","🐼","🐨","🐯","🦁","🐸","🐧","🦉","🦋","🐞","🌞","🌙","⭐","🎨","🎵","📚","🍎","🌺","🎯","✨","🦄","🐢"];
 
 
-// [DATA MOVED] SUPPORT_E_POST, supportMailto, FAQ_DATA → ./data/faq.js
 
 // ─── Felles planTema per bruker – lagres i user_profiles ───
 export async function hentPlanTema(brukerId) {
