@@ -25,6 +25,7 @@ import DokumentasjonSide from './DokumentasjonSide.jsx';
 import ProfilSide from './ProfilSide.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
 import { Tilbake, FagTag } from './components.jsx';
+import { escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
 
 
@@ -671,13 +672,6 @@ const KORT_IKONER = [
   "🤝","🔬","🧲","🎯","🦄","🏕️","🎶","🖍️","✂️","🔑"
 ];
 
-// [DATA MOVED] FAGOMRADER → ./data/ (se imports øverst i filen)
-// [DATA MOVED] SANGER → ./data/ (se imports øverst i filen)
-// [DATA MOVED] AKTIVITETER → ./data/ (se imports øverst i filen)
-// [DATA MOVED] RE → ./data/ (se imports øverst i filen)
-// [DATA MOVED] SVG_TEGN → ./data/ (se imports øverst i filen)
-
-import { escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 
 
 // Standalone form — fully self-contained so typing NEVER re-renders the parent
