@@ -119,7 +119,7 @@ export default function MaanedskalenderSide({ ctx }) {
               const dagEvents=(events||{})[String(d)]||[];
               return(
                 <div key={i} onClick={()=>{if(d&&redigerbar){setAktivDag(String(d));setNyEvent({type:"aktivitet",tekst:"",ikon:""});}}}
-                  style={{minHeight:printModus?54:64,borderRadius:7,border:erIDag(d)?"2px solid "+C.g:"1px solid #e8eff8",background:d?C.w:"#f8fafd",padding:"3px 4px",cursor:d&&redigerbar?"pointer":undefined,position:"relative",overflow:"hidden"}}>
+                  style={{minHeight:printModus?54:64,borderRadius:7,border:erIDag(d)?"2px solid "+C.g:"1px solid var(--c-divider)",background:d?C.w:"var(--c-lg2)",padding:"3px 4px",cursor:d&&redigerbar?"pointer":undefined,position:"relative",overflow:"hidden"}}>
                   {d&&<div style={{fontSize:11,fontWeight:erIDag(d)?900:700,color:erIDag(d)?C.g:C.t,marginBottom:2}}>{d}</div>}
                   {dagEvents.map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
                     <div key={ev.id} style={{background:t.bg,color:t.farge,borderRadius:4,fontSize:9,padding:"1px 4px",marginBottom:1,display:"flex",alignItems:"center",gap:2,whiteSpace:"nowrap",overflow:"hidden"}}>
@@ -206,21 +206,21 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
           {k_feil&&<div style={{background:"#ffebee",color:"#c62828",borderRadius:9,padding:"9px 12px",fontSize:12,marginBottom:12}}>{k_feil}</div>}
           <div style={{background:C.w,borderRadius:13,padding:14,boxShadow:"0 2px 10px rgba(44,91,142,0.08)",marginBottom:12}}>
             <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>TITTEL</label>
-            <input value={k_tittel} onChange={e=>setKTittel(e.target.value)} placeholder="F.eks. 'September – Blå avdeling'" style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10}}/>
+            <input value={k_tittel} onChange={e=>setKTittel(e.target.value)} placeholder="F.eks. 'September – Blå avdeling'" style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10}}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10,marginBottom:10}}>
               <div>
                 <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>ÅR</label>
-                <input type="number" value={k_aar} onChange={e=>setKAar(parseInt(e.target.value)||new Date().getFullYear())} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
+                <input type="number" value={k_aar} onChange={e=>setKAar(parseInt(e.target.value)||new Date().getFullYear())} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
               </div>
               <div>
                 <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>MÅNED</label>
-                <select value={k_maaned} onChange={e=>setKMaaned(parseInt(e.target.value))} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}>
+                <select value={k_maaned} onChange={e=>setKMaaned(parseInt(e.target.value))} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}>
                   {MAANEDER_KAL.map((n,i)=><option key={i+1} value={i+1}>{n}</option>)}
                 </select>
               </div>
             </div>
             <label style={{fontSize:11,fontWeight:800,color:C.gr,display:"block",marginBottom:4}}>TEMA</label>
-            <input value={k_tema} onChange={e=>setKTema(e.target.value)} placeholder={planTema||"F.eks. Natur og årstider"} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
+            <input value={k_tema} onChange={e=>setKTema(e.target.value)} placeholder={planTema||"F.eks. Natur og årstider"} style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box"}}/>
           </div>
 
           <div style={{background:C.lg2,borderRadius:10,padding:"10px 12px",marginBottom:12}}>
@@ -239,7 +239,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
 
           {aktivDag&&(
             <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setAktivDag(null)} onKeyDown={e=>e.key==="Escape"&&setAktivDag(null)} tabIndex={-1}>
-              <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:18,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+              <div onClick={e=>e.stopPropagation()} style={{background:"var(--c-card)",borderRadius:14,padding:18,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
                 <div style={{fontFamily:"'Fredoka One',cursive",fontSize:16,color:C.t,marginBottom:12}}>{MAANEDER_KAL[k_maaned-1]} {aktivDag}</div>
                 {(k_events[aktivDag]||[]).length>0&&(
                   <div style={{marginBottom:12}}>
@@ -252,12 +252,12 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
                   </div>
                 )}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
-                  {Object.entries(EVENT_TYPER).map(([k,v])=><button key={k} onClick={()=>setNyEvent(p=>({...p,type:k}))} style={{padding:"5px 8px",borderRadius:7,border:nyEvent.type===k?"2px solid "+v.farge:"1.5px solid #e8eff8",background:nyEvent.type===k?v.bg:"#fff",color:v.farge,fontSize:11,fontWeight:700,cursor:"pointer"}}>{v.ikon} {v.label}</button>)}
+                  {Object.entries(EVENT_TYPER).map(([k,v])=><button key={k} onClick={()=>setNyEvent(p=>({...p,type:k}))} style={{padding:"5px 8px",borderRadius:7,border:nyEvent.type===k?"2px solid "+v.farge:"1.5px solid var(--c-divider)",background:nyEvent.type===k?v.bg:"var(--c-w)",color:v.farge,fontSize:11,fontWeight:700,cursor:"pointer"}}>{v.ikon} {v.label}</button>)}
                 </div>
-                <input value={nyEvent.tekst} onChange={e=>setNyEvent(p=>({...p,tekst:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&leggTilEvent()} placeholder="Beskriv hendelsen..." style={{width:"100%",padding:"8px 11px",borderRadius:8,border:"1.5px solid #d0dff0",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:8}}/>
+                <input value={nyEvent.tekst} onChange={e=>setNyEvent(p=>({...p,tekst:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&leggTilEvent()} placeholder="Beskriv hendelsen..." style={{width:"100%",padding:"8px 11px",borderRadius:8,border:"1.5px solid var(--c-input-border)",fontSize:13,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:8}}/>
                 <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:8}}>
                   <button onClick={leggTilEvent} disabled={!nyEvent.tekst.trim()} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Legg til</button>
-                  <button onClick={()=>setAktivDag(null)} style={{background:"#e8eff8",color:C.t,border:"none",borderRadius:8,padding:"9px 14px",fontSize:13,cursor:"pointer"}}>Lukk</button>
+                  <button onClick={()=>setAktivDag(null)} style={{background:"var(--c-lg2)",color:C.t,border:"none",borderRadius:8,padding:"9px 14px",fontSize:13,cursor:"pointer"}}>Lukk</button>
                 </div>
               </div>
             </div>
@@ -283,7 +283,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
               <div style={{fontSize:12,color:C.gr,marginTop:2}}>{mNavn} {valgt.aar}{valgt.tema&&" • "+valgt.tema} • {totalEvents} hendelser</div>
             </div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              <button onClick={()=>setPrintModus(p=>!p)} style={{background:printModus?"#1565c0":"#e8eff8",color:printModus?"#fff":C.t,border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{printModus?"📺 Skjermvisning":"🖨️ Utskriftsmodus"}</button>
+              <button onClick={()=>setPrintModus(p=>!p)} style={{background:printModus?"#1565c0":"var(--c-lg2)",color:printModus?"#fff":C.t,border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{printModus?"📺 Skjermvisning":"🖨️ Utskriftsmodus"}</button>
               <button onClick={()=>skrivUtKalender(valgt)} style={{background:"#2c5b8e",color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>🖨️ Skriv ut</button>
               <button onClick={()=>redigerPlan(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏️ Rediger</button>
             </div>
@@ -300,7 +300,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
           <div style={{background:C.lg2,borderRadius:10,padding:"10px 13px",marginBottom:12}}>
             <div style={{fontWeight:800,fontSize:11,color:C.gr,marginBottom:6,textTransform:"uppercase"}}>Hendelser denne måneden</div>
             {Object.entries(valgt.events||{}).sort((a,b)=>parseInt(a[0])-parseInt(b[0])).map(([dag,evts])=>evts.map(ev=>{const t=EVENT_TYPER[ev.type]||EVENT_TYPER.aktivitet;return(
-              <div key={ev.id} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderBottom:"1px solid #e8eff8"}}>
+              <div key={ev.id} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderBottom:"1px solid var(--c-divider)"}}>
                 <span style={{fontSize:11,fontWeight:700,color:C.gr,minWidth:22,textAlign:"right"}}>{dag}.</span>
                 <span style={{background:t.bg,color:t.farge,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700}}>{ev.ikon||t.ikon} {ev.tekst}</span>
               </div>
@@ -332,7 +332,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
               <div key={p.id} className="hover" onClick={()=>{setValgt(p);setVisning("les");}} style={{background:C.w,borderRadius:12,padding:"13px 15px",cursor:"pointer",boxShadow:"0 1px 5px rgba(44,91,142,0.07)",borderLeft:"3px solid #1565c0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                   <div style={{fontWeight:800,color:C.t,fontSize:14}}>{p.tittel}</div>
-                  <span style={{fontSize:10,color:C.gr,background:"#e8eff8",padding:"2px 8px",borderRadius:7,fontWeight:700,flexShrink:0}}>{mN} {p.aar}</span>
+                  <span style={{fontSize:10,color:C.gr,background:"var(--c-lg2)",padding:"2px 8px",borderRadius:7,fontWeight:700,flexShrink:0}}>{mN} {p.aar}</span>
                 </div>
                 {p.tema&&<div style={{fontSize:12,color:C.gr,marginTop:2}}>{p.tema}</div>}
                 <div style={{fontSize:11,color:C.gr,marginTop:4}}>{antall} hendelser</div>

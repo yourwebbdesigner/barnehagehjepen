@@ -83,12 +83,12 @@ export function MaanedsplanSide({ ctx }) {
               <button onClick={()=>redigerPlan(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontWeight:700}}>✏️ Rediger</button>
               {bekreftSletting
                 ? <><button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{background:"#c62828",color:"#fff",border:"none",borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:12,fontWeight:700}}>Slett</button>
-                    <button onClick={()=>setBekreftSletting(false)} style={{background:"#e8eff8",color:C.t,border:"none",borderRadius:8,padding:"7px 10px",cursor:"pointer",fontSize:12,fontWeight:700}}>Avbryt</button></>
+                    <button onClick={()=>setBekreftSletting(false)} style={{background:"var(--c-lg2)",color:C.t,border:"none",borderRadius:8,padding:"7px 10px",cursor:"pointer",fontSize:12,fontWeight:700}}>Avbryt</button></>
                 : <button onClick={()=>setBekreftSletting(true)} style={{background:"#ffebee",color:"#c62828",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🗑</button>}
             </div>
           </div>
           {["uke1","uke2","uke3","uke4"].map((u,i)=>valgt[u]&&(
-            <div key={u} style={{background:"#f5f9fd",borderRadius:10,padding:"12px 14px",marginBottom:10,borderLeft:"3px solid #2c5b8e"}}>
+            <div key={u} style={{background:"var(--c-lg2)",borderRadius:10,padding:"12px 14px",marginBottom:10,borderLeft:"3px solid #2c5b8e"}}>
               <div style={{fontWeight:800,color:"#2c5b8e",fontSize:12,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>📅 Uke {i+1}</div>
               <RenderTekst tekst={valgt[u]}/>
             </div>
@@ -240,7 +240,7 @@ export default function MaanedsbrevSide({ ctx }) {
               <button onClick={()=>redigerBrev(valgt)} style={{background:C.g,color:"#fff",border:"none",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontWeight:700}}>✏️ Rediger</button>
               {bekreftSletting
                 ? <><button onClick={()=>{setBekreftSletting(false);slettBrev(valgt.id);}} style={{background:"#c62828",color:"#fff",border:"none",borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:12,fontWeight:700}}>Slett</button>
-                    <button onClick={()=>setBekreftSletting(false)} style={{background:"#e8eff8",color:C.t,border:"none",borderRadius:8,padding:"7px 10px",cursor:"pointer",fontSize:12,fontWeight:700}}>Avbryt</button></>
+                    <button onClick={()=>setBekreftSletting(false)} style={{background:"var(--c-lg2)",color:C.t,border:"none",borderRadius:8,padding:"7px 10px",cursor:"pointer",fontSize:12,fontWeight:700}}>Avbryt</button></>
                 : <button onClick={()=>setBekreftSletting(true)} style={{background:"#ffebee",color:"#c62828",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>🗑</button>}
             </div>
           </div>

@@ -125,7 +125,7 @@ export default function Hjem({ ctx }) {
         <div style={{marginBottom:20}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
             <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>🕐 Siste planer</div>
-            <button onClick={()=>navigerTil("planlegging")} style={{background:"#e8eff8",color:C.g,border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Alle planer →</button>
+            <button onClick={()=>navigerTil("planlegging")} style={{background:"var(--c-lg2)",color:C.g,border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Alle planer →</button>
           </div>
           <div style={{display:"grid",gap:8}}>
             {sistePlaner.map((p,i) => (
@@ -149,7 +149,7 @@ export default function Hjem({ ctx }) {
       {/* PLANLEGGING */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
         <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t}}>📋 Planlegging</div>
-        <button onClick={()=>navigerTil("planlegging")} style={{background:"#d8f3dc",color:"#2d6a4f",border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
+        <button onClick={()=>navigerTil("planlegging")} style={{background:"var(--c-lg2)",color:C.g,border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Se alle →</button>
       </div>
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:9, marginBottom:20}}>
         {[
@@ -225,7 +225,7 @@ export function MineSkjemaer({ ctx }) {
           <div style={{color:C.gr,fontSize:12,marginTop:4,marginBottom:12}}>Lag ditt første aktivitetsskjema koblet til Rammeplanen!</div>
           <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
             <button className="btn" onClick={()=>navigerTil("skjema-ny")} style={{background:C.g,color:"#fff",padding:"10px 18px",fontSize:13}}>✏️ Lag nytt skjema</button>
-            <button className="btn" onClick={()=>navigerTil("ai")} style={{background:"#e8eff8",color:C.t,padding:"10px 18px",fontSize:13}}>🤖 Generer med AI</button>
+            <button className="btn" onClick={()=>navigerTil("ai")} style={{background:"var(--c-lg2)",color:C.t,padding:"10px 18px",fontSize:13}}>🤖 Generer med AI</button>
           </div>
         </div>
       ):valgtSkjema?(
@@ -267,7 +267,7 @@ export function MineSkjemaer({ ctx }) {
           )}
           <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
             {valgtSkjema.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtSkjema.alder}</span>}
-            {valgtSkjema.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{valgtSkjema.kategori}</span>}
+            {valgtSkjema.kategori&&<span className="tag" style={{background:"var(--c-lg2)",color:C.g}}>{valgtSkjema.kategori}</span>}
             {valgtSkjema.rammeplan?.map(r=><FagTag key={r} rid={r}/>)}
           </div>
           {[
@@ -292,10 +292,10 @@ export function MineSkjemaer({ ctx }) {
             <input
               type="text" value={sok} onChange={e=>setSok(e.target.value)}
               placeholder="🔍 Søk i skjemaer ..."
-              style={{flex:1,padding:"9px 12px",border:"1.5px solid #d8e6f5",borderRadius:10,fontSize:13,fontFamily:"'Nunito',sans-serif",background:"#f5f9fd",color:C.t,outline:"none"}}
+              style={{flex:1,padding:"9px 12px",border:"1.5px solid var(--c-input-border)",borderRadius:10,fontSize:13,fontFamily:"'Nunito',sans-serif",background:"var(--c-input-bg)",color:C.t,outline:"none"}}
             />
             <select value={sortering} onChange={e=>setSortering(e.target.value)}
-              style={{padding:"9px 10px",border:"1.5px solid #d8e6f5",borderRadius:10,fontSize:12,fontFamily:"'Nunito',sans-serif",background:"#f5f9fd",color:C.t,cursor:"pointer",flexShrink:0}}>
+              style={{padding:"9px 10px",border:"1.5px solid var(--c-input-border)",borderRadius:10,fontSize:12,fontFamily:"'Nunito',sans-serif",background:"var(--c-input-bg)",color:C.t,cursor:"pointer",flexShrink:0}}>
               <option value="nyest">Nyeste først</option>
               <option value="az">A–Å</option>
             </select>
@@ -312,7 +312,7 @@ export function MineSkjemaer({ ctx }) {
                     {s.hva&&<div style={{color:C.gr,fontSize:11,marginTop:2,lineHeight:1.4}}>{s.hva.substring(0,70)}{s.hva.length>70?"…":""}</div>}
                     <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                       {s.alder&&<span className="tag" style={{background:C.mint,color:C.g}}>{s.alder}</span>}
-                      {s.kategori&&<span className="tag" style={{background:"#e8eff8",color:"#3a72b0"}}>{s.kategori}</span>}
+                      {s.kategori&&<span className="tag" style={{background:"var(--c-lg2)",color:C.g}}>{s.kategori}</span>}
                       {(s.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge}}>{f.ikon}</span>:null;})}
                     </div>
                   </div>

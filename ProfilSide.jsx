@@ -6,7 +6,7 @@ import { C } from './utils.js';
 import { Tilbake } from './components.jsx';
 function AvatarDisplay({ src, emoji, size, bg = "rgba(255,255,255,0.18)" }) {
   return (
-    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:src?"#e8eff8":bg,lineHeight:1,position:"relative"}}>
+    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:src?"var(--c-lg2)":bg,lineHeight:1,position:"relative"}}>
       {src ? (
         <img src={src} alt="Profilbilde" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={(e)=>{e.currentTarget.style.display="none";}}/>
       ) : (
@@ -160,7 +160,7 @@ export default function ProfilSide({ ctx }) {
       visBekreftelse("✅ Profilbilde fjernet");
     };
 
-    const iS = {width:"100%",border:"1.5px solid #d8e6f5",borderRadius:10,padding:"11px 13px",fontSize:14,background:"#f5f9fd",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
+    const iS = {width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:10,padding:"11px 13px",fontSize:14,background:"var(--c-input-bg)",color:C.t,fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",marginBottom:10,outline:"none"};
     const labelStil = {display:"block",fontWeight:700,color:C.t,fontSize:12,marginBottom:5};
     const knappPrimaer = (disabled) => ({width:"100%",padding:"12px",fontSize:14,fontWeight:800,background:disabled?"#ccc":"linear-gradient(135deg,#2c5b8e,#4178bd)",color:"#fff",border:"none",borderRadius:10,cursor:disabled?"wait":"pointer",fontFamily:"'Nunito',sans-serif",marginTop:4,boxShadow:"0 3px 9px rgba(44,91,142,0.25)"});
 
@@ -233,11 +233,11 @@ export default function ProfilSide({ ctx }) {
             {/* Stor sentrert forhåndsvisning */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:14}}>
               {bildeLoading ? (
-                <div style={{width:140,height:140,borderRadius:"50%",background:"#e8eff8",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div style={{width:140,height:140,borderRadius:"50%",background:"var(--c-lg2)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <div className="spin"/>
                 </div>
               ) : (
-                <div style={{width:140,height:140,borderRadius:"50%",overflow:"hidden",background:"#e8eff8",border:"4px solid #d8e6f5",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(44,91,142,0.18)"}}>
+                <div style={{width:140,height:140,borderRadius:"50%",overflow:"hidden",background:"var(--c-lg2)",border:"4px solid var(--c-divider)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(44,91,142,0.18)"}}>
                   {bildePreview ? (
                     <img src={bildePreview} alt="Forhåndsvisning" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                   ) : aktivBruker?.profilbilde ? (
@@ -257,7 +257,7 @@ export default function ProfilSide({ ctx }) {
               {bildePreview ? (
                 <>
                   <button onClick={bekreftBilde} disabled={bildeLoading} style={{flex:"1 1 140px",padding:"12px",fontSize:14,fontWeight:800,background:bildeLoading?"#ccc":"linear-gradient(135deg,#2d6a4f,#52b788)",color:"#fff",border:"none",borderRadius:10,cursor:bildeLoading?"wait":"pointer",fontFamily:"'Nunito',sans-serif",boxShadow:"0 3px 9px rgba(45,106,79,0.25)"}}>{bildeLoading?"Lagrer ...":"💾 Lagre bilde"}</button>
-                  <button onClick={avbrytBilde} disabled={bildeLoading} style={{flex:"0 0 auto",padding:"12px 16px",fontSize:14,fontWeight:700,background:"#e8eff8",color:C.t,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✕ Avbryt</button>
+                  <button onClick={avbrytBilde} disabled={bildeLoading} style={{flex:"0 0 auto",padding:"12px 16px",fontSize:14,fontWeight:700,background:"var(--c-lg2)",color:C.t,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>✕ Avbryt</button>
                 </>
               ) : (
                 <>
@@ -271,7 +271,7 @@ export default function ProfilSide({ ctx }) {
               )}
             </div>
 
-            <div style={{background:"#e8eff8",borderRadius:9,padding:"10px 12px",fontSize:11,color:C.gr,lineHeight:1.6,marginBottom:18}}>
+            <div style={{background:"var(--c-lg2)",borderRadius:9,padding:"10px 12px",fontSize:11,color:C.gr,lineHeight:1.6,marginBottom:18}}>
               <strong style={{color:C.t}}>📱 Slik fungerer det:</strong> På mobil får du velge mellom kamera og galleri. Bildet komprimeres automatisk til 400×400 px og lagres lokalt på enheten din.<br/>
               <strong style={{color:C.t}}>Støttede formater:</strong> JPG, PNG, WEBP (maks 12 MB).
             </div>
@@ -281,7 +281,7 @@ export default function ProfilSide({ ctx }) {
             <p style={{fontSize:11,color:C.gr,marginBottom:12,lineHeight:1.6}}>Vises hvis du ikke har et profilbilde. Trykk på et emoji for å velge.</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(54px,1fr))",gap:7}}>
               {AVATAR_VALG.map(e=>(
-                <button key={e} onClick={()=>settAvatar(e)} style={{fontSize:26,padding:0,background:aktivBruker?.avatar===e?"#d8e6f5":"#f5f9fd",border:aktivBruker?.avatar===e?"2.5px solid #2c5b8e":"2px solid #e8eff8",borderRadius:11,cursor:"pointer",aspectRatio:"1",lineHeight:1,transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>{e}</button>
+                <button key={e} onClick={()=>settAvatar(e)} style={{fontSize:26,padding:0,background:aktivBruker?.avatar===e?"var(--c-lg2)":"var(--c-input-bg)",border:aktivBruker?.avatar===e?"2.5px solid "+C.g:"2px solid var(--c-divider)",borderRadius:11,cursor:"pointer",aspectRatio:"1",lineHeight:1,transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>{e}</button>
               ))}
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function ProfilSide({ ctx }) {
           <div style={{background:C.w,borderRadius:14,padding:18,boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
             <Tilbake onClick={tilbake}/>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:14}}>@ Endre brukernavn</div>
-            <div style={{background:"#e8eff8",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.brukernavn}</strong></div>
+            <div style={{background:"var(--c-lg2)",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.brukernavn}</strong></div>
             <label style={labelStil}>Nytt brukernavn (min. 3 tegn)</label>
             <input type="text" value={nb_nytt} onChange={e=>setNbNytt(e.target.value)} placeholder="kari_ny" style={iS} autoComplete="username"/>
             <button onClick={lagreBrukernavnEndr} disabled={pf_loading||!nb_nytt} style={knappPrimaer(pf_loading||!nb_nytt)}>{pf_loading?"Lagrer ...":"💾 Lagre endring"}</button>
@@ -313,10 +313,10 @@ export default function ProfilSide({ ctx }) {
           <div style={{background:C.w,borderRadius:14,padding:18,boxShadow:"0 2px 10px rgba(44,91,142,0.08)"}}>
             <Tilbake onClick={tilbake}/>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:14}}>📧 Endre e-post</div>
-            <div style={{background:"#e8eff8",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.epost}</strong></div>
+            <div style={{background:"var(--c-lg2)",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.epost}</strong></div>
             <label style={labelStil}>Ny e-postadresse</label>
             <input type="email" value={ne_nytt} onChange={e=>setNeNytt(e.target.value)} placeholder="ny@example.no" style={iS} autoComplete="email"/>
-            <div style={{background:"#e8eff8",borderRadius:8,padding:"8px 11px",fontSize:11,color:"#5d7390",marginBottom:10,lineHeight:1.5}}>
+            <div style={{background:"var(--c-lg2)",borderRadius:8,padding:"8px 11px",fontSize:11,color:C.gr,marginBottom:10,lineHeight:1.5}}>
               📧 Supabase sender en bekreftelseslenke til den nye e-posten.
             </div>
             <button onClick={lagreEpostEndr} disabled={pf_loading||!ne_nytt} style={knappPrimaer(pf_loading||!ne_nytt)}>{pf_loading?"Lagrer ...":"💾 Lagre endring"}</button>
@@ -328,7 +328,7 @@ export default function ProfilSide({ ctx }) {
             <Tilbake onClick={tilbake}/>
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:8}}>📱 Telefonnummer</div>
             <p style={{fontSize:12,color:C.gr,marginBottom:14,lineHeight:1.6}}>Valgfritt. Lagres sikkert i skyen og synkroniseres på tvers av enheter. Krever ikke passord å endre.</p>
-            <div style={{background:"#e8eff8",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.telefon || "Ikke satt"}</strong></div>
+            <div style={{background:"var(--c-lg2)",padding:"9px 12px",borderRadius:9,marginBottom:12,fontSize:12,color:C.t}}>Nåværende: <strong>{aktivBruker?.telefon || "Ikke satt"}</strong></div>
             <label style={labelStil}>Telefonnummer (la stå tomt for å fjerne)</label>
             <input type="tel" inputMode="tel" value={tlf_nytt} onChange={e=>setTlfNytt(e.target.value)} placeholder="+47 123 45 678" style={iS} autoComplete="tel"/>
             <button onClick={lagreTelefonEndr} disabled={pf_loading} style={knappPrimaer(pf_loading)}>{pf_loading?"Lagrer ...":"💾 Lagre"}</button>
@@ -351,7 +351,7 @@ export default function ProfilSide({ ctx }) {
               <div style={{marginBottom:10}}>
                 <div style={{display:"flex",gap:3,marginBottom:5}}>
                   {[1,2,3,4,5].map(i=>(
-                    <div key={i} style={{flex:1,height:5,borderRadius:3,background:i<=styrke.nivaa?styrke.farge:"#e8eff8",transition:"background 0.2s"}}/>
+                    <div key={i} style={{flex:1,height:5,borderRadius:3,background:i<=styrke.nivaa?styrke.farge:"var(--c-lg2)",transition:"background 0.2s"}}/>
                   ))}
                 </div>
                 <div style={{fontSize:11,fontWeight:700,color:styrke.farge}}>Styrke: {styrke.tekst}</div>
@@ -366,13 +366,13 @@ export default function ProfilSide({ ctx }) {
 
         {bekreftFjernBilde && (
           <div className="fade" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:18}} onClick={()=>setBekreftFjernBilde(false)}>
-            <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,padding:22,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:"var(--c-card)",borderRadius:14,padding:22,maxWidth:380,width:"100%",boxShadow:"0 10px 40px rgba(0,0,0,0.25)"}}>
               <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:10}}>🗑 Fjerne profilbildet?</div>
               <p style={{fontSize:13,color:C.t,lineHeight:1.6,marginBottom:16}}>
                 Profilbildet ditt vil bli fjernet, og avataren {aktivBruker?.avatar || "👤"} vises i stedet. Du kan laste opp et nytt bilde når som helst.
               </p>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setBekreftFjernBilde(false)} style={{flex:1,padding:"11px",background:"#e8eff8",color:C.t,border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
+                <button onClick={()=>setBekreftFjernBilde(false)} style={{flex:1,padding:"11px",background:"var(--c-lg2)",color:C.t,border:"none",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button>
                 <button onClick={utforFjernBilde} style={{flex:1,padding:"11px",background:"#c62828",color:"#fff",border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🗑 Fjern bilde</button>
               </div>
             </div>

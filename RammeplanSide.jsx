@@ -327,7 +327,7 @@ export default function RammeplanSide({ ctx }) {
         {rammeSeksjon==="roller"&&(
           <div className="fade">
             <div style={{fontFamily:"'Fredoka One',cursive",fontSize:18,color:C.t,marginBottom:10}}>👤 {RE.roller.tittel}</div>
-            <div style={{background:"#e8eff8",borderRadius:12,padding:13,marginBottom:14,fontSize:13,color:C.t,lineHeight:1.7}}>{RE.roller.innhold}</div>
+            <div style={{background:"var(--c-lg2)",borderRadius:12,padding:13,marginBottom:14,fontSize:13,color:C.t,lineHeight:1.7}}>{RE.roller.innhold}</div>
             <div style={{display:"grid",gap:10}}>
               {RE.roller.personer.map((p,i)=>(
                 <div key={i} style={{background:C.w,borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 7px rgba(44,91,142,0.07)",borderLeft:"4px solid "+p.farge}}>
@@ -344,7 +344,7 @@ export default function RammeplanSide({ ctx }) {
                       </div>
                     ))}
                   </div>
-                  <div style={{background:"#f5f9fd",borderRadius:8,padding:"8px 10px",fontSize:11,color:C.gr,lineHeight:1.6}}>
+                  <div style={{background:"var(--c-lg2)",borderRadius:8,padding:"8px 10px",fontSize:11,color:C.gr,lineHeight:1.6}}>
                     <strong>Krav:</strong> {p.krav}
                   </div>
                 </div>
@@ -419,9 +419,9 @@ export default function RammeplanSide({ ctx }) {
             <div style={{background:C.w,borderRadius:12,padding:14,boxShadow:"0 2px 6px rgba(44,91,142,0.07)"}}>
               <div style={{fontWeight:800,color:C.t,fontSize:13,marginBottom:10}}>👥 Roller og ansvar i barnehagen</div>
               {RE.pedagogisk.ansvar.map((r,i)=>(
-                <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start",padding:"8px 0",borderBottom:i<RE.pedagogisk.ansvar.length-1?"1px solid #e8eff8":"none"}}>
+                <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start",padding:"8px 0",borderBottom:i<RE.pedagogisk.ansvar.length-1?"1px solid var(--c-divider)":"none"}}>
                   <div style={{minWidth:120,flexShrink:0}}>
-                    <span style={{background:"#e8eff8",color:C.g,borderRadius:7,padding:"3px 9px",fontSize:11,fontWeight:800}}>{r.rolle}</span>
+                    <span style={{background:"var(--c-lg2)",color:C.g,borderRadius:7,padding:"3px 9px",fontSize:11,fontWeight:800}}>{r.rolle}</span>
                   </div>
                   <span style={{fontSize:12,color:C.gr,lineHeight:1.6,flex:1}}>{r.b}</span>
                 </div>
