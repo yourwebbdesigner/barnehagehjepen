@@ -307,7 +307,7 @@ th{background:#2c5b8e;color:#fff;padding:6px 4px;text-align:center;font-size:11p
             );}))}
           </div>
           {bekreftSletting
-            ?<div style={{display:"flex",gap:8}}><button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft sletting</button><button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"#e8eff8",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button></div>
+            ?<div style={{display:"flex",gap:8}}><button onClick={()=>{setBekreftSletting(false);slettPlan(valgt.id);}} style={{flex:1,background:"#c62828",color:"#fff",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Bekreft sletting</button><button onClick={()=>setBekreftSletting(false)} style={{flex:1,background:"var(--c-lg2)",color:C.t,padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>Avbryt</button></div>
             :<button onClick={()=>setBekreftSletting(true)} style={{background:"#fdecea",color:"#c62828",padding:"11px",fontSize:12,fontWeight:800,border:"none",borderRadius:10,cursor:"pointer",fontFamily:"'Nunito',sans-serif",width:"100%"}}>🗑 Slett kalender</button>}
         </div>
       );
