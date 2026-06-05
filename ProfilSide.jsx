@@ -3,9 +3,7 @@ import { supabase } from "./supabase.js";
 import { oppdaterVisningsnavn, oppdaterTelefon, oppdaterAvatar, oppdaterProfilbilde, oppdaterBrukernavn, oppdaterEpost, oppdaterPassord, validerTelefon, passordStyrke, AVATAR_VALG, komprimerBilde } from './api.js';
 
 import { C } from './utils.js';
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
+import { Tilbake } from './components.jsx';
 function AvatarDisplay({ src, emoji, size, bg = "rgba(255,255,255,0.18)" }) {
   return (
     <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:src?"#e8eff8":bg,lineHeight:1,position:"relative"}}>

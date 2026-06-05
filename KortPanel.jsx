@@ -29,14 +29,7 @@ const KORT_IKONER = [
   "🍎","🍓","🍭","🧁","🍕",
   "🤝","🔬","🧲","🎯","🦄","🏕️","🎶","🖍️","✂️","🔑"
 ];
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
-function FagTag({ rid }) {
-  const f = FAGOMRADER.find(x => x.id === rid);
-  if (!f) return null;
-  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
-}
+import { Tilbake, FagTag } from './components.jsx';
 function KortModal({ kort, onLagre, onLukk }) {
   const iS = { width:"100%", border:"1.5px solid #c4d6ec", borderRadius:9, padding:"9px 13px", fontSize:13, background:"#f5f9fd", fontFamily:"'Nunito',sans-serif", boxSizing:"border-box", marginBottom:10 };
   const lS = { fontSize:11, fontWeight:800, color:C.gr, display:"block", marginBottom:3, marginTop:8 };

@@ -4,14 +4,7 @@ import { SANGER } from './data/sanger.js';
 import { FAGOMRADER } from './data/rammeplan.js';
 import { C, escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { sanitizeForPrompt } from './data/ai-data.js';
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
-function FagTag({ rid }) {
-  const f = FAGOMRADER.find(x => x.id === rid);
-  if (!f) return null;
-  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
-}
+import { Tilbake, FagTag } from './components.jsx';
 
 export async function hentUserSanger(userId) {
   const { data } = await supabase.from("user_sanger").select("*").eq("user_id", userId).order("created_at", { ascending: false });

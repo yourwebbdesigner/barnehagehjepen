@@ -3,9 +3,7 @@ import { FAGOMRADER, RE } from './data/rammeplan.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
 
 import { C } from './utils.js';
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
+import { Tilbake } from './components.jsx';
 
 export default function RammeplanSide({ ctx }) {
   const { rammeSeksjon, setRammeSeksjon, valgtFag, setValgtFag, setPreselectAktiv, setSide } = ctx;

@@ -2,14 +2,7 @@ import React, { useState, useEffect } from "react";
 import { AKTIVITETER } from './data/aktiviteter.js';
 import { FAGOMRADER } from './data/rammeplan.js';
 import { C, escapeHTML, mdToHtml, skrivUtVindu } from './utils.js';
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
-function FagTag({ rid }) {
-  const f = FAGOMRADER.find(x => x.id === rid);
-  if (!f) return null;
-  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
-}
+import { Tilbake, FagTag } from './components.jsx';
 const AKTIV_KATS = [["alle","Alle"],["kreativ","🎨 Kreativ"],["ute","🌳 Ute"],["matematikk","🔢 Matte"],["drama","🎭 Drama"],["samtale","💬 Samtale"],["mat","🍞 Mat"],["natur","🌱 Natur"],["musikk","🎶 Musikk"],["motorikk","🏃 Motorikk"],["rollelek","🏠 Rollelek"],["språk","🗣 Språk"],["prosjekt","📋 Prosjekt"],["kunst","🎨 Kunst"]];
 
 // Standalone-komponent for søkeboks – holder fokus selv om parent re-rendrer.

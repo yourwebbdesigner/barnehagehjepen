@@ -8,16 +8,7 @@ import { DAGENS_TIPS, hilsen } from './data/tips.js';
 import { GlobalSok } from './AktivSide.jsx';
 import { RenderTekst } from './AiSide.jsx';
 import { C, escapeHTML, skrivUtVindu } from './utils.js';
-
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:"var(--c-mint)", color:"var(--c-t)", padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
-
-function FagTag({ rid }) {
-  const f = FAGOMRADER.find(x => x.id === rid);
-  if (!f) return null;
-  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
-}
+import { Tilbake, FagTag } from './components.jsx';
 function DataSkjelett() {
   return (
     <div style={{marginBottom:18}}>

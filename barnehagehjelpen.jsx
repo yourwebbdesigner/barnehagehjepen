@@ -24,6 +24,7 @@ import ArsplanSide from './ArsplanSide.jsx';
 import DokumentasjonSide from './DokumentasjonSide.jsx';
 import ProfilSide from './ProfilSide.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
+import { Tilbake, FagTag } from './components.jsx';
 import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
 
 
@@ -675,15 +676,6 @@ const KORT_IKONER = [
 // [DATA MOVED] AKTIVITETER → ./data/ (se imports øverst i filen)
 // [DATA MOVED] RE → ./data/ (se imports øverst i filen)
 // [DATA MOVED] SVG_TEGN → ./data/ (se imports øverst i filen)
-
-function FagTag({ rid }) {
-  const f = FAGOMRADER.find(x => x.id === rid);
-  if (!f) return null;
-  return <span data-fag={f.id} className="tag" style={{background:f.lys, color:f.farge}}>{f.ikon} {f.navn}</span>;
-}
-function Tilbake({ onClick }) {
-  return <button className="btn" onClick={onClick} style={{background:C.mint, color:C.t, padding:"6px 14px", fontSize:13, marginBottom:16}}>← Tilbake</button>;
-}
 
 import { escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 
