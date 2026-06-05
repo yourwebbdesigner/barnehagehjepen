@@ -939,6 +939,10 @@ function FavoritterSide({ favoritter, favTotal, aapneSang, aapneTegneark, toggle
   );
 }
 
+// Sikker localStorage – setItem/removeItem kaster SecurityError i Safari Private Browsing
+function lsSet(key, value) { try { localStorage.setItem(key, value); } catch {} }
+function lsRemove(key) { try { localStorage.removeItem(key); } catch {} }
+
 // [COMPONENT MOVED] RammeplanSide → ./RammeplanSide.jsx
 function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [tema, setTema] = useState(() => {
@@ -949,7 +953,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", tema);
-    localStorage.setItem("bh_tema", tema);
+    lsSet("bh_tema", tema);
   }, [tema]);
 
   const [side, setSide] = useState("hjem");
@@ -988,13 +992,13 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   useEffect(() => {
     if (!aktivBruker?.id) return;
     hentPlanTema(aktivBruker.id).then(tema => {
-      if (tema) { setPlanTema(tema); localStorage.setItem("bh_plan_tema", tema); }
+      if (tema) { setPlanTema(tema); lsSet("bh_plan_tema", tema); }
     }).catch(() => {});
   }, [aktivBruker?.id]);
   // Lagre planTema til Supabase + localStorage ved endring
   useEffect(() => {
-    if (planTema) localStorage.setItem("bh_plan_tema", planTema);
-    else localStorage.removeItem("bh_plan_tema");
+    if (planTema) lsSet("bh_plan_tema", planTema);
+    else lsRemove("bh_plan_tema");
     if (aktivBruker?.id) lagrePlanTema(aktivBruker.id, planTema).catch(() => {});
   }, [planTema, aktivBruker?.id]);
 
@@ -1079,6 +1083,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   useEffect(() => {
     const uid = aktivBruker?.id;
     if (!uid) { setDataLastet(true); return; }
+    let avbrutt = false;
     setDataLastet(false);
     Promise.all([
       hentFavoritter(uid).catch(() => ({ sanger:[], aktiviteter:[], tegneark:[] })),
@@ -1093,6 +1098,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       hentDokumentasjon(uid).catch(() => []),
       hentKalenderplaner(uid).catch(() => []),
     ]).then(([fav, ukeplaner, maanedsplaner, maanedsbrev, arsplaner, boker, tegneark, sanger, aktivitetskort, dokumentasjon, kalenderplaner]) => {
+      if (avbrutt) return;
       setFavoritter(fav);
       setGlobalUkeplaner(ukeplaner);
       setGlobalMaanedsplaner(maanedsplaner);
@@ -1104,7 +1110,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
       setGlobalAktivitetskort(aktivitetskort);
       setGlobalDokumentasjon(dokumentasjon);
       setGlobalKalenderplaner(kalenderplaner);
-    }).catch(console.error).finally(() => setDataLastet(true));
+    }).catch(console.error).finally(() => { if (!avbrutt) setDataLastet(true); });
+    return () => { avbrutt = true; };
   }, [aktivBruker?.id]);
 
   // Last skjemaer fra storage når bruker logger inn
@@ -1635,7 +1642,7 @@ export default function App() {
   }, []);
 
   const handleLogout = async () => {
-    sessionStorage.removeItem("bh_sesjon");
+    try { sessionStorage.removeItem("bh_sesjon"); } catch {}
     await slettSesjon();
     setAktivBruker(null);
     setVisInnlogging(false);

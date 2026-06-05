@@ -245,11 +245,11 @@ export default function AuthScreen({ onLoginSuccess }) {
     if (!/\S+@\S+\.\S+/.test(li_epost)) { setFeil("Skriv en gyldig e-postadresse"); return; }
     if (!li_pw) { setFeil("Passord er påkrevd"); return; }
     setLoading(true);
-    localStorage.setItem("bh_husk_meg", huskMeg ? "true" : "false");
+    try { localStorage.setItem("bh_husk_meg", huskMeg ? "true" : "false"); } catch {}
     try {
       const r = await loggInnBruker({ epost: li_epost, passord: li_pw });
       if (!r.ok) { setFeil(r.feil); return; }
-      sessionStorage.setItem("bh_sesjon", "1");
+      try { sessionStorage.setItem("bh_sesjon", "1"); } catch {}
       setSuksess("✅ Innlogget!");
       setTimeout(() => onLoginSuccess(r.bruker), 400);
     } catch (err) {
