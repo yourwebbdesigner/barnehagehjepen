@@ -140,25 +140,6 @@ const CSS = `
     background: var(--c-w) !important;
     color: var(--c-t);
   }
-  /* Lys grå bakgrunn – hex og rgb() fallback */
-  [data-theme="dark"] [style*="background:#f5f9fd"],
-  [data-theme="dark"] [style*="background: #f5f9fd"],
-  [data-theme="dark"] [style*="background:rgb(245, 249, 253)"],
-  [data-theme="dark"] [style*="background: rgb(245, 249, 253)"],
-  [data-theme="dark"] [style*="background:#f5f7fa"],
-  [data-theme="dark"] [style*="background: #f5f7fa"],
-  [data-theme="dark"] [style*="background:rgb(245, 247, 250)"],
-  [data-theme="dark"] [style*="background: rgb(245, 247, 250)"],
-  [data-theme="dark"] [style*="background:#f3f7fc"],
-  [data-theme="dark"] [style*="background: #f3f7fc"],
-  [data-theme="dark"] [style*="background:rgb(243, 247, 252)"],
-  [data-theme="dark"] [style*="background: rgb(243, 247, 252)"],
-  [data-theme="dark"] [style*="background:#f8fafd"],
-  [data-theme="dark"] [style*="background: #f8fafd"],
-  [data-theme="dark"] [style*="background:rgb(248, 250, 253)"],
-  [data-theme="dark"] [style*="background: rgb(248, 250, 253)"] {
-    background: var(--c-lg2) !important;
-  }
   /* Gule info-bokser – dempet i mørk modus + rgb() fallback */
   [data-theme="dark"] [style*="background:#fffde7"],
   [data-theme="dark"] [style*="background: #fffde7"],
@@ -195,15 +176,7 @@ const CSS = `
   [data-theme="dark"] [style*="background:#e3f2fd"],
   [data-theme="dark"] [style*="background: #e3f2fd"],
   [data-theme="dark"] [style*="background:rgb(227, 242, 253)"],
-  [data-theme="dark"] [style*="background: rgb(227, 242, 253)"],
-  [data-theme="dark"] [style*="background:#d8e6f5"],
-  [data-theme="dark"] [style*="background: #d8e6f5"],
-  [data-theme="dark"] [style*="background:rgb(216, 230, 245)"],
-  [data-theme="dark"] [style*="background: rgb(216, 230, 245)"],
-  [data-theme="dark"] [style*="background:#e8eff8"],
-  [data-theme="dark"] [style*="background: #e8eff8"],
-  [data-theme="dark"] [style*="background:rgb(232, 239, 248)"],
-  [data-theme="dark"] [style*="background: rgb(232, 239, 248)"] {
+  [data-theme="dark"] [style*="background: rgb(227, 242, 253)"] {
     background: var(--c-lg2) !important;
   }
   /* Mørk tekst på lyse bakgrunner */
@@ -222,19 +195,6 @@ const CSS = `
   [data-theme="dark"] [style*="color:#999"],
   [data-theme="dark"] [style*="color: #999"] {
     color: var(--c-gr) !important;
-  }
-  /* Border-farger */
-  [data-theme="dark"] [style*="border:1px solid #e8eff8"],
-  [data-theme="dark"] [style*="border: 1px solid #e8eff8"],
-  [data-theme="dark"] [style*="border:1px solid #d8e6f5"],
-  [data-theme="dark"] [style*="border: 1px solid #d8e6f5"],
-  [data-theme="dark"] [style*="border:1.5px solid #e8eff8"],
-  [data-theme="dark"] [style*="border: 1.5px solid #e8eff8"],
-  [data-theme="dark"] [style*="border:1.5px solid #d8e6f5"],
-  [data-theme="dark"] [style*="border: 1.5px solid #d8e6f5"],
-  [data-theme="dark"] [style*="border:1.5px solid #ddd"],
-  [data-theme="dark"] [style*="border: 1.5px solid #ddd"] {
-    border-color: var(--c-divider) !important;
   }
   /* Ekstra border-varianter */
   [data-theme="dark"] [style*="border:1px solid #c4d6ec"],
