@@ -103,6 +103,18 @@ const CSS = `
   [data-theme="dark"] [style*="background: linear-gradient(135deg,#f0f7ff"] {
     background: var(--c-lg2) !important;
   }
+  [data-theme="dark"] [style*="background:#f8e7f6"],
+  [data-theme="dark"] [style*="background: #f8e7f6"] {
+    background: #2a0a2a !important; color: #d07ac8 !important;
+  }
+  [data-theme="dark"] [style*="background:#d8e6f5"],
+  [data-theme="dark"] [style*="background: #d8e6f5"] {
+    background: #0e1e38 !important; color: #90b4d8 !important;
+  }
+  [data-theme="dark"] [style*="background:#fdebd0"],
+  [data-theme="dark"] [style*="background: #fdebd0"] {
+    background: #2a1500 !important; color: #ffba7a !important;
+  }
 `;
 
 const KATEGORIER = [
