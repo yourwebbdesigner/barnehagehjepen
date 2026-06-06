@@ -151,6 +151,7 @@ export default function TegnearkSide({ ctx }) {
     const [lokalToast, setLokalToast] = useState("");
     const [visAiPanel, setVisAiPanel] = useState(false);
     const [userTegneark, setUserTegneark] = useState([]);
+    const [sok, setSok] = useState("");
     const visLokal = (m) => { setLokalToast(m); setTimeout(()=>setLokalToast(""),3000); };
     const favSet = new Set(favoritter?.tegneark || []);
 
@@ -177,6 +178,14 @@ export default function TegnearkSide({ ctx }) {
       : tkat==="mine"
       ? userMapped
       : (tkat==="alle" ? alleData : alleData.filter(t=>t.kategori===tkat));
+
+    const sokTrimmed = sok.trim().toLowerCase();
+    const visData = sokTrimmed.length < 2 ? data : data.filter(t =>
+      t.tittel.toLowerCase().includes(sokTrimmed) ||
+      t.oppgave.toLowerCase().includes(sokTrimmed) ||
+      t.samtale.toLowerCase().includes(sokTrimmed) ||
+      t.mal.toLowerCase().includes(sokTrimmed)
+    );
 
     const trygtFilnavn = (s) => String(s||"tegneark").toLowerCase().replace(/[^a-z0-9æøå]+/gi,"_").replace(/^_+|_+$/g,"").slice(0,50) || "tegneark";
 
@@ -365,6 +374,16 @@ ${innhold}
         <div style={{background:"#fff8e1",borderRadius:12,padding:"11px 14px",marginBottom:14,borderLeft:"4px solid #6ba0d9",fontSize:12,color:"#795548"}}>
           <strong>💡 Slik bruker du tegnearkene:</strong> Bla i kategoriene under, åpne et ark, trykk "Skriv ut" for å skrive ut, eller "Kopier" for å lagre teksten. Alle ark er koblet til rammeplanen med samtaleforslag.
         </div>
+        <div style={{position:"relative",marginBottom:12}}>
+          <span style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none",opacity:0.5}}>🔍</span>
+          <input
+            value={sok}
+            onChange={e=>{setSok(e.target.value);}}
+            placeholder="Søk i tegneark..."
+            style={{width:"100%",border:"1.5px solid var(--c-input-border)",borderRadius:10,padding:"9px 13px 9px 34px",fontSize:13,background:"var(--c-input-bg)",fontFamily:"'Nunito',sans-serif",boxSizing:"border-box",color:C.t}}
+          />
+          {sok&&<button onClick={()=>setSok("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:15,color:C.gr,lineHeight:1,padding:2}}>✕</button>}
+        </div>
         <div style={{marginBottom:16,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:4,marginLeft:-4,marginRight:-4,paddingLeft:4,paddingRight:4}}>
           <div style={{display:"flex",gap:7,flexWrap:"nowrap",width:"max-content"}}>
             {[["favoritter","⭐ Favoritter"],["mine","🤖 Mine"],...TEGNEKAT].map(([v,l])=>{
@@ -429,25 +448,33 @@ ${innhold}
           </div>
         ) : (
           <>
-            {data.length===0 && (
+            {visData.length===0 && (
               <div style={{textAlign:"center",padding:28,color:C.gr,background:C.w,borderRadius:12}}>
-                {tkat==="favoritter" ? "Du har ingen favoritt-tegneark ennå – trykk på ⭐ for å lagre" : "Ingen tegneark i denne kategorien"}
+                {tkat==="favoritter"
+                  ? "Du har ingen favoritt-tegneark ennå – trykk på ⭐ for å lagre"
+                  : sokTrimmed.length >= 2
+                  ? `Ingen tegneark matcher «${sok}»`
+                  : "Ingen tegneark i denne kategorien"}
               </div>
             )}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {data.map(t=>(
+            {sokTrimmed.length >= 2 && visData.length > 0 && (
+              <div style={{fontSize:11,color:C.gr,marginBottom:8}}>{visData.length} treff for «{sok}»</div>
+            )}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(138px,1fr))",gap:10}}>
+              {visData.map(t=>(
                 <div key={t.id} className="hover fade" onClick={()=>setValgtT(t)} style={{background:C.w,borderRadius:14,overflow:"hidden",cursor:"pointer",boxShadow:"0 2px 8px rgba(44,91,142,0.08)",position:"relative"}}>
-                  <button className={`fav-btn ${favSet.has(t.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:7,right:7,fontSize:15,zIndex:2}} aria-label="Favoritt">
+                  <button className={`fav-btn ${favSet.has(t.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:5,right:5,fontSize:14,zIndex:2,background:"rgba(255,255,255,0.82)",borderRadius:6,width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",padding:0}} aria-label="Favoritt">
                     {favSet.has(t.id)?"⭐":"☆"}
                   </button>
-                  <div style={{background:"linear-gradient(135deg,#f0f9f4,#e8f5e9)",padding:"14px 10px 10px",textAlign:"center"}}>
-                    <div style={{maxWidth:120,margin:"0 auto",pointerEvents:"none"}}>{t.svg}</div>
+                  <div style={{background:"#f5f9fd",overflow:"hidden",height:90,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",borderBottom:"1px solid var(--c-divider,#e8eff8)"}}>
+                    <div style={{width:"88%",pointerEvents:"none",lineHeight:0,maxHeight:88,overflow:"hidden"}}>{t.svg}</div>
+                    <span style={{position:"absolute",top:3,left:5,fontSize:10,background:"rgba(255,255,255,0.88)",borderRadius:4,padding:"1px 4px",lineHeight:1.4,boxShadow:"0 1px 2px rgba(0,0,0,0.06)"}}>{t.ikon}</span>
                   </div>
-                  <div style={{padding:"9px 11px 11px"}}>
-                    <div style={{fontWeight:800,color:C.t,fontSize:13,lineHeight:1.3,marginBottom:3}}>{t._erMin&&<span style={{fontSize:9,background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"1px 5px",marginRight:4,fontWeight:700}}>🤖 AI</span>}{t.tittel}</div>
-                    <div style={{fontSize:10,color:C.gr,marginBottom:5}}>👶 {t.alder}</div>
-                    <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                      {(t.rammeplan||[]).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
+                  <div style={{padding:"7px 9px 9px"}}>
+                    <div style={{fontWeight:800,color:C.t,fontSize:12,lineHeight:1.3,marginBottom:2}}>{t._erMin&&<span style={{fontSize:9,background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"1px 5px",marginRight:4,fontWeight:700}}>🤖 AI</span>}{t.tittel}</div>
+                    <div style={{fontSize:10,color:C.gr,marginBottom:4}}>👶 {t.alder}</div>
+                    <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
+                      {(t.rammeplan||[]).slice(0,2).map(r=>{const f=FAGOMRADER.find(x=>x.id===r);return f?<span data-fag={f.id} key={r} className="tag" style={{background:f.lys,color:f.farge,fontSize:9,padding:"1px 5px"}}>{f.ikon} {f.navn.split(",")[0]}</span>:null;})}
                     </div>
                   </div>
                 </div>

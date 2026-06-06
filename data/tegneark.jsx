@@ -115,21 +115,6 @@ const SvgSnomann = ()=>(
     <path d="M178 272 Q192 258 212 272" fill="none" strokeWidth="3"/>
   </svg>
 );
-const SvgSol = ()=>(
-  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    {[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>(<line key={a} x1={150+84*Math.cos(a*Math.PI/180)} y1={148+84*Math.sin(a*Math.PI/180)} x2={150+106*Math.cos(a*Math.PI/180)} y2={148+106*Math.sin(a*Math.PI/180)} strokeWidth="5" stroke="#6ba0d9"/>))}
-    <circle cx="150" cy="148" r="62" fill="#fff9c4"/>
-    <circle cx="128" cy="138" r="9" fill={S.s}/><circle cx="172" cy="138" r="9" fill={S.s}/>
-    <circle cx="131" cy="135" r="3" fill="white" stroke="none"/><circle cx="175" cy="135" r="3" fill="white" stroke="none"/>
-    <path d="M128 162 Q150 178 172 162" fill="none" strokeWidth="3"/>
-    <ellipse cx="58" cy="238" rx="62" ry="34" fill="white"/>
-    <ellipse cx="30" cy="250" rx="38" ry="28" fill="white"/>
-    <ellipse cx="88" cy="250" rx="46" ry="26" fill="white"/>
-    <ellipse cx="222" cy="242" rx="52" ry="30" fill="white"/>
-    <ellipse cx="258" cy="252" rx="36" ry="26" fill="white"/>
-    <ellipse cx="190" cy="254" rx="40" ry="24" fill="white"/>
-  </svg>
-);
 const SvgRegnbue = ()=>(
   <svg viewBox="0 0 320 240" fill="none" stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc}>
     <path d="M20 195 Q20 58 160 58 Q300 58 300 195" stroke="#e53e3e" strokeWidth="11" fill="none"/>
@@ -438,20 +423,6 @@ const SvgDinosaur = ()=>(
     <line x1="135" y1="230" x2="130" y2="285" strokeWidth="6"/>
     <line x1="200" y1="230" x2="205" y2="285" strokeWidth="6"/>
     <path d="M62 180 Q15 200 30 230" fill="none" strokeWidth="3.5"/>
-  </svg>
-);
-const SvgHus = ()=>(
-  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    <rect x="60" y="130" width="180" height="140" fill="#fff3cc"/>
-    <path d="M40 135 L150 50 L260 135Z" fill="#c62828" stroke={S.s} strokeWidth="3.5"/>
-    <rect x="130" y="190" width="50" height="80" fill="#8b5e3c"/>
-    <circle cx="170" cy="232" r="4" fill={S.s}/>
-    <rect x="80" y="155" width="34" height="34" fill="#a8d5ff"/>
-    <line x1="97" y1="155" x2="97" y2="189"/><line x1="80" y1="172" x2="114" y2="172"/>
-    <rect x="186" y="155" width="34" height="34" fill="#a8d5ff"/>
-    <line x1="203" y1="155" x2="203" y2="189"/><line x1="186" y1="172" x2="220" y2="172"/>
-    <rect x="180" y="60" width="22" height="40" fill="#8b5e3c"/>
-    <path d="M178 60 L186 50 L202 50 L210 60Z" fill="#8b5e3c"/>
   </svg>
 );
 const SvgBil = ()=>(
@@ -987,20 +958,6 @@ const SvgSommerfuglVaar = ()=>(
     <circle cx="210" cy="245" r="8" fill="#ff9898" stroke="#c62828" strokeWidth="1.5"/>
   </svg>
 );
-const SvgSommerfuglMany = ()=>(
-  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    {[[70,65,0.7],[220,55,0.7],[150,130,1],[60,190,0.65],[240,185,0.65],[130,52,0.55],[200,160,0.6]].map(([cx,cy,sc],i)=>(
-      <g key={i} transform={`translate(${cx},${cy}) scale(${sc})`}>
-        <ellipse cx="0" cy="0" rx="12" ry="8"/>
-        <ellipse cx="-26" cy="-16" rx="32" ry="24" transform="rotate(-20,-26,-16)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
-        <ellipse cx="26" cy="-16" rx="32" ry="24" transform="rotate(20,26,-16)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
-        <ellipse cx="-24" cy="18" rx="24" ry="18" transform="rotate(15,-24,18)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
-        <ellipse cx="24" cy="18" rx="24" ry="18" transform="rotate(-15,24,18)" fill={["#d8f3dc","#fff9c4","#fce8e8","#e3f2fd","#d8f3dc","#fff9c4","#fce8e8"][i]}/>
-      </g>
-    ))}
-    <rect x="20" y="248" width="260" height="22" rx="10" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
-  </svg>
-);
 const SvgKaninEng = ()=>(
   <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
     <ellipse cx="150" cy="208" rx="68" ry="54"/>
@@ -1077,22 +1034,6 @@ const SvgRumpetroll = ()=>(
     <ellipse cx="100" cy="245" rx="88" ry="28" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
     <ellipse cx="195" cy="252" rx="55" ry="18" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="1.5"/>
     <path d="M115 248 Q140 238 165 248" fill="none" strokeWidth="2" stroke="#52b788"/>
-  </svg>
-);
-const SvgFroskBad = ()=>(
-  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    <ellipse cx="150" cy="175" rx="115" ry="72" fill="#d8e8f5" stroke="#6ba0d9" strokeWidth="2.5"/>
-    <path d="M35 210 Q90 195 150 205 Q210 195 265 210" fill="none" strokeWidth="2" stroke="#6ba0d9"/>
-    <ellipse cx="150" cy="148" rx="72" ry="58"/>
-    <circle cx="100" cy="105" r="28"/><circle cx="100" cy="105" r="16" fill="#d8f3dc"/>
-    <circle cx="200" cy="105" r="28"/><circle cx="200" cy="105" r="16" fill="#d8f3dc"/>
-    <circle cx="100" cy="103" r="9" fill={S.s}/><circle cx="102" cy="101" r="3" fill="white" stroke="none"/>
-    <circle cx="200" cy="103" r="9" fill={S.s}/><circle cx="202" cy="101" r="3" fill="white" stroke="none"/>
-    <path d="M122 162 Q150 172 178 162" fill="none" strokeWidth="3"/>
-    <path d="M38 175 Q20 168 15 155" fill="none" strokeWidth="3"/>
-    <path d="M262 175 Q280 168 285 155" fill="none" strokeWidth="3"/>
-    <circle cx="72" cy="228" r="8" fill="#ffd700" stroke="#f9a825" strokeWidth="2"/>
-    <circle cx="228" cy="232" r="8" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
   </svg>
 );
 const SvgFiskestang = ()=>(
@@ -1190,20 +1131,6 @@ const SvgHostRegn = ()=>(
     {[[65,240],[130,255],[200,252],[258,244]].map(([x,y],i)=>(<path key={"s"+i} d={`M${x+2} ${y+5} Q${x+8} ${y+14} ${x+12} ${y+2}`} fill="#8B5E3C" stroke="#5a3e28" strokeWidth="2"/>))}
   </svg>
 );
-const SvgIskremBoks = ()=>(
-  <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    <rect x="55" y="148" width="190" height="108" rx="12"/>
-    <ellipse cx="150" cy="148" rx="95" ry="28"/>
-    <path d="M55 148 Q55 168 150 176 Q245 168 245 148"/>
-    <ellipse cx="150" cy="128" rx="85" ry="38" fill="#ff9898" stroke="#c62828" strokeWidth="2.5"/>
-    <ellipse cx="150" cy="118" rx="72" ry="30" fill="#ffd700" stroke="#ff8c00" strokeWidth="2"/>
-    <ellipse cx="150" cy="108" rx="58" ry="24" fill="#4299e1" stroke="#2c5b8e" strokeWidth="2"/>
-    <ellipse cx="150" cy="100" rx="44" ry="18" fill="#52b788" stroke="#2d6a4f" strokeWidth="2"/>
-    <ellipse cx="150" cy="93" rx="30" ry="12" fill="#ff9898" stroke="#c62828" strokeWidth="2"/>
-    <circle cx="150" cy="85" r="10" fill="#c62828" stroke="#8b1a1a" strokeWidth="2"/>
-    <circle cx="95" cy="188" r="8" fill={S.s} stroke="none"/><circle cx="125" cy="198" r="8" fill={S.s} stroke="none"/><circle cx="175" cy="195" r="8" fill={S.s} stroke="none"/><circle cx="205" cy="183" r="8" fill={S.s} stroke="none"/>
-  </svg>
-);
 const SvgBursdagKake = ()=>(
   <svg viewBox="0 0 300 280" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
     <ellipse cx="150" cy="235" rx="108" ry="32"/>
@@ -1274,38 +1201,6 @@ const SvgPingvinFam = ()=>(
     <circle cx="150" cy="183" r="24"/>
     <circle cx="142" cy="178" r="6" fill={S.s}/><circle cx="158" cy="178" r="6" fill={S.s}/>
     <ellipse cx="80" cy="278" rx="34" ry="12"/><ellipse cx="220" cy="278" rx="34" ry="12"/><ellipse cx="150" cy="282" rx="24" ry="10"/>
-  </svg>
-);
-const SvgRobot2 = ()=>(
-  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    <ellipse cx="150" cy="22" rx="14" ry="14"/>
-    <line x1="150" y1="36" x2="150" y2="65" strokeWidth="3"/>
-    <rect x="78" y="65" width="144" height="108" rx="22"/>
-    <ellipse cx="118" cy="107" rx="22" ry="22"/><ellipse cx="118" cy="107" rx="14" ry="14" fill="#d8e8f5"/><circle cx="118" cy="107" r="8" fill={S.s}/>
-    <ellipse cx="182" cy="107" rx="22" ry="22"/><ellipse cx="182" cy="107" rx="14" ry="14" fill="#d8e8f5"/><circle cx="182" cy="107" r="8" fill={S.s}/>
-    <path d="M118 142 L135 152 L150 142 L165 152 L182 142" fill="none" strokeWidth="3"/>
-    <rect x="62" y="188" width="176" height="112" rx="18"/>
-    <circle cx="116" cy="232" r="22"/><circle cx="116" cy="232" r="14" fill="#d8e8f5"/>
-    <circle cx="184" cy="232" r="22"/><circle cx="184" cy="232" r="14" fill="#d8e8f5"/>
-    <line x1="116" y1="268" x2="184" y2="268" strokeWidth="3"/>
-    <rect x="14" y="190" width="46" height="90" rx="14"/>
-    <rect x="240" y="190" width="46" height="90" rx="14"/>
-    <path d="M14 218 Q5 235 14 252" fill="none" strokeWidth="2.5"/>
-    <path d="M286 218 Q295 235 286 252" fill="none" strokeWidth="2.5"/>
-    <rect x="90" y="297" width="48" height="22" rx="8"/><rect x="162" y="297" width="48" height="22" rx="8"/>
-  </svg>
-);
-const SvgBallongMany = ()=>(
-  <svg viewBox="0 0 300 300" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    {[[75,80,"#ff9898"],[150,55,"#ffd700"],[225,80,"#52b788"],[50,155,"#4299e1"],[250,155,"#9b59b6"],[110,140,"#ff8c42"],[190,135,"#ff9898"]].map(([cx,cy,fill],i)=>(
-      <g key={i}>
-        <ellipse cx={cx} cy={cy} rx="32" ry="38" fill={fill} stroke={S.s} strokeWidth="2.5"/>
-        <path d={`M${cx-4} ${cy+38} Q${cx} ${cy+50} ${cx+4} ${cy+38}`} fill="none" strokeWidth="2"/>
-        <line x1={cx} y1={cy+50} x2={cx+((i%3-1)*8)} y2="280" strokeWidth="1.5" stroke="#c4d6ec"/>
-      </g>
-    ))}
-    <line x1="145" y1="275" x2="155" y2="275" strokeWidth="4"/>
-    <ellipse cx="150" cy="288" rx="50" ry="10" fill="#f5f9fd"/>
   </svg>
 );
 const SvgEpletre = ()=>(
@@ -1445,24 +1340,6 @@ const SvgPaaskelilje2 = ()=>(
     <rect x="218" y="111" width="14" height="80" rx="6" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
     <circle cx="175" cy="65" r="14" fill="#fff9c4" stroke="#f9a825" strokeWidth="2"/>
     <rect x="168" y="78" width="14" height="60" rx="5" fill="#2d8c3c" stroke="#1b5e20" strokeWidth="2"/>
-  </svg>
-);
-const SvgSnomannJul = ()=>(
-  <svg viewBox="0 0 300 320" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
-    <circle cx="150" cy="278" r="66"/>
-    <circle cx="150" cy="190" r="48"/>
-    <circle cx="150" cy="118" r="36"/>
-    <rect x="118" y="74" width="64" height="22" rx="4" fill="#c62828"/><rect x="112" y="79" width="76" height="10" rx="3" fill="#c62828"/>
-    <ellipse cx="224" cy="78" rx="22" ry="14" fill="white" stroke="none"/>
-    <circle cx="136" cy="113" r="6" fill={S.s}/><circle cx="164" cy="113" r="6" fill={S.s}/>
-    <ellipse cx="150" cy="124" rx="5" ry="8" fill="#ff8c42" stroke="#e65100" strokeWidth="2"/>
-    <path d="M138 133 Q150 140 162 133" fill="none" strokeWidth="2.5"/>
-    <circle cx="146" cy="182" r="5" fill={S.s}/><circle cx="156" cy="190" r="5" fill={S.s}/><circle cx="146" cy="198" r="5" fill={S.s}/>
-    <path d="M102 185 Q72 168 55 150" fill="none" strokeWidth="3"/><path d="M198 185 Q228 168 245 150" fill="none" strokeWidth="3"/>
-    <path d="M62 155 Q52 148 48 138" fill="none" strokeWidth="2"/><path d="M240 148 Q250 138 252 128" fill="none" strokeWidth="2"/>
-    {[[55,115],[80,95],[230,108],[255,128]].map(([x,y],i)=>(<polygon key={i} points={[0,1,2,3,4].map(n=>`${x+8*Math.cos((n*72-90)*Math.PI/180)},${y+8*Math.sin((n*72-90)*Math.PI/180)}`).join(' ')} fill="#ffd700" stroke="#ff8c00" strokeWidth="1.5"/>))}
-    <path d="M88 272 Q108 258 122 272" fill="none" strokeWidth="3"/>
-    <path d="M178 272 Q192 258 212 272" fill="none" strokeWidth="3"/>
   </svg>
 );
 const SvgEng = ()=>(
@@ -1677,6 +1554,95 @@ const SvgFotball = ()=>(
   </svg>
 );
 
+const SvgSki = ()=>(
+  <svg viewBox="0 0 300 270" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M0 238 Q150 210 300 238 L300 270 L0 270Z" fill="#e3f2fd" stroke="#90caf9" strokeWidth="2"/>
+    <path d="M10 215 L92 118 L175 215Z"/><path d="M128 215 L210 112 L292 215Z"/>
+    <path d="M80 132 L92 118 L104 132 Q92 124 80 132Z" fill="#e3f2fd" stroke="#90caf9" strokeWidth="1.5"/>
+    <path d="M198 126 L210 112 L222 126 Q210 118 198 126Z" fill="#e3f2fd" stroke="#90caf9" strokeWidth="1.5"/>
+    <circle cx="218" cy="90" r="20"/>
+    <rect x="206" y="70" width="24" height="13" rx="5"/><circle cx="218" cy="63" r="6"/>
+    <circle cx="223" cy="87" r="4" fill={S.s}/><circle cx="224.5" cy="85.5" r="1.5" fill="white" stroke="none"/>
+    <rect x="207" y="111" width="22" height="42" rx="10" transform="rotate(-12,218,132)"/>
+    <line x1="207" y1="122" x2="183" y2="148" strokeWidth="3.5"/><line x1="229" y1="122" x2="253" y2="144" strokeWidth="3.5"/>
+    <line x1="183" y1="148" x2="172" y2="194" strokeWidth="2"/><line x1="253" y1="144" x2="267" y2="192" strokeWidth="2"/>
+    <line x1="211" y1="153" x2="190" y2="194" strokeWidth="4.5"/><line x1="224" y1="153" x2="210" y2="194" strokeWidth="4.5"/>
+    <ellipse cx="185" cy="200" rx="38" ry="7" transform="rotate(-10,185,200)"/>
+    <ellipse cx="207" cy="202" rx="38" ry="7" transform="rotate(-10,207,202)"/>
+  </svg>
+);
+const SvgTurBarn = ()=>(
+  <svg viewBox="0 0 300 285" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M0 258 Q75 238 150 252 Q225 238 300 258 L300 285 L0 285Z" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+    <line x1="225" y1="170" x2="225" y2="248" strokeWidth="3"/><path d="M211 170 L225 142 L239 170Z"/><path d="M211 155 L225 128 L239 155Z"/>
+    <line x1="268" y1="178" x2="268" y2="248" strokeWidth="3"/><path d="M254 178 L268 152 L282 178Z"/>
+    <circle cx="110" cy="84" r="27"/>
+    <path d="M103 64 Q110 52 117 64" fill="none" strokeWidth="3.5"/>
+    <circle cx="103" cy="80" r="4" fill={S.s}/><circle cx="117" cy="80" r="4" fill={S.s}/>
+    <path d="M103 93 Q110 101 117 93" fill="none" strokeWidth="2.5"/>
+    <rect x="96" y="112" width="28" height="50" rx="10"/>
+    <rect x="73" y="110" width="25" height="46" rx="8" fill="#e8f5e9"/>
+    <line x1="82" y1="110" x2="96" y2="120" strokeWidth="2.5"/><line x1="85" y1="156" x2="96" y2="152" strokeWidth="2.5"/>
+    <line x1="96" y1="122" x2="70" y2="152" strokeWidth="3.5"/>
+    <line x1="124" y1="126" x2="155" y2="200" strokeWidth="3.5"/>
+    <line x1="104" y1="162" x2="96" y2="220" strokeWidth="5"/><line x1="118" y1="162" x2="130" y2="220" strokeWidth="5"/>
+    <ellipse cx="93" cy="225" rx="15" ry="7"/><ellipse cx="133" cy="225" rx="15" ry="7"/>
+  </svg>
+);
+const SvgBaal = ()=>(
+  <svg viewBox="0 0 300 270" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M0 242 Q75 222 150 236 Q225 222 300 242 L300 270 L0 270Z" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+    <ellipse cx="150" cy="212" rx="65" ry="13" fill="#8b6355" stroke="#5d3a1a" strokeWidth="2.5"/>
+    <ellipse cx="118" cy="217" rx="50" ry="11" fill="#8b6355" stroke="#5d3a1a" strokeWidth="2.5" transform="rotate(-22,118,217)"/>
+    <ellipse cx="182" cy="217" rx="50" ry="11" fill="#8b6355" stroke="#5d3a1a" strokeWidth="2.5" transform="rotate(22,182,217)"/>
+    <path d="M130 206 Q122 185 137 164 Q133 182 150 168 Q143 185 163 164 Q157 183 166 206Z" fill="#fff9c4" strokeWidth="2"/>
+    <path d="M140 206 Q134 188 147 175 Q143 189 156 179 Q151 193 158 206Z" fill="#ffe0b2" strokeWidth="1.5"/>
+    <circle cx="125" cy="155" r="3" fill="#f4a261" stroke="none"/><circle cx="175" cy="150" r="2.5" fill="#f4a261" stroke="none"/>
+    <circle cx="57" cy="193" r="19"/>
+    <rect x="45" y="212" width="24" height="30" rx="8" fill="#e3f2fd"/>
+    <circle cx="243" cy="193" r="19"/>
+    <rect x="231" y="212" width="24" height="30" rx="8" fill="#fce8e8"/>
+    <line x1="76" y1="198" x2="127" y2="183" strokeWidth="2.5"/><circle cx="128" cy="181" r="5" fill="#f9c5b5"/>
+    <line x1="224" y1="198" x2="173" y2="183" strokeWidth="2.5"/><circle cx="172" cy="181" r="5" fill="#f9c5b5"/>
+  </svg>
+);
+const SvgAke = ()=>(
+  <svg viewBox="0 0 300 265" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M0 228 Q75 208 150 222 Q225 208 300 228 L300 265 L0 265Z" fill="#e3f2fd" stroke="#90caf9" strokeWidth="2"/>
+    <path d="M0 228 Q100 155 255 215" fill="none" stroke="#90caf9" strokeWidth="2.5"/>
+    <path d="M12 227 Q112 155 262 215" fill="none" stroke="#c4d6ec" strokeWidth="1.5" strokeDasharray="7,5"/>
+    <path d="M24 227 Q124 155 275 215" fill="none" stroke="#c4d6ec" strokeWidth="1.5" strokeDasharray="7,5"/>
+    <line x1="30" y1="205" x2="30" y2="240" strokeWidth="3"/><path d="M16 205 L30 177 L44 205Z"/><path d="M16 190 L30 163 L44 190Z"/>
+    <line x1="68" y1="196" x2="68" y2="232" strokeWidth="3"/><path d="M54 196 L68 170 L82 196Z"/>
+    <rect x="146" y="196" width="84" height="15" rx="6" fill="#e53935" stroke="#c62828" strokeWidth="2"/>
+    <path d="M152 211 Q149 225 155 228 Q162 225 162 211" fill="none" strokeWidth="2.5"/>
+    <path d="M220 211 Q217 225 223 228 Q230 225 230 211" fill="none" strokeWidth="2.5"/>
+    <circle cx="174" cy="183" r="19"/>
+    <rect x="162" y="165" width="22" height="11" rx="4"/><circle cx="173" cy="158" r="5.5"/>
+    <circle cx="179" cy="180" r="3.5" fill={S.s}/><circle cx="180.5" cy="178.5" r="1.5" fill="white" stroke="none"/>
+    <rect x="161" y="201" width="28" height="22" rx="9"/>
+    <line x1="161" y1="211" x2="140" y2="197" strokeWidth="3.5"/>
+    <line x1="189" y1="211" x2="220" y2="196" strokeWidth="3.5"/>
+  </svg>
+);
+const SvgTelt = ()=>(
+  <svg viewBox="0 0 300 265" fill={S.f} stroke={S.s} strokeWidth={S.sw} strokeLinecap={S.sc} strokeLinejoin={S.sj}>
+    <path d="M0 238 Q75 218 150 232 Q225 218 300 238 L300 265 L0 265Z" fill="#d8f3dc" stroke="#52b788" strokeWidth="2"/>
+    <path d="M45 235 L150 115 L255 235Z"/>
+    <path d="M78 235 L150 138 L222 235Z" fill="#e3f2fd" stroke="#90caf9" strokeWidth="2"/>
+    <path d="M129 235 Q129 208 150 201 Q171 208 171 235" fill="#fff9c4" stroke="#d4a017" strokeWidth="2"/>
+    <line x1="150" y1="115" x2="150" y2="95" strokeWidth="2.5"/><circle cx="150" cy="93" r="4" fill={S.s}/>
+    <line x1="45" y1="235" x2="20" y2="248" strokeWidth="1.5" strokeDasharray="4,3"/><line x1="255" y1="235" x2="280" y2="248" strokeWidth="1.5" strokeDasharray="4,3"/>
+    <line x1="20" y1="248" x2="20" y2="254" strokeWidth="2.5"/><line x1="280" y1="248" x2="280" y2="254" strokeWidth="2.5"/>
+    <path d="M257 218 Q253 206 261 196 Q259 206 267 198 Q264 210 267 220Z" fill="#fff9c4" strokeWidth="1.5"/>
+    <ellipse cx="262" cy="223" rx="13" ry="5" fill="#8b6355" stroke="#5d3a1a" strokeWidth="2"/>
+    <circle cx="55" cy="82" r="2.5" fill={S.s} stroke="none"/>
+    <circle cx="220" cy="70" r="2.5" fill={S.s} stroke="none"/>
+    <circle cx="140" cy="60" r="2.5" fill={S.s} stroke="none"/>
+    <path d="M34 72 L36 66 L38 72 L44 70 L40 75 L42 81 L36 77 L30 81 L32 75 L28 70Z" fill="#fff9c4" stroke="#d4a017" strokeWidth="1.5"/>
+  </svg>
+);
+
 // ═══════════════════════════════════════════
 //  SVG OVERRIDE-REGISTRY
 //  ─────────────────────────────────────────────
@@ -1726,7 +1692,6 @@ export const TEGNEARK = [
   {id:5,tittel:"Sommerfuglens livssyklus",ikon:"🦋",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","kunst"],svg:<SvgSommerfugl/>,oppgave:"1. Farg de to vingepar i tydelig mønster – prikkete eller stripete. 2. Bruk minst tre farger på vingene. 3. Tegn en blomst den suger nektar av. 4. Tegn en larve og en kokong i hjørnet av arket.",samtale:"Hva er en metamorfose? Hvilke fire stadier går en sommerfugl gjennom? Hva er forskjellen mellom en sommerfugl og en møll?",mal:"Insekters livssyklus og biologisk mangfold. Rammeplanen: Natur – forstå forvandlingsprosesser i naturen."},
   {id:6,tittel:"Frosken i tjernet",ikon:"🐸",kategori:"dyr",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFrosk/>,oppgave:"1. Farg frosken knall grønn med mørke flekker. 2. Tegn et tjern med vannliljeblader og siv. 3. Legg til tre rumpetroll i vannet. 4. Tegn insekter frosken kan spise.",samtale:"Hva er et rumpetroll? Hva skjer med det? Kan du hoppe som en frosk – prøv!",mal:"Amfibier og metamorfose. Rammeplanen: Natur og kropp – livssykluser og kople dem til kroppsbevegelse."},
   {id:7,tittel:"Elgoksen i birkeskogen",ikon:"🦌",kategori:"dyr",alder:"3-6 år",rammeplan:["natur","naermiljo"],svg:<SvgElg/>,oppgave:"1. Farg kroppen mørk brun og snuten beige. 2. Farg geviret beige – tell grenene! 3. Tegn bjørketrær rundt med gult løv. 4. Tegn dype spor i bakken.",samtale:"Hva er et gevir, og hvem har det? Hva spiser elgen om sommeren og om vinteren? Hvor stor er en voksen elg sammenlignet med en bil?",mal:"Norges storvilt og skogsøkologi. Rammeplanen: Natur og nærmiljø – kjenne til norske dyr og deres leveområder."},
-  {id:8,tittel:"Solen gir liv",ikon:"☀️",kategori:"natur",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSol/>,oppgave:"1. Farg solen sterkt gul med oransje stråler. 2. Tegn en blomst som vender mot solen. 3. Legg til et tre og en fugl. 4. Farg himmelen lys blå.",samtale:"Hva trenger planter for å vokse? Hva gir solen oss? Hva skjer hvis det er overskyet i lang tid?",mal:"Fotosyntese og solenergi. Rammeplanen: Natur – forstå solens rolle for alt liv."},
   {id:9,tittel:"Regnbuen – naturens kunstverk",ikon:"🌈",kategori:"natur",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgRegnbue/>,oppgave:"1. Farg regnbuen i riktig rekkefølge: rød, oransje, gul, grønn, blå, indigo, fiolett. 2. Tegn regndråper på den ene siden og sol på den andre. 3. Skriv tallene 1–7 på hver bue.",samtale:"Hva må til for å se en regnbue? Kan du huske alle 7 fargene i riktig rekkefølge? Hva er lys egentlig laget av?",mal:"Farger og lysets spredning. Rammeplanen: Natur og antall – rekkefølge, mønster og fargeblanding."},
   {id:10,tittel:"Høsttreet med fargerike blader",ikon:"🍂",kategori:"host",alder:"3-6 år",rammeplan:["natur","kunst"],svg:<SvgHost/>,oppgave:"1. Farg bladene i fire høstfarger: rødt, oransje, gult og brunt. 2. Tegn blader som virvler ned. 3. Legg til en bunke blader på bakken. 4. Tegn en kråke som sitter øverst.",samtale:"Hva skjer med klorofyllet om høsten? Hva finner vi i skogen om høsten? Hva heter prosessen der treet mister bladene?",mal:"Årstider og naturprosesser. Rammeplanen: Natur – forstå forandringer i naturen knyttet til årstidene."},
   {id:11,tittel:"Snømannen med personlighet",ikon:"⛄",kategori:"vinter",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgSnomann/>,oppgave:"1. Farg snømannen med tre hvite kuler. 2. Gi ham en gulrotnese, mørke øyne og knapperekke. 3. Tegn fargerik lue og stripete skjerf. 4. Legg til to pinner som armer.",samtale:"Hva trenger vi for å lage en snømann? Hva skjer med snømannen når solen varmer? Hva er smeltepunktet for is?",mal:"Is og snø. Rammeplanen: Natur – forstå vann i ulike aggregattilstander."},
@@ -1761,9 +1726,7 @@ export const TEGNEARK = [
   {id:40,tittel:"Seiltur om sommeren",ikon:"⛵",kategori:"sommer",alder:"2-6 år",rammeplan:["naermiljo","natur"],svg:<SvgBat/>,oppgave:"1. Farg båten hvit med rødt seil. 2. Tegn bølger i grønnt og blått. 3. Legg til en måke som flyr over. 4. Tegn land i horisonten og en liten fyr.",samtale:"Hva er et seil og hva brukes det til? Hva er vindenergi? Hva er forskjellen mellom seilbåt og motorbåt?",mal:"Vannreiser og vindkraft. Rammeplanen: Nærmiljø – bli kjent med norsk kystliv og sjøfart."},
   {id:41,tittel:"Sykkelturen i sommerparken",ikon:"🚲",kategori:"sommer",alder:"2-6 år",rammeplan:["kropp","naermiljo"],svg:<SvgSykkelVei/>,oppgave:"1. Farg sykkelen i dine farger med reflekser på hjulene. 2. Tegn en syklist med hjelm på en vei. 3. Legg til trær og blomster langs veien. 4. Tegn et trafikklys i bakgrunnen.",samtale:"Hva bruker vi hjelm til? Hva betyr rødt, gult og grønt lys? Hva er god trafikkatferd for syklister?",mal:"Trafikksikkerhet og kroppslig mestring. Rammeplanen: Kropp og nærmiljø – trygg ferdsel og fysisk aktivitet."},
   {id:42,tittel:"Fisketur i solskinn",ikon:"🐟",kategori:"sommer",alder:"2-6 år",rammeplan:["natur","naermiljo"],svg:<SvgFiskestang/>,oppgave:"1. Farg fisken sølvblank med gullfinnet. 2. Tegn en fiskestang med snøre og krok. 3. Legg til en mark på kroken. 4. Tegn bobler fra fisken og grønt vann.",samtale:"Hva er et agn? Hva er et fiskekort og hvorfor finnes det? Hva er bærekraftig fiske?",mal:"Friluftsliv og naturtradisjoner. Rammeplanen: Nærmiljø – kjenne til norske friluftslivsaktiviteter."},
-  {id:43,tittel:"Frosken og varmedammen",ikon:"🐸",kategori:"sommer",alder:"2-5 år",rammeplan:["natur","kropp"],svg:<SvgFroskBad/>,oppgave:"1. Farg frosken grønn med gul buk. 2. Tegn et varmt tjern med vannliljeblader. 3. Legg til insekter den prøver å fange. 4. Tegn den hoppe fra stein til stein.",samtale:"Hva gjør frosker om sommeren? Hva spiser de? Hva er et amfibium?",mal:"Amfibier og sommerøkologi. Rammeplanen: Natur og kropp – dyrs levevis og bevegelse."},
   {id:44,tittel:"Solsikken i blomsterenga",ikon:"🌻",kategori:"sommer",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSolsikke/>,oppgave:"1. Farg blomsten knall gul med brun midtdel. 2. Tegn en hel blomstereng med mange farger. 3. Legg til bier og sommerfugler som besøker blomstene. 4. Tegn frø i midten av blomsten.",samtale:"Hvilken blomst er din favoritt? Hvorfor liker bier blomster? Hva er nektaret?",mal:"Naturglede og pollinering. Rammeplanen: Natur og kunst – kreativt uttrykk og naturforståelse."},
-  {id:45,tittel:"Sommerfuglene telles",ikon:"🦋",kategori:"sommer",alder:"2-6 år",rammeplan:["natur","antall"],svg:<SvgSommerfuglMany/>,oppgave:"1. Farg én stor sommerfugl i detaljert mønster. 2. Tegn seks til rundt i ulike farger. 3. Legg til blomster de flyr mellom. 4. Tell alle sommerfuglene og skriv tallet.",samtale:"Hvor mange sommerfugler tegnet du? Hva spiser de? Hva betyr det å telle en naturbestand?",mal:"Natur, antall og estetikk. Rammeplanen: Antall – telle og sammenligne mengder i naturen."},
   {id:46,tittel:"Høstens regnvær",ikon:"🍁",kategori:"host",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgHostRegn/>,oppgave:"1. Farg treet med røde, oransje og gule blader. 2. Tegn regn som faller ned. 3. Legg til to barn med regnfrakk og gummistøvler. 4. Tegn pyttene de hopper i.",samtale:"Hva er høst for deg? Hva skjer med klorofyllet om høsten? Hva slags klær trenger vi om høsten?",mal:"Høst, vær og påkledning. Rammeplanen: Kropp og kommunikasjon – kleskunnskap og årstidsforståelse."},
   {id:47,tittel:"Gresskaret på tunet",ikon:"🎃",kategori:"host",alder:"2-6 år",rammeplan:["natur","kunst"],svg:<SvgGresskar/>,oppgave:"1. Farg gresskaret dypt oransje med grønn stilk og blader. 2. Tegn et morsomt ansikt: trekantøyne og taggete munn. 3. Lag en gul sirkel inni som lys. 4. Tegn tre gresskår rundt i ulike størrelser.",samtale:"Hva er et gresskar – er det en frukt eller grønnsak? Kan man spise gresskar? Hva er en innhøsting?",mal:"Grønnsaker om høsten og innhøsting. Rammeplanen: Natur og nærmiljø – mat fra jord til bord."},
   {id:48,tittel:"Epleplukking om høsten",ikon:"🍎",kategori:"host",alder:"1-5 år",rammeplan:["natur","kropp"],svg:<SvgEpletre/>,oppgave:"1. Farg eplet rødt og blankt med en grønn stilk og blad. 2. Tegn tre epler til på et tre over. 3. Legg til en kurv med plukket frukt. 4. Tegn en barnehånd som strekker seg opp.",samtale:"Hvilke bær og frukter modner om høsten? Hva er syltetøy og hva lager vi det av? Hva gir epler oss av næring?",mal:"Høstens frukter og mattradisjoner. Rammeplanen: Natur og kropp – kople naturen til kosthold."},
@@ -1781,7 +1744,6 @@ export const TEGNEARK = [
   {id:60,tittel:"Juletreet med lys",ikon:"🎄",kategori:"jul",alder:"1-6 år",rammeplan:["kunst","etikk"],svg:<SvgGran/>,oppgave:"1. Farg treet dypt grønt. 2. Tegn fargerike kuler, lametta og pepperkaker som henger. 3. Legg til en stjerne på toppen. 4. Tegn pakker under treet.",samtale:"Hva slags tre er et juletre? Hva er juletreets opprinnelse? Hvem i familien pynter treet hjemme?",mal:"Juletreet og norsk kulturtradisjon. Rammeplanen: Etikk og kunst – kjenne til og sette pris på egne tradisjoner."},
   {id:61,tittel:"Julehjertene",ikon:"❤️",kategori:"jul",alder:"2-5 år",rammeplan:["etikk","kunst"],svg:<SvgHjerte/>,oppgave:"1. Farg et stort hjerte rødt og hvitt. 2. Legg til et flettet mønster – røde og hvite striper. 3. Tegn en sløyfe øverst for å henge det i treet. 4. Skriv et navn inni hjertet.",samtale:"Hva er et flettet julejhjerte, og hvem fant det opp? Hva er et symbol? Hva symboliserer et hjerte?",mal:"Julehjertetradisjon og symboler. Rammeplanen: Kunst og etikk – kulturarv og kreativt uttrykk."},
   {id:62,tittel:"Pepperkakebaking",ikon:"🍪",kategori:"jul",alder:"2-6 år",rammeplan:["kropp","kunst"],svg:<SvgPepperkake/>,oppgave:"1. Farg pepperkaken gyldenbrun. 2. Tegn glasur i hvit og rød på toppen. 3. Legg til fargerikt sukkerstrø og julemotiver. 4. Tegn bakerutstyr rundt: kjevle og utstikkere.",samtale:"Hva er de viktigste ingrediensene i pepperkaker? Hva er kanel og ingefær? Hva er smaken av julen for deg?",mal:"Matlaging og juletradisjon. Rammeplanen: Kropp og kunst – sanseerfaringer knyttet til matlaging."},
-  {id:63,tittel:"Snømannen i julegardin",ikon:"⛄",kategori:"jul",alder:"1-5 år",rammeplan:["natur","kunst"],svg:<SvgSnomannJul/>,oppgave:"1. Farg snømannen med tre kuler. 2. Gi ham julehatt og rødt skjerf. 3. Tegn juletreet i bakgrunnen med lys. 4. Legg til pakker rundt og snøfloker i luften.",samtale:"Hva er det koselige med en hvit jul? Hva gjør vi ute om vinteren? Hva er en hvit jul?",mal:"Vinter og julekultur. Rammeplanen: Kunst og natur – koble årstid med kulturelle tradisjoner."},
   {id:64,tittel:"Reinsdyrene flyr",ikon:"🦌",kategori:"jul",alder:"2-6 år",rammeplan:["kommunikasjon","kunst"],svg:<SvgReinsdyr/>,oppgave:"1. Farg reinsdyret brun med rødbrun nese. 2. Tegn det i lufta med bena løftet. 3. Legg til en slede det trekker med gaver i. 4. Tegn stjerner og nattehimmel rundt.",samtale:"Hva heter Julenissens reinsdyr? Hva er Rudolphs spesielle kjennetegn? Er dette en sann eller en fiktiv fortelling?",mal:"Julefortellinger og fantasi. Rammeplanen: Kommunikasjon – høre og gjenfortelle eventyr og sagn."},
   {id:65,tittel:"Gavene under treet",ikon:"🎁",kategori:"jul",alder:"1-5 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgGave/>,oppgave:"1. Farg ballongene som fargerike gaver i rødt, grønt og gull. 2. Tegn sløyfer og bånd på dem. 3. Legg til juletreet i bakgrunnen. 4. Tegn et barn som strekker seg mot en gave.",samtale:"Hva er det fineste med å gi en gave? Og det fineste med å få en? Hva er det beste med juleaften?",mal:"Glede ved å gi og motta. Rammeplanen: Etikk og kommunikasjon – empati og raushet."},
   {id:66,tittel:"Påskeharen gjemmer egg",ikon:"🐰",kategori:"paske",alder:"1-5 år",rammeplan:["kunst","etikk"],svg:<SvgKaninEgg/>,oppgave:"1. Farg påskeharen lysegul med rosa ører. 2. Tegn fargerike egg gjemt i gress, bak steiner og i busker. 3. Legg til vårblomster rundt. 4. Tegn et barn som leter med en kurv.",samtale:"Hva er opprinnelsen til påskeharen og eggjaktingen? Hva er påsketradisjoner i Norge? Hva feirer vi egentlig i påsken?",mal:"Påsketradisjoner og kulturhistorie. Rammeplanen: Kommunikasjon og etikk – kjenne til og snakke om høytider."},
@@ -1810,7 +1772,6 @@ export const TEGNEARK = [
   {id:89,tittel:"Sinne og ro",ikon:"💝",kategori:"folelser",alder:"3-6 år",rammeplan:["etikk","kommunikasjon"],svg:<SvgPust/>,oppgave:"1. Del hjertet i to – farg én halvdel rød (sint) og én blå (rolig). 2. Tegn et ansikt med sinne på én side og ro på den andre. 3. Legg til puste-bobler: 'inn... ut...' 4. Tegn en person som puster dypt.",samtale:"Hva er sinne? Hva kan vi gjøre når vi er veldig sinte? Hva er 'pusteøvelser'?",mal:"Følelsesregulering og sinnsro. Rammeplanen: Etikk – strategier for å håndtere sterke følelser."},
   {id:90,tittel:"Eplet som er sunt",ikon:"🍎",kategori:"mat",alder:"1-5 år",rammeplan:["kropp","natur"],svg:<SvgEple/>,oppgave:"1. Farg eplet rødt med et glinsende hvit felt. 2. Tegn stilken og et lite blad. 3. Legg til et bitt tatt ut av eplet. 4. Tegn et lite 'C' symbol for vitamin C.",samtale:"Hva er et vitamin og hva gjør vitaminer for oss? Hva er vitamin C? Hva er frukt og grønt godt for?",mal:"Ernæring og vitaminer. Rammeplanen: Kropp – forstå sunn mat og næringstoffer."},
   {id:91,tittel:"Bananen fra tropene",ikon:"🍌",kategori:"mat",alder:"1-4 år",rammeplan:["kropp","natur"],svg:<SvgBanan/>,oppgave:"1. Farg bananen knall gul med brune flekker for å vise den er moden. 2. Tegn den i en fruktskål med andre frukter. 3. Legg til et palmetre bananene vokser på. 4. Tegn en ape som spiser en banan.",samtale:"Hva er et tropisk land? Hvilke frukter dyrkes i Norge og hvilke importeres? Hva er kali (mineral i banan)?",mal:"Mat fra ulike verdensdeler. Rammeplanen: Natur og kropp – forstå matens opprinnelse."},
-  {id:92,tittel:"Min favorittiskrem",ikon:"🍨",kategori:"mat",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgIskremBoks/>,oppgave:"1. Farg iskrem med minst fire lag i ulike farger. 2. Tegn strø, kjeks og kirsebær. 3. Legg til en serviett og en skje. 4. Tegn solen som smelter den litt.",samtale:"Hva er iskrem laget av? Hva er fløte? Hva er forskjellen mellom iskrem og sorbet?",mal:"Matprosessering og meieriprodukter. Rammeplanen: Kropp og kommunikasjon – lære om matproduksjon."},
   {id:93,tittel:"Bursdagskaken min",ikon:"🎂",kategori:"mat",alder:"2-6 år",rammeplan:["antall","kommunikasjon"],svg:<SvgCupcake/>,oppgave:"1. Farg kaken med glasur og fargerike lag. 2. Tegn lys på toppen – like mange som du er år gammel. 3. Legg til pynt: ballonger, konfetti, figurer. 4. Skriv en gratulasjon.",samtale:"Hvem er du – hvor mange år fyller du? Hva er tradisjonen med lys på kaken? Hva er en overraskelseskake?",mal:"Tall og bursdagstradisjoner. Rammeplanen: Antall – telle antall år og kople til bursdagsritual."},
   {id:94,tittel:"Grønnsaker er sunne",ikon:"🥕",kategori:"mat",alder:"3-6 år",rammeplan:["kropp","natur"],svg:<SvgGulrot/>,oppgave:"1. Farg frukten grønn og tegn en gulrot ved siden. 2. Tegn en tallerken med minst fem grønnsaker. 3. Legg til tekst ved siden: 'vitamin', 'fiber'. 4. Tegn et gledelig barn som spiser.",samtale:"Hva er en grønnsak og hva er en frukt? Hva er fibrer? Hvilke grønnsaker vokser under jorda?",mal:"Kosthold og helse. Rammeplanen: Kropp – forstå grønnsakers ernæringsmessige verdi."},
   {id:95,tittel:"Bilen og trafikken",ikon:"🚗",kategori:"kjoretoy",alder:"2-5 år",rammeplan:["naermiljo","kommunikasjon"],svg:<SvgBil/>,oppgave:"1. Farg bilen din favorittfarge med klar lakk. 2. Tegn en vei med trafikklys og et fotgjengerfelt. 3. Legg til skilt: stopp, vikeplass, 30 km/t. 4. Tegn tre barn som venter ved fotgjengerfeltet.",samtale:"Hva betyr de forskjellige trafikksignalene? Hva er et fotgjengerfelt? Hva er 30-sone?",mal:"Trafikkregler og sikker ferdsel. Rammeplanen: Nærmiljø – forstå trafikk og trygg ferdsel."},
@@ -1818,20 +1779,22 @@ export const TEGNEARK = [
   {id:97,tittel:"Flyet i lufta",ikon:"✈️",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["naermiljo","kommunikasjon"],svg:<SvgFly/>,oppgave:"1. Farg flyet hvitt med fargerik hale og logo. 2. Tegn hvite kondensstriper etter flyet. 3. Legg til skyer i ulike høyder. 4. Tegn bakken under med byer, fjell og hav.",samtale:"Hva er en kondensstripe? Hva driver et fly fremover? Hva er den høyeste flygehøyden?",mal:"Luftfart og fysikk. Rammeplanen: Nærmiljø – forstå moderne transportmidler."},
   {id:98,tittel:"Toget på langtur",ikon:"🚂",kategori:"kjoretoy",alder:"1-5 år",rammeplan:["naermiljo","kropp"],svg:<SvgTog/>,oppgave:"1. Farg lokomotivet rødt med svart røykpipe. 2. Tegn skinner som strekker seg ut i fjerneten. 3. Legg til tunneler og broer langs ruten. 4. Tegn passasjerer som vinker fra vinduene.",samtale:"Hva er et lokomotiv? Hva er forskjellen mellom tog og trikk? Er tog eller bil mest miljøvennlig?",mal:"Skinnegående transport og miljø. Rammeplanen: Nærmiljø – forstå offentlig transport og bærekraft."},
   {id:99,tittel:"Sykkelen med hjelm",ikon:"🚲",kategori:"kjoretoy",alder:"2-6 år",rammeplan:["kropp","naermiljo"],svg:<SvgSykkel/>,oppgave:"1. Farg sykkelen og alle deler: hjul, kjede, styre. 2. Legg til en hjelm, reflekser og lys. 3. Tegn en sykkelsti med klar merking. 4. Tegn et barn med hjelm og sykkelbriller.",samtale:"Hva er de forskjellige delene på en sykkel? Hva er en sykkelsti? Hva er refleks og hva gjør den?",mal:"Sykling og trafikksikkerhet. Rammeplanen: Kropp og nærmiljø – motorikk og sikker ferdsel."},
-  {id:100,tittel:"Hjemmet mitt",ikon:"🏠",kategori:"bygg",alder:"1-5 år",rammeplan:["naermiljo","kunst"],svg:<SvgHus/>,oppgave:"1. Farg huset slik ditt ser ut – farge på vegg, vindu, tak. 2. Tegn hagen med planter og gjerde. 3. Legg til din favorittdetalj av huset. 4. Tegn en fuglekasse i hagen.",samtale:"Hva er ditt favorittrom? Hva gjøres i stuen, kjøkkenet og badet? Hva er 'hjem' for deg?",mal:"Hjem og identitet. Rammeplanen: Nærmiljø – forstå nærsamfunnets strukturer og personlig tilhørighet."},
   {id:101,tittel:"Barnehagen vår",ikon:"🏫",kategori:"bygg",alder:"1-5 år",rammeplan:["naermiljo","etikk"],svg:<SvgBarnehage/>,oppgave:"1. Farg barnehagen med store vinduer og fargerike vegger. 2. Tegn lekestativ, sandkasse og gynger ute. 3. Legg til barn og barnehagelærere som leker. 4. Tegn et norsk flagg utenfor.",samtale:"Hva er din favorittdel av barnehagen? Hva er de voksnes oppgave her? Hva betyr 'fellesskap'?",mal:"Barnehagens rolle og fellesskap. Rammeplanen: Nærmiljø og etikk – forstå fellesskapet i barnehagen."},
   {id:102,tittel:"Drømmehuset mitt",ikon:"🏰",kategori:"bygg",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgDrommehus/>,oppgave:"1. Begynn med husformen og legg til tårn, balkonger og terrasser. 2. Legg til noe fantasifullt: taubane, basseng, trampoline. 3. Farg det i fantasifulle farger. 4. Tegn naboer og omgivelser rundt.",samtale:"Hvis du fikk designe ditt drømmehus, hva ville det ha? Hva er en arkitekt? Hva er de viktigste rommene i et hus?",mal:"Kreativ tenkning og arkitektur. Rammeplanen: Kunst og kommunikasjon – uttrykke ideer gjennom tegning."},
-  {id:103,tittel:"Ballongene flyr",ikon:"🎈",kategori:"festlig",alder:"1-5 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgBallongMany/>,oppgave:"1. Farg ballongene i regnbuens farger – minst fem. 2. Tegn snorer og et barn som holder dem. 3. Legg til konfetti rundt. 4. Tegn én ballong som slipper unna og flyr opp.",samtale:"Hva er helium og hva gjør at ballonger flyr opp? Hva er en fest for deg? Hva er konfetti?",mal:"Festglede og fysikk. Rammeplanen: Kunst og kommunikasjon – kreativ utfoldelse og naturforståelse."},
   {id:104,tittel:"Stjerneregnet",ikon:"⭐",kategori:"festlig",alder:"2-5 år",rammeplan:["kunst","antall"],svg:<SvgStjerneSkudd/>,oppgave:"1. Farg en stor stjerne gullgul. 2. Tegn 12 stjerner i ulike størrelser rundt. 3. Legg til glitter-kryss rundt de største. 4. Tell alle stjernene og skriv tallet.",samtale:"Hva er et stjernebilde? Hva er solen – er den en stjerne? Hvem kan telle høyest?",mal:"Astronomi og antall. Rammeplanen: Kunst og antall – estetisk utfoldelse og telling."},
   {id:105,tittel:"Bursdagsfesten",ikon:"🎂",kategori:"festlig",alder:"2-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgBursdagKake/>,oppgave:"1. Farg en flott bursdagskake med lag og glasur. 2. Tegn lys – ett for hvert år du er gammel. 3. Legg til gaver, ballonger og festpynt rundt. 4. Skriv bursdagsbarnets navn på kaken.",samtale:"Hva er det spesielle med bursdagen din? Hva er den beste gaven du har fått? Hva betyr det å bli et år eldre?",mal:"Milepæler og personlig vekst. Rammeplanen: Kommunikasjon – fortelle om seg selv, sin alder og familie."},
   {id:106,tittel:"Roboten min venn",ikon:"🤖",kategori:"teknologi",alder:"3-6 år",rammeplan:["kommunikasjon","etikk"],svg:<SvgRobot/>,oppgave:"1. Farg robotens hode sølv eller blå. 2. Gi øynene fargerike lysdioder – en farge du velger! 3. Tegn knapper og skjermer på magen. 4. Legg til ledninger og gnister rundt roboten.",samtale:"Hva er en robot? Hva kan roboter gjøre som mennesker ikke kan? Er en robot levende?",mal:"Teknologi og menneskelige egenskaper. Rammeplanen: Kommunikasjon – undre seg over teknologi og sammenligne med mennesker."},
-  {id:107,tittel:"Roboten hjelper i barnehagen",ikon:"🤖",kategori:"teknologi",alder:"4-6 år",rammeplan:["etikk","naermiljo"],svg:<SvgRobot2/>,oppgave:"1. Farg roboten i barnehagens farger. 2. Tegn den bærende en bok eller ryddende leker. 3. Legg til barn som ser på og vinker. 4. Tegn et hjerte på robotens bryst.",samtale:"Hva ville du lært en robot å gjøre? Kan en robot være venn? Hva er forskjellen på en maskin og et menneske?",mal:"Teknologi i hverdagen og etiske spørsmål. Rammeplanen: Etikk og nærmiljø – reflektere over teknologiens rolle."},
   {id:108,tittel:"Raketten skytes opp",ikon:"🚀",kategori:"romfart",alder:"3-6 år",rammeplan:["natur","kommunikasjon"],svg:<SvgRakette/>,oppgave:"1. Farg raketten hvit med fargerike striper. 2. Tegn flammene nederst i gult og oransje. 3. Legg til stjerner og planeter rundt. 4. Tegn røykspor etter raketten.",samtale:"Hva er et rakettdrivstoff? Hvorfor skytes raketter opp med så mye fart? Hva er verdensrommet?",mal:"Romfart og tyngdekraft. Rammeplanen: Natur – undre seg over universet og teknologi."},
   {id:109,tittel:"Astronauten i verdensrommet",ikon:"👨‍🚀",kategori:"romfart",alder:"3-6 år",rammeplan:["natur","kropp"],svg:<SvgAstronaut/>,oppgave:"1. Farg romdressen hvit med fargerik nasjonalitet-stripe. 2. Tegn visir med speilblankt glass. 3. Legg til oksygentanken på ryggen. 4. Tegn jorden i bakgrunnen sett fra verdensrommet.",samtale:"Hva spiser astronauter i verdensrommet? Hva er tyngdeløshet? Hva er ISS – den internasjonale romstasjonen?",mal:"Romfart og menneskekroppen. Rammeplanen: Natur og kropp – forstå rommet og astronautenes liv."},
   {id:110,tittel:"Gitarspilleren på scenen",ikon:"🎸",kategori:"musikk",alder:"3-6 år",rammeplan:["kunst","kommunikasjon"],svg:<SvgGitar/>,oppgave:"1. Farg gitarkroppen i en varm farge – brun, rød eller oransje. 2. Tegn strengene i sølv og gull. 3. Legg til noter som flyr fra gitaren. 4. Tegn en person som spiller den.",samtale:"Hva er en gitar laget av? Hva er forskjellen mellom akustisk og elektrisk gitar? Hva er din favorittlåt?",mal:"Musikkinstrumenter og lydlære. Rammeplanen: Kunst og kultur – utforske musikk som kunstform."},
   {id:111,tittel:"Orkesteret spiller",ikon:"🥁",kategori:"musikk",alder:"3-6 år",rammeplan:["kunst","etikk"],svg:<SvgTrommer/>,oppgave:"1. Farg gitaren i kontrastfull farge. 2. Tegn et band rundt: trommer, mikrofon, keyboard. 3. Legg til et publikum med glade ansikter. 4. Tegn lys og konfetti over scenen.",samtale:"Hva er et orkester? Hva er forskjellen mellom et band og et orkester? Hvilke instrumenter kjenner du til?",mal:"Musikksamarbeid og ulike instrumenter. Rammeplanen: Etikk og kunst – samspill og respekt i fellesskap."},
   {id:112,tittel:"Fotballkampen",ikon:"⚽",kategori:"sport",alder:"3-6 år",rammeplan:["kropp","etikk"],svg:<SvgFotball/>,oppgave:"1. Farg ballen svart og hvit i klassisk mønster. 2. Tegn et mål med nett bak. 3. Legg til to lag med fargerike drakter. 4. Tegn jubel fra banen.",samtale:"Hva er reglene i fotball? Hva er fair play? Hva betyr det å samarbeide i et lag?",mal:"Lagsport og samarbeid. Rammeplanen: Kropp og etikk – motorisk mestring og sportslig adferd."},
   {id:113,tittel:"Målvakten redder",ikon:"⚽",kategori:"sport",alder:"2-6 år",rammeplan:["kropp","kommunikasjon"],svg:<SvgMaalvakt/>,oppgave:"1. Farg fotballen i dine favorittfarger. 2. Tegn en målvakt som hopper og strekker seg. 3. Legg til et mål med keeper-hansker. 4. Tegn publikum som heier.",samtale:"Hva gjør en målvakt? Hva er de vanskeligste skuddene å redde? Hva er det som gjør fotball spennende?",mal:"Idrett og kroppsmestring. Rammeplanen: Kropp – utfordre og utvikle motoriske ferdigheter."},
+  {id:114,tittel:"Skitur i fjellet",ikon:"⛷️",kategori:"friluftsliv",alder:"2-6 år",rammeplan:["kropp","natur","naermiljo"],svg:<SvgSki/>,oppgave:"1. Farg skiene røde og skistakkene svarte. 2. Farg drakten varm og fargerik. 3. Tegn snøkledde fjelltopper i bakgrunnen. 4. Legg til skiløype med spor i snøen.",samtale:"Hva er viktig å ha med på skitur? Hva er pulversnø? Hva betyr det å bruke riktig utstyr i fjellet?",mal:"Vinterlek og friluftsliv. Rammeplanen: Kropp og nærmiljø – utforske natur og oppleve mestring i fysisk aktivitet."},
+  {id:115,tittel:"Tur i skogen",ikon:"🥾",kategori:"friluftsliv",alder:"2-6 år",rammeplan:["natur","kropp","naermiljo"],svg:<SvgTurBarn/>,oppgave:"1. Farg skogen grønn og brun. 2. Farg barnet med ryggsekk og gode tursko. 3. Tegn en sti med steiner og røtter. 4. Legg til fugler og insekter i trærne.",samtale:"Hva kan vi se og høre på tur i skogen? Hva er friluftsliv? Hva betyr allemannsretten?",mal:"Friluftsliv og naturopplevelser. Rammeplanen: Nærmiljø – erfare og utforske naturen gjennom fysisk aktivitet."},
+  {id:116,tittel:"Bålkos ute i naturen",ikon:"🔥",kategori:"friluftsliv",alder:"2-6 år",rammeplan:["natur","kropp","etikk"],svg:<SvgBaal/>,oppgave:"1. Farg flammene gule og oransje. 2. Farg stokkene brune og jorda mørk. 3. Tegn barna med varme klær og rosenkoste på pinner. 4. Tegn stjerner og nattehimmel rundt.",samtale:"Hva trenger vi for å lage bål trygt? Hva er farlig med ild? Hva er reglene for bål i naturen?",mal:"Friluftsliv og sikkerhet i naturen. Rammeplanen: Kropp og etikk – forstå glede og ansvar ved bålkos."},
+  {id:117,tittel:"Akebakken",ikon:"🛷",kategori:"friluftsliv",alder:"1-5 år",rammeplan:["kropp","natur","kommunikasjon"],svg:<SvgAke/>,oppgave:"1. Farg akebrettet rødt og klærne fargerike. 2. Tegn en lang hvit snøbakke. 3. Legg til andre barn som venter i køen øverst. 4. Tegn snøfnugg som daler.",samtale:"Hva er tyngdekraft? Hva er det raskeste du har opplevd? Hva er viktig for sikkerheten i akebakken?",mal:"Vinterlek og fysisk mestring. Rammeplanen: Kropp – oppleve mestring og glede i kroppslig aktivitet."},
+  {id:118,tittel:"Telt og overnatting ute",ikon:"⛺",kategori:"friluftsliv",alder:"3-6 år",rammeplan:["naermiljo","natur","kommunikasjon"],svg:<SvgTelt/>,oppgave:"1. Farg teltet din favorittfarge – oransje, grønt eller blått. 2. Tegn skog og stjerner rundt. 3. Legg til bål foran inngangen. 4. Tegn sovepose og ryggsekk ved siden.",samtale:"Hva er det spesielle med å sove ute? Hva er utstyr vi trenger på tur? Hvem kan fortelle om sin beste naturopplevelse?",mal:"Friluftsliv og naturglede. Rammeplanen: Nærmiljø – erfare naturen og bygge friluftskunnskap."},
 ];
 export const TEGNEKAT = [
   ["alle","Alle 🖍️"],
@@ -1855,6 +1818,7 @@ export const TEGNEKAT = [
   ["romfart","Romfart 🚀"],
   ["musikk","Musikk 🎵"],
   ["sport","Sport ⚽"],
+  ["friluftsliv","Friluftsliv 🏕️"],
 ];
 
 // (FagTag, Tilbake, NyttSkjemaForm, escapeHTML, mdToHtml, stripMd, skrivUtVindu tilhører barnehagehjelpen.jsx)
