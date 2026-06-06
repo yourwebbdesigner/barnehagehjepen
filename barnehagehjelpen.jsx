@@ -73,6 +73,7 @@ const CSS = `
   html { scroll-behavior: smooth; }
   body { font-family: 'Nunito', sans-serif; background: var(--c-bg); -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--c-scrollbar); border-radius: 3px; }
+  .no-scrollbar::-webkit-scrollbar { display:none; width:0; }
   ::-webkit-scrollbar-thumb:hover { background: var(--c-scrollbar-hover); }
   textarea, input, select { font-family: 'Nunito', sans-serif; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }

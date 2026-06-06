@@ -55,7 +55,7 @@ export default function Hjem({ ctx }) {
         <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
         <div style={{marginTop:2}}>
           <div style={{fontSize:10,opacity:.75,marginBottom:7,fontWeight:700,letterSpacing:"0.5px",textTransform:"uppercase",color:"#fff"}}>📖 Rammeplan – 7 fagområder</div>
-          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+          <div className="no-scrollbar" style={{display:"flex",gap:5,overflowX:"auto",flexWrap:"nowrap",scrollbarWidth:"none",msOverflowStyle:"none",paddingBottom:2}}>
             {FAGOMRADER.map(f=>(
               <div key={f.id} onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");navigerTil("rammeplan");}}
                 style={{background:"rgba(255,255,255,0.22)",borderRadius:20,padding:"6px 11px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,backdropFilter:"blur(4px)"}}>
@@ -104,7 +104,7 @@ export default function Hjem({ ctx }) {
 
       {/* HURTIGTILGANG */}
       <div style={{fontFamily:"'Fredoka One',cursive", fontSize:16, color:C.t, marginBottom:11}}>🚀 Hurtigtilgang</div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:11, marginBottom:20}}>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))", gap:11, marginBottom:20}}>
         {[
           ["🎵","Sanger & Rim",`${SANGER.length} sanger og rim`,"#2c5b8e","sanger"],
           ["🏃","Aktiviteter",`${AKTIVITETER.length} ferdige aktiviteter`,"#1565c0","aktiviteter"],
