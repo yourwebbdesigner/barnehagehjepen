@@ -117,7 +117,7 @@ const SvgBevegelse = ()=>(
     <text x="50" y="230" textAnchor="middle" fontSize="11" fill={S.s} {...T}>Hoppe!</text>
     {/* Figure 2: Running – leaning forward, arms swinging */}
     <circle cx="150" cy="52" r="22"/>
-    <path d="M150 74 L148 138" strokeWidth="S.sw"/>
+    <path d="M150 74 L148 138" strokeWidth={S.sw}/>
     <path d="M148 90 L118 76"/><path d="M148 90 L175 108"/>
     <path d="M148 138 L128 178 L116 170"/><path d="M148 138 L170 172 L182 165"/>
     <text x="150" y="230" textAnchor="middle" fontSize="11" fill={S.s} {...T}>Løpe!</text>

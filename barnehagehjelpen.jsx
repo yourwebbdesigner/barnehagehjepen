@@ -4,7 +4,7 @@ import { supabase } from "./supabase.js";
 import { FAGOMRADER, RE } from './data/rammeplan.js';
 import { SANGER } from './data/sanger.js';
 import { AKTIVITETER } from './data/aktiviteter.js';
-import { SUPPORT_E_POST, supportMailto, FAQ_DATA } from './data/faq.js';
+import { supportMailto, FAQ_DATA } from './data/faq.js';
 import { hilsen, DAGENS_TIPS } from './data/tips.js';
 import TegnearkSide, { hentUserTegneark } from './TegnearkSide.jsx';
 import { SvgPlaceholder, TEGNEARK } from './data/tegneark.jsx';
@@ -14,7 +14,6 @@ import AiSideComp from './AiSide.jsx';
 import AuthScreen, { AdminPanel } from './AuthScreen.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
 import { Tilbake, FagTag } from './components.jsx';
-import { escapeHTML, mdToHtml, stripMd, skrivUtVindu } from './utils.js';
 import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
 
 const BokerSide = React.lazy(() => import('./Boker.jsx'));

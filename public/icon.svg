@@ -1,35 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Blå bakgrunn – full bleed for maskable -->
-  <rect width="512" height="512" fill="#2c5b8e"/>
-
-  <!-- Stilisert plante inspirert av 🌿 -->
-
-  <!-- Stengel -->
-  <path d="M256 400 Q248 330 256 240 Q260 210 265 185"
-        stroke="#a8deb8" stroke-width="18" fill="none" stroke-linecap="round"/>
-
-  <!-- Blad øverst (henger til høyre) -->
-  <path d="M262 185 C295 140 375 135 368 200 C362 250 295 252 262 215 Z"
-        fill="#6fcf82"/>
-  <!-- Vene øverst blad -->
-  <path d="M262 200 Q320 175 368 200"
-        stroke="#4db86a" stroke-width="5" fill="none" stroke-linecap="round"/>
-
-  <!-- Blad venstre øvre -->
-  <path d="M252 240 C205 200 148 215 162 270 C174 310 238 305 252 265 Z"
-        fill="#5ec475"/>
-  <path d="M252 253 Q200 240 162 270"
-        stroke="#3fa85a" stroke-width="5" fill="none" stroke-linecap="round"/>
-
-  <!-- Blad høyre midtre -->
-  <path d="M260 280 C308 248 358 262 348 312 C340 345 280 338 260 300 Z"
-        fill="#5ec475"/>
-  <path d="M260 290 Q310 272 348 312"
-        stroke="#3fa85a" stroke-width="5" fill="none" stroke-linecap="round"/>
-
-  <!-- Blad venstre nedre -->
-  <path d="M248 335 C195 300 148 318 162 368 C174 400 234 392 248 360 Z"
-        fill="#6fcf82"/>
-  <path d="M248 348 Q198 332 162 368"
-        stroke="#4db86a" stroke-width="5" fill="none" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" fill="#2c5b8e"/>
+  <text x="50" y="54"
+        font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif"
+        font-size="68"
+        text-anchor="middle"
+        dominant-baseline="middle">🌿</text>
 </svg>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase.js";
-import { passordStyrke, validerTelefon, diagnostiserStorage, hentProfil, sendTilbakestillEpost, publiskBruker, AVATAR_VALG, registrerBruker, loggInnBruker } from './api.js';
+import { passordStyrke, validerTelefon, hentProfil, sendTilbakestillEpost, AVATAR_VALG, registrerBruker, loggInnBruker } from './api.js';
 import { supportMailto } from './data/faq.js';
 
 import { C } from './utils.js';
