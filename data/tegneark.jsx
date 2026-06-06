@@ -463,7 +463,7 @@ const SvgHjelpeOmsorg = ()=>(
     <circle cx="85" cy="52" r="26"/>
     <circle cx="76" cy="46" r="5" fill={S.s} stroke="none"/><circle cx="94" cy="46" r="5" fill={S.s} stroke="none"/>
     <path d="M75 62 Q85 68 95 62" fill="none" strokeWidth="2.5"/>
-    <path d="M85 78 L82 150" strokeWidth="S.sw"/>
+    <path d="M85 78 L82 150" strokeWidth={S.sw}/>
     <path d="M82 100 L46 130"/><path d="M82 100 L110 88"/>
     <path d="M50 130 L34 158"/><path d="M82 150 L68 195"/><path d="M82 150 L96 195"/>
     {/* Helping hand reaching toward fallen child */}
@@ -665,7 +665,7 @@ export const TEGNEARK = [
   // ── KKK: Kunst, kultur og kreativitet ───────────────────────────────
   {id:7,tittel:"Selvportrettet",ikon:"🎨",kategori:"kkk",alder:"3-6 år",rammeplan:["kkk"],
    svg:<SvgSelvportrett/>,
-   oppgave:"1. Tegn ansiktet ditt inne i speilet – hår, øyne, nese og munn. 2. Legg til detaljer: øredobber, briller, fregner? 3. Farg rammen rundt speilet i favoritfargene dine. 4. Hva er det spesielle med akkurat ditt ansikt?",
+   oppgave:"1. Tegn ansiktet ditt inne i speilet – hår, øyne, nese og munn. 2. Legg til detaljer: øredobber, briller, fregner? 3. Farg rammen rundt speilet i favorittfargene dine. 4. Hva er det spesielle med akkurat ditt ansikt?",
    samtale:"Hva ser du når du ser deg i speilet? Hva er likt mellom deg og vennene dine? Hva er forskjellig?",
    mal:"Selvbilde og kunstnerisk selvuttrykk. Rammeplanen KKK: uttrykke seg gjennom billedkunst, utvikle identitet og kreativ kompetanse."},
   {id:8,tittel:"Mønsterbåndet",ikon:"🔷",kategori:"kkk",alder:"2-6 år",rammeplan:["kkk"],
@@ -676,7 +676,7 @@ export const TEGNEARK = [
   {id:9,tittel:"Fargenes verden",ikon:"🌈",kategori:"kkk",alder:"2-6 år",rammeplan:["kkk"],
    svg:<SvgFargesirkel/>,
    oppgave:"1. Farg det øverste feltet rødt. 2. Beveg deg rundt: oransje, gul, grønn, blå, lilla. 3. Farg midtsirkelen med alle fargene blandet. 4. Hvilke to farger lager grønn? Hvilke lager lilla?",
-   samtale:"Hva er dine tre favorittfarger? Hvilke farger ser du ute i naturen? Hva kalles de tre grunfargene?",
+   samtale:"Hva er dine tre favorittfarger? Hvilke farger ser du ute i naturen? Hva kalles de tre grunnfargene?",
    mal:"Fargeforståelse og fargeteori. Rammeplanen KKK: utforske farger, eksperimentere med blanding og estetisk uttrykk."},
 
   // ── NMT: Natur, miljø og teknologi ──────────────────────────────────
@@ -692,7 +692,7 @@ export const TEGNEARK = [
    mal:"Biologiske livssykluser og forvandling. Rammeplanen NMT: forstå livsprosesser, vekst og forandring i naturen."},
   {id:12,tittel:"Værmeldingen min",ikon:"🌤️",kategori:"nmt",alder:"2-6 år",rammeplan:["nmt"],
    svg:<SvgVaerkart/>,
-   oppgave:"1. Farg solen gul og strålar oransje. 2. Farg skyen grå. 3. Farg regndråpene blå. 4. Farg snøflakene lyseblå. 5. Tegn lyn i tordensymbolet. 6. Skriv hva slags vær det er i dag.",
+   oppgave:"1. Farg solen gul og stråler oransje. 2. Farg skyen grå. 3. Farg regndråpene blå. 4. Farg snøflakene lyseblå. 5. Tegn lyn i tordensymbolet. 6. Skriv hva slags vær det er i dag.",
    samtale:"Hva slags vær er det i dag? Hva bruker vi barometer til? Hva er forskjellen mellom vær og klima?",
    mal:"Meteorologi og naturobservasjon. Rammeplanen NMT: observere, beskrive og dokumentere vær og naturfenomener."},
 
