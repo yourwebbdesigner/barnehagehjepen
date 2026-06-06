@@ -233,7 +233,7 @@ export async function slettSesjon() {
 // ─── Profilendringer ───
 export async function oppdaterVisningsnavn(brukerId, nyttNavn) {
   const navn = (nyttNavn || "").trim();
-  const { error } = await supabase.from("user_profiles").update({ visningsnavn: navn, display_name: navn || undefined }).eq("id", brukerId);
+  const { error } = await supabase.from("user_profiles").update({ visningsnavn: navn, display_name: navn }).eq("id", brukerId);
   if (error) return { ok: false, feil: "Kunne ikke oppdatere visningsnavn" };
   const profil = await hentProfil(brukerId);
   const { data } = await supabase.auth.getUser();
