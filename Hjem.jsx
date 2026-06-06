@@ -54,13 +54,13 @@ export default function Hjem({ ctx }) {
         <div style={{fontFamily:"'Fredoka One',cursive", fontSize:26, marginTop:4}}>{hils}!</div>
         <div style={{fontSize:14, opacity:.9, marginTop:3, marginBottom:18}}>{hsub}</div>
         <div style={{marginTop:2}}>
-          <div style={{fontSize:10,opacity:.75,marginBottom:7,fontWeight:700,letterSpacing:"0.5px",textTransform:"uppercase"}}>📖 Rammeplan – 7 fagområder</div>
+          <div style={{fontSize:10,opacity:.75,marginBottom:7,fontWeight:700,letterSpacing:"0.5px",textTransform:"uppercase",color:"#fff"}}>📖 Rammeplan – 7 fagområder</div>
           <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
             {FAGOMRADER.map(f=>(
               <div key={f.id} onClick={()=>{setValgtFag(f);setRammeSeksjon("fagomrader");navigerTil("rammeplan");}}
                 style={{background:"rgba(255,255,255,0.22)",borderRadius:20,padding:"6px 11px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,backdropFilter:"blur(4px)"}}>
                 <span style={{fontSize:14}}>{f.ikon}</span>
-                <span style={{fontSize:10,fontWeight:800,lineHeight:1}}>{f.navn.split(",")[0]}</span>
+                <span style={{fontSize:10,fontWeight:800,lineHeight:1,color:"#fff"}}>{f.navn.split(",")[0]}</span>
               </div>
             ))}
           </div>
