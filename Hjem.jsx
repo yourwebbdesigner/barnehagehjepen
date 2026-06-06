@@ -129,7 +129,7 @@ export default function Hjem({ ctx }) {
           </div>
           <div style={{display:"grid",gap:8}}>
             {sistePlaner.map((p,i) => (
-              <div key={i} className="hover" onClick={()=>navigerTil(p._sid)}
+              <div key={p.id||i} className="hover" onClick={()=>aapnePlan(p, p._sid)}
                 style={{background:C.w,borderRadius:12,padding:"11px 14px",cursor:"pointer",boxShadow:`0 2px 8px ${p._farge}1a`,display:"flex",alignItems:"center",gap:11,borderLeft:`3px solid ${p._farge}`}}>
                 <span style={{fontSize:20,flexShrink:0}}>{p._ikon}</span>
                 <div style={{flex:1,minWidth:0}}>
