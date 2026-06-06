@@ -450,9 +450,9 @@ export default function AiSideComp({ onLagreSomSkjema, initialType, clearInitial
                 }} style={{
                   padding:"9px 10px",
                   fontSize:11,
-                  background: aktiv ? f.lys : "#f5f9fd",
+                  background: aktiv ? f.lys : C.lg2,
                   color: aktiv ? f.farge : C.t,
-                  border: aktiv ? `2px solid ${f.farge}` : "2px solid #e8eff8",
+                  border: aktiv ? `2px solid ${f.farge}` : "2px solid var(--c-divider)",
                   borderRadius:9,
                   cursor:"pointer",
                   fontFamily:"'Nunito',sans-serif",
