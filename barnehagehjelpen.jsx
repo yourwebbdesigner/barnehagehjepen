@@ -14,7 +14,7 @@ import AiSideComp from './AiSide.jsx';
 import AuthScreen, { AdminPanel, VilkaarModal } from './AuthScreen.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
 import { Tilbake, FagTag } from './components.jsx';
-import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
+import { byggBruker, hentProfil, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
 
 const BokerSide = React.lazy(() => import('./Boker.jsx'));
 const SamarbeidSide = React.lazy(() => import('./Samarbeid.jsx'));
@@ -944,8 +944,8 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   // Synkroniser planTema fra Supabase ved innlogging (overskriver localStorage-verdi)
   useEffect(() => {
     if (!aktivBruker?.id) return;
-    hentPlanTema(aktivBruker.id).then(tema => {
-      if (tema) { setPlanTema(tema); lsSet("bh_plan_tema", tema); }
+    hentPlanTema(aktivBruker.id).then(hentetPlanTema => {
+      if (hentetPlanTema) { setPlanTema(hentetPlanTema); lsSet("bh_plan_tema", hentetPlanTema); }
     }).catch(() => {});
   }, [aktivBruker?.id]);
   // Lagre planTema til Supabase + localStorage ved endring
@@ -1031,11 +1031,11 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const aapneAktivitetskort = (k) => { setPreselectAktivitetskortId(k?.id||null); navigerTil("aktivitetskort"); setGlobalSok(""); };
   const aapneDokumentasjon = (d) => { setPreselectDokumentasjonId(d?.id||null); navigerTil("dokumentasjon"); setGlobalSok(""); };
   const aapneSkjema = (s) => { setValgtSkjema(s); navigerTil("skjemaer"); setGlobalSok(""); };
-  const [preselectPlanId, setPreselectPlanId] = React.useState(null);
+  const [preselectPlanId, setPreselectPlanId] = useState(null);
   const aapnePlan = (plan, sidId) => { setPreselectPlanId(plan.id||null); navigerTil(sidId); setGlobalSok(""); };
 
 
-  const sesjonsStart = React.useRef(null);
+  const sesjonsStart = useRef(null);
 
   // Last alle brukerdata ved innlogging – én samlet Promise.all for færre round-trips
   useEffect(() => {
