@@ -172,6 +172,7 @@ export default function UkeplanSide({ ctx }) {
     };
     const slettAktivitet = (dag, id) => {
       setUDager(prev=>({...prev,[dag]:{...prev[dag],aktiviteter:(prev[dag].aktiviteter||[]).filter(a=>a.id!==id)}}));
+      setHarEndringer(true);
     };
     const handleDagDragEnd = (dag, event) => {
       const {active,over} = event;
@@ -183,6 +184,7 @@ export default function UkeplanSide({ ctx }) {
         if(oldIdx<0||newIdx<0)return prev;
         return {...prev,[dag]:{...prev[dag],aktiviteter:arrayMove(akt,oldIdx,newIdx)}};
       });
+      setHarEndringer(true);
     };
     const flyttAktivitet = (fraDag, aktivitetId, tilDag) => {
       setUDager(prev=>{
@@ -193,6 +195,7 @@ export default function UkeplanSide({ ctx }) {
           [tilDag]:{...prev[tilDag],aktiviteter:[...(prev[tilDag].aktiviteter||[]),{...akt}]}
         };
       });
+      setHarEndringer(true);
     };
 
     const fyllMedAI = async () => {
