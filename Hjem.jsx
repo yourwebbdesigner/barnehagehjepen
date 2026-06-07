@@ -21,7 +21,7 @@ function DataSkjelett() {
 }
 
 export default function Hjem({ ctx }) {
-  const { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner = [], globalMaanedsplaner = [], globalMaanedsbrev = [], globalArsplaner = [] } = ctx;
+  const { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapneSkjema, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner = [], globalMaanedsplaner = [], globalMaanedsbrev = [], globalArsplaner = [] } = ctx;
 
   // Bygg liste over siste 3 planer på tvers av alle plantyper
   const sistePlaner = React.useMemo(() => {
@@ -82,6 +82,7 @@ export default function Hjem({ ctx }) {
         aapneRammeplan={aapneRammeplan}
         aapneAktivitetskort={aapneAktivitetskort}
         aapneDokumentasjon={aapneDokumentasjon}
+        aapneSkjema={aapneSkjema}
         aapnePlan={aapnePlan}
         C={C}
       />

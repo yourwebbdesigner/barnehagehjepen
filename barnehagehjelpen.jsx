@@ -1029,6 +1029,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [preselectDokumentasjonId, setPreselectDokumentasjonId] = useState(null);
   const aapneAktivitetskort = (k) => { setPreselectAktivitetskortId(k?.id||null); navigerTil("aktivitetskort"); setGlobalSok(""); };
   const aapneDokumentasjon = (d) => { setPreselectDokumentasjonId(d?.id||null); navigerTil("dokumentasjon"); setGlobalSok(""); };
+  const aapneSkjema = (s) => { setValgtSkjema(s); navigerTil("skjemaer"); setGlobalSok(""); };
   const [preselectPlanId, setPreselectPlanId] = React.useState(null);
   const aapnePlan = (plan, sidId) => { setPreselectPlanId(plan.id||null); navigerTil(sidId); setGlobalSok(""); };
 
@@ -1314,7 +1315,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
     sesjonsStart: sesjonsStart.current,
   };
 
-  const hjemCtx = { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner };
+  const hjemCtx = { hikon, vær, værIkon, værTekst, hils, hsub, skjemaer, globalSok, setGlobalSok, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapneSkjema, aapnePlan, tips, tipsFag, nesteTips, setValgtFag, setRammeSeksjon, dataLastet, globalUkeplaner, globalMaanedsplaner, globalMaanedsbrev, globalArsplaner };
   const skjemaCtx = { skjemaer, setSkjemaer, feedback, vis, valgtSkjema, setValgtSkjema, redigerSkjemaTittel, setRedigerSkjemaTittel, setBekreftSlettSkjema, navigerTil };
 
   const sider={

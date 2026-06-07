@@ -7,7 +7,7 @@ const AKTIV_KATS = [["alle","Alle"],["kreativ","🎨 Kreativ"],["ute","🌳 Ute"
 
 // Standalone-komponent for søkeboks – holder fokus selv om parent re-rendrer.
 // Lokal state for input-verdien, kaller onChange-prop ved hver endring.
-export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapnePlan, C }) {
+export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAktivitet, aapneSang, aapneTegneark, aapneFagomrade, aapneRammeplan, aapneAktivitetskort, aapneDokumentasjon, aapneSkjema, aapnePlan, C }) {
   return (
     <div style={{marginBottom:18}}>
       <div style={{position:"relative"}}>
@@ -100,7 +100,7 @@ export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAkti
                 <div>
                   <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#6a1b9a",background:"var(--c-lg2)",textTransform:"uppercase",letterSpacing:0.5}}>📋 Mine skjemaer ({sokeResultat.skjemaer.length})</div>
                   {sokeResultat.skjemaer.slice(0,5).map(s=>(
-                    <div key={"sk"+s.id} onClick={()=>{navigerTil("skjemaer");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
+                    <div key={"sk"+s.id} onClick={()=>aapneSkjema?aapneSkjema(s):(navigerTil("skjemaer"),setVerdi(""))} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
                       <div style={{fontWeight:700}}>{s.tittel||"Skjema"}</div>
                       {s.type&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{s.type}</div>}
                     </div>
