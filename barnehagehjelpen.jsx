@@ -558,7 +558,7 @@ const CSS = `
   /* RESPONSIVT LAYOUT */
   .bh-layout { display:flex; min-height:100vh; background:var(--c-bg); transition:background 0.25s; }
   .bh-sidebar { position:fixed; top:0; left:0; width:225px; height:100vh; background:var(--c-sidebar); z-index:100; display:flex; flex-direction:column; overflow-y:auto; transition:transform 0.28s ease, background 0.25s; }
-  .bh-main { margin-left:225px; flex:1; padding:22px 20px; max-width:700px; transition:margin-left 0.28s ease; }
+  .bh-main { margin-left:225px; flex:1; padding:22px 32px; max-width:1100px; transition:margin-left 0.28s ease; }
   .bh-hamburger { display:none; }
   .bh-backdrop { display:none; }
   .bh-mobile-header { display:none; }
