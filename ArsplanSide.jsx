@@ -144,7 +144,7 @@ export default function ArsplanSide({ ctx }) {
     useEffect(()=>{ if(!preselectPlanId||!lastet||planer.length===0)return; const p=planer.find(p=>p.id===preselectPlanId); if(p){lesPlan(p);setPreselectPlanId?.(null);} },[preselectPlanId,lastet,planer.length]);
 
     const oppdaterSeksjon = (id, tekst) => { setAp(prev => ({ ...prev, seksjoner: { ...prev.seksjoner, [id]: tekst } })); setHarEndringer(true); };
-    const oppdaterArshjul = (maaned, felt, verdi) => setAp(prev => ({ ...prev, arshjul: { ...prev.arshjul, [maaned]: { ...prev.arshjul[maaned], [felt]: verdi } } }));
+    const oppdaterArshjul = (maaned, felt, verdi) => { setAp(prev => ({ ...prev, arshjul: { ...prev.arshjul, [maaned]: { ...prev.arshjul[maaned], [felt]: verdi } } })); setHarEndringer(true); };
 
     const lagreNy = async () => {
       if (!ap?.tittel?.trim()) { setPlanFeil("Skriv en tittel for årsplanen"); return; }
