@@ -186,7 +186,8 @@ export default function SangerSideComp({ favoritter, toggleFav, aktivBruker, onN
     skrivUtVindu('<div style="max-width:620px;margin:0 auto;"><h1 style="font-size:22px;color:#2c5b8e;margin-bottom:6px;">' + escapeHTML(s.tittel) + '</h1><div style="font-size:12px;color:#888;margin-bottom:16px;">' + escapeHTML(s.kategori) + ' · ' + escapeHTML(s.alder) + melodiHtml + '</div><pre style="font-size:16px;line-height:2.1;white-space:pre-wrap;font-family:inherit;background:#f5f9fd;padding:18px;border-radius:10px;border:1px solid #c4d6ec;">' + stripMd(s.tekst) + '</pre>' + tipsHtml + '<div style="margin-top:16px;font-size:10px;color:#aaa;text-align:center;">Barnehagehjelpen – barnehagehjelpen.pages.dev</div></div>', escapeHTML(s.tittel));
   };
   const slettMin = async (dbId) => {
-    await slettUserSang(dbId, aktivBruker.id);
+    const { error } = await slettUserSang(dbId, aktivBruker.id);
+    if (error) { setFeil("Kunne ikke slette sangen. Prøv igjen."); return; }
     setUserSanger(p => p.filter(s => s.id !== dbId));
     setValgt(null);
   };
