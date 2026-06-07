@@ -35,6 +35,21 @@ function json(data, status = 200, request = null) {
   });
 }
 
+// Rate limiting: max 20 kall per 5 minutter per IP, lagret i Cloudflare Cache API
+async function sjekkRateLimit(request) {
+  const ip = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "ukjent";
+  const vindu = Math.floor(Date.now() / (5 * 60 * 1000)); // 5-minutters vinduer
+  const cacheNokkel = new Request(`https://rate-limit.invalid/ai/${encodeURIComponent(ip)}/${vindu}`);
+  const cache = caches.default;
+  const cached = await cache.match(cacheNokkel);
+  const antall = cached ? (parseInt(await cached.text()) || 0) : 0;
+  if (antall >= 20) return false;
+  await cache.put(cacheNokkel, new Response(String(antall + 1), {
+    headers: { "Cache-Control": "max-age=360", "Content-Type": "text/plain" },
+  }));
+  return true;
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -43,6 +58,11 @@ export async function onRequest(context) {
   }
   if (request.method !== "POST") {
     return json({ error: "Bruk POST" }, 405, request);
+  }
+
+  const innenforGrense = await sjekkRateLimit(request).catch(() => true);
+  if (!innenforGrense) {
+    return json({ error: "Du har sendt for mange AI-forespørsler. Vent noen minutter og prøv igjen." }, 429, request);
   }
 
   try {
