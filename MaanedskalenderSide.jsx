@@ -8,7 +8,7 @@ import { UnsavedDialog, KonfliktDialog } from './UnsavedDialog.jsx';
 import { useUnsavedGuard } from './hooks.js';
 
 export default function MaanedskalenderSide({ ctx }) {
-  const { aktivBruker, navigerTil, planTema, setGlobalKalenderplaner, sesjonsStart } = ctx;
+  const { aktivBruker, navigerTil, planTema, setGlobalKalenderplaner, preselectPlanId, setPreselectPlanId, sesjonsStart } = ctx;
 
     const MAANEDER_KAL = ["Januar","Februar","Mars","April","Mai","Juni","Juli","August","September","Oktober","November","Desember"];
     const UKEDAGER = ["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
@@ -56,6 +56,7 @@ export default function MaanedskalenderSide({ ctx }) {
 
     const nyPlan=()=>{setValgt(null);setKTittel("");setKAar(new Date().getFullYear());setKMaaned(new Date().getMonth()+1);setKTema(planTema);setKEvents({});setKFeil("");kalNullstill();setVisning("ny");};
     const redigerPlan=p=>{setValgt(p);setKTittel(p.tittel||"");setKAar(p.aar);setKMaaned(p.maaned);setKTema(p.tema||"");setKEvents(p.events||{});setKFeil("");kalNullstill();setVisning("rediger");};
+    useEffect(()=>{ if(!preselectPlanId||!lastet||planer.length===0)return; const p=planer.find(p=>p.id===preselectPlanId); if(p){setValgt(p);setVisning("les");setPreselectPlanId?.(null);} // eslint-disable-next-line react-hooks/exhaustive-deps },[preselectPlanId,lastet,planer.length]);
 
     const leggTilEvent=()=>{
       if(!nyEvent.tekst.trim())return;

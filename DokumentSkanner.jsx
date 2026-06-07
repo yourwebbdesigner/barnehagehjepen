@@ -586,7 +586,7 @@ export default function DokumentSkanner({ aktivBruker, onFerdig }) {
         <>
           <div className="ds-kort" style={{ background: "#d8f3dc", borderColor: "#52b788" }}>
             <div style={{ fontWeight: 800, color: "#1b5e47", fontSize: 15, marginBottom: 10 }}>
-              ✅ Dokument skannet og lagret i skyen!
+              {lagretUrl ? "✅ Dokument skannet og lagret i skyen!" : "✅ Dokument skannet og lastet ned lokalt!"}
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {lagretUrl && (

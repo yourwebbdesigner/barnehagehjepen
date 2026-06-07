@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase.js";
-import { TEGNEARK, TEGNEKAT, SvgPlaceholder } from './data/tegneark.jsx';
+import { TEGNEARK, TEGNEKAT, TEGNEKAT_FARGER, SvgPlaceholder } from './data/tegneark.jsx';
 import { FAGOMRADER } from './data/rammeplan.js';
 
 import { C, escapeHTML } from './utils.js';
@@ -143,6 +143,10 @@ function matchSvg(kategori, tittel = '') {
   return matches[seed % matches.length].svg;
 }
 
+function harBildeForTegneark(ark) {
+  return TEGNEARK.some(t => t.kategori === (ark.kategori || ""));
+}
+
 export default function TegnearkSide({ ctx }) {
   const { aktivBruker, vis, preselectTegneark, setPreselectTegneark, favoritter, toggleFav, setGlobalUserTegneark } = ctx;
 
@@ -157,13 +161,23 @@ export default function TegnearkSide({ ctx }) {
 
     useEffect(() => {
       if (!aktivBruker?.id) return;
-      hentUserTegneark(aktivBruker.id).then(ut => {
-        setUserTegneark(ut);
+      (async () => {
+        const ut = await hentUserTegneark(aktivBruker.id);
+        const utenBilde = ut.filter(t => !harBildeForTegneark(t));
+        const medBilde = ut.filter(t => harBildeForTegneark(t));
+        if (utenBilde.length > 0) {
+          await Promise.all(utenBilde.map(t => slettUserTegneark(t.id, aktivBruker.id).catch(() => null)));
+          setUserTegneark(medBilde);
+          setGlobalUserTegneark(medBilde);
+          visLokal(`🗑️ Fjernet ${utenBilde.length} tegneark uten bilde`);
+        } else {
+          setUserTegneark(ut);
+        }
         if (preselectTegneark && !valgtT) {
-          const funnet = ut.find(t => "user_"+t.id === preselectTegneark);
+          const funnet = medBilde.find(t => "user_"+t.id === preselectTegneark);
           if (funnet) setValgtT({ id:"user_"+funnet.id, tittel:funnet.tittel, ikon:funnet.ikon||"🖍️", kategori:funnet.kategori||"natur", alder:funnet.alder, rammeplan:funnet.rammeplan||[], svg:matchSvg(funnet.kategori||"natur", funnet.tittel||""), oppgave:funnet.oppgave, samtale:funnet.samtale, mal:funnet.mal, _erMin:true, _dbId:funnet.id });
         }
-      });
+      })();
     }, [aktivBruker?.id]);
 
     useEffect(() => {
@@ -191,7 +205,9 @@ export default function TegnearkSide({ ctx }) {
 
     const byggUtskriftsHTML = (ark, { selvstendig = true } = {}) => {
       const svgEl = document.getElementById("svg-ark-" + ark.id);
-      const svgHTML = svgEl?.innerHTML || "";
+      let svgHTML = svgEl?.innerHTML || "";
+      // Gjør relative bildeURLer absolutte for nedlastede/utskrevne HTML-filer
+      svgHTML = svgHTML.replace(/src="\/tegneark\//g, `src="${window.location.origin}/tegneark/`);
       const fagomraderHTML = ark.rammeplan.map(r => {
         const f = FAGOMRADER.find(x => x.id === r);
         return f ? `<span class="tag" style="background:${f.lys};color:${f.farge}">${escapeHTML(f.ikon)} ${escapeHTML(f.navn)}</span>` : "";
@@ -228,7 +244,7 @@ export default function TegnearkSide({ ctx }) {
   .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
   .tag { display: inline-block; border-radius: 20px; padding: 3px 11px; font-size: 12px; font-weight: 700; }
   .svg-wrap { text-align: center; border: 2px dashed #c4d6ec; border-radius: 16px; padding: 16px; margin: 14px 0; background: #f5f9fd; }
-  .svg-wrap svg { max-width: 380px; width: 100%; height: auto; }
+  .svg-wrap svg, .svg-wrap img { max-width: 380px; width: 100%; height: auto; }
   .boks { border-radius: 12px; padding: 14px 16px; margin: 10px 0; font-size: 14px; }
   .boks.gul { background: #fff9c4; }
   .boks.gronn { background: #e8f5e9; }
@@ -301,7 +317,7 @@ ${innhold}
               #print-area-bh .boks.gronn { background: #e8f5e9; }
               #print-area-bh .boks.bla { background: #e3f2fd; }
               #print-area-bh .svg-wrap { text-align: center; border: 2px dashed #c4d6ec; border-radius: 16px; padding: 14px; margin: 14px 0; background: #f5f9fd; }
-              #print-area-bh .svg-wrap svg { max-width: 380px; width: 100%; height: auto; }
+              #print-area-bh .svg-wrap svg, #print-area-bh .svg-wrap img { max-width: 380px; width: 100%; height: auto; }
               #print-area-bh .footer { text-align: center; font-size: 11px; color: #999; margin-top: 16px; }
             }
           `;
@@ -360,9 +376,16 @@ ${innhold}
 
     if (visAiPanel) return <AiTegnearkView aktivBruker={aktivBruker} onLagre={(ny) => { setUserTegneark(p => [ny, ...p]); setGlobalUserTegneark(p => [ny, ...p]); setVisAiPanel(false); }} onAvbryt={() => setVisAiPanel(false)} />;
     const slettMin = async (dbId) => {
-      await slettUserTegneark(dbId, aktivBruker.id);
+      const { error } = await slettUserTegneark(dbId, aktivBruker.id);
+      if (error) {
+        console.error("[Tegneark] Kunne ikke slette:", error);
+        visLokal("❌ Kunne ikke slette tegnearket");
+        return;
+      }
       setUserTegneark(p => p.filter(t => t.id !== dbId));
+      setGlobalUserTegneark(p => p.filter(t => t.id !== dbId));
       setValgtT(null);
+      visLokal("🗑️ Tegnearket er slettet");
     };
     return (
       <div className="fade">
@@ -410,8 +433,8 @@ ${innhold}
               <span className="tag" style={{background:C.mint,color:C.g}}>👶 {valgtT.alder}</span>
               {(valgtT.rammeplan||[]).map(r=><FagTag key={r} rid={r}/>)}
             </div>
-            <div id={"svg-ark-"+valgtT.id} className="svg-wrap-hover" style={{background:"linear-gradient(135deg,#fafffe,#f0f9f4)",border:"2px solid #d8f3dc",borderRadius:16,padding:16,textAlign:"center",marginBottom:16}}>
-              <div style={{maxWidth:300,margin:"0 auto"}}>{valgtT.svg}</div>
+            <div id={"svg-ark-"+valgtT.id} className="svg-wrap-hover" style={{background:TEGNEKAT_FARGER[valgtT.kategori]||"#f5f9fd",border:"2px solid var(--c-divider)",borderRadius:16,padding:18,textAlign:"center",marginBottom:16,boxShadow:"inset 0 1px 4px rgba(0,0,0,0.04)"}}>
+              <div style={{maxWidth:320,margin:"0 auto"}}>{valgtT.svg}</div>
             </div>
             <div style={{display:"grid",gap:10,marginBottom:14}}>
               <div style={{background:"#fff9c4",borderRadius:11,padding:"11px 14px"}}>
@@ -466,9 +489,9 @@ ${innhold}
                   <button className={`fav-btn ${favSet.has(t.id)?"aktiv":""}`} onClick={(e)=>{e.stopPropagation();toggleFav("tegneark",t.id);}} style={{position:"absolute",top:5,right:5,fontSize:14,zIndex:2,background:"rgba(255,255,255,0.82)",borderRadius:6,width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",padding:0}} aria-label="Favoritt">
                     {favSet.has(t.id)?"⭐":"☆"}
                   </button>
-                  <div style={{background:"#f5f9fd",overflow:"hidden",height:90,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",borderBottom:"1px solid var(--c-divider,#e8eff8)"}}>
-                    <div style={{width:"88%",pointerEvents:"none",lineHeight:0,maxHeight:88,overflow:"hidden"}}>{t.svg}</div>
-                    <span style={{position:"absolute",top:3,left:5,fontSize:10,background:"rgba(255,255,255,0.88)",borderRadius:4,padding:"1px 4px",lineHeight:1.4,boxShadow:"0 1px 2px rgba(0,0,0,0.06)"}}>{t.ikon}</span>
+                  <div style={{background:TEGNEKAT_FARGER[t.kategori]||"#f5f9fd",overflow:"hidden",height:96,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",borderBottom:"1px solid var(--c-divider,#e8eff8)"}}>
+                    <div style={{width:"90%",pointerEvents:"none",lineHeight:0,maxHeight:94,overflow:"hidden"}}>{t.svg}</div>
+                    <span style={{position:"absolute",top:4,left:6,fontSize:11,background:"rgba(255,255,255,0.92)",borderRadius:5,padding:"2px 5px",lineHeight:1.4,boxShadow:"0 1px 3px rgba(0,0,0,0.10)"}}>{t.ikon}</span>
                   </div>
                   <div style={{padding:"7px 9px 9px"}}>
                     <div style={{fontWeight:800,color:C.t,fontSize:12,lineHeight:1.3,marginBottom:2}}>{t._erMin&&<span style={{fontSize:9,background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"1px 5px",marginRight:4,fontWeight:700}}>🤖 AI</span>}{t.tittel}</div>

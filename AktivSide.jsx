@@ -122,7 +122,7 @@ export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAkti
                 <div>
                   <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#6a1b9a",background:"var(--c-lg2)",textTransform:"uppercase",letterSpacing:0.5}}>📋 Dine planer ({sokeResultat.maanedsplaner.length})</div>
                   {sokeResultat.maanedsplaner.slice(0,5).map(p=>(
-                    <div key={"mp"+p.id} onClick={()=>{navigerTil(p.type==="kalender"?"maanedskalender":"maanedsplan");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
+                    <div key={"mp"+p.id} onClick={()=>aapnePlan?aapnePlan(p,p.type==="kalender"?"maanedskalender":"maanedsplan"):(navigerTil(p.type==="kalender"?"maanedskalender":"maanedsplan"),setVerdi(""))} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
                       <div style={{fontWeight:700}}>{p.type==="kalender"?"🗓️ ":"📋 "}{p.tittel}</div>
                       {p.tema&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{p.tema}</div>}
                     </div>
@@ -133,7 +133,7 @@ export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAkti
                 <div>
                   <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#2d6a4f",background:"var(--c-lg2)",textTransform:"uppercase",letterSpacing:0.5}}>📨 Dine månedsbrev ({sokeResultat.maanedsbrev.length})</div>
                   {sokeResultat.maanedsbrev.slice(0,5).map(b=>(
-                    <div key={"mb"+b.id} onClick={()=>{navigerTil("maanedsbrev");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
+                    <div key={"mb"+b.id} onClick={()=>aapnePlan?aapnePlan(b,"maanedsbrev"):(navigerTil("maanedsbrev"),setVerdi(""))} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
                       <div style={{fontWeight:700}}>{b.tittel}</div>
                     </div>
                   ))}
@@ -142,8 +142,8 @@ export function GlobalSok({ verdi, setVerdi, sokeResultat, navigerTil, aapneAkti
               {sokeResultat.arsplaner && sokeResultat.arsplaner.length > 0 && (
                 <div>
                   <div style={{padding:"7px 14px",fontSize:10,fontWeight:800,color:"#1b5e20",background:"var(--c-lg2)",textTransform:"uppercase",letterSpacing:0.5}}>📆 Dine årsplaner ({sokeResultat.arsplaner.length})</div>
-                  {sokeResultat.arsplaner.slice(0,5).map((p,i)=>(
-                    <div key={"ap"+i} onClick={()=>{navigerTil("arsplan");setVerdi("");}} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
+                  {sokeResultat.arsplaner.slice(0,5).map((p)=>(
+                    <div key={"ap"+p.id} onClick={()=>aapnePlan?aapnePlan(p,"arsplan"):(navigerTil("arsplan"),setVerdi(""))} style={{padding:"9px 14px",cursor:"pointer",borderBottom:"1px solid var(--c-divider)",fontSize:13,color:C.t}} className="hover">
                       <div style={{fontWeight:700}}>{p.tittel||"Årsplan"}</div>
                       {(p.aar||p.tema)&&<div style={{fontSize:11,color:C.gr,marginTop:1}}>{p.aar?p.aar+"":""}{p.aar&&p.tema?" • ":""}{p.tema||""}</div>}
                     </div>
