@@ -11,7 +11,7 @@ import { SvgPlaceholder, TEGNEARK } from './data/tegneark.jsx';
 import SangerSideComp, { hentUserSanger } from './SangerSide.jsx';
 import AktivSideComp from './AktivSide.jsx';
 import AiSideComp from './AiSide.jsx';
-import AuthScreen, { AdminPanel } from './AuthScreen.jsx';
+import AuthScreen, { AdminPanel, VilkaarModal } from './AuthScreen.jsx';
 import Hjem, { MineSkjemaer } from './Hjem.jsx';
 import { Tilbake, FagTag } from './components.jsx';
 import { byggBruker, hentProfil, hentSesjon, slettSesjon, hentFavoritter, lagreFavoritter, hentMaanedsplaner, lagreMaanedsplaner, hentMaanedsbrev, lagreMaanedsbrev, hentAktivitetskort, lagreArsplaner, lagreDokumentasjon, lagreUkeplaner, lagreKalenderplaner, hentUkeplaner, hentKalenderplaner, hentArsplaner, hentDokumentasjon, hentPlanTema, lagrePlanTema } from './api.js';
@@ -932,6 +932,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   const [globalKalenderplaner, setGlobalKalenderplaner] = useState([]);
   const [globalDokumentasjon, setGlobalDokumentasjon] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [visVilkaarModal, setVisVilkaarModal] = useState(null);
   const [dataLastet, setDataLastet] = useState(false);
   const [globalSok, setGlobalSok] = useState("");
   const [sokDebounced, setSokDebounced] = useState("");
@@ -1424,6 +1425,10 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
               style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.2)",color:"#fff",padding:"9px 11px",borderRadius:9,fontSize:12,fontWeight:700,textDecoration:"none",fontFamily:"'Nunito',sans-serif",marginBottom:7,boxSizing:"border-box"}}>
               📧 Kontakt support
             </a>
+            <div style={{display:"flex",gap:6,marginBottom:7}}>
+              <button onClick={()=>setVisVilkaarModal("personvern")} style={{flex:1,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.7)",padding:"7px 4px",borderRadius:9,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>🔒 Personvern</button>
+              <button onClick={()=>setVisVilkaarModal("bruksvilkaar")} style={{flex:1,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.7)",padding:"7px 4px",borderRadius:9,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif"}}>📋 Vilkår</button>
+            </div>
             <button onClick={onLogout} style={{width:"100%",background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.2)",color:"#fff",padding:"9px 11px",borderRadius:9,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Nunito',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
               🔓 Logg ut
             </button>
@@ -1457,6 +1462,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
           </div>
         </div>
       )}
+      {visVilkaarModal && <VilkaarModal type={visVilkaarModal} onLukk={()=>setVisVilkaarModal(null)}/>}
     </>
   );
 }

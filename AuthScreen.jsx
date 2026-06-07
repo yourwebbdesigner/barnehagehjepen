@@ -5,7 +5,7 @@ import { supportMailto } from './data/faq.js';
 
 import { C } from './utils.js';
 // ═══════════════════════════════════════════
-function VilkaarModal({ type, onLukk }) {
+export function VilkaarModal({ type, onLukk }) {
   const erPersonvern = type === "personvern";
   return (
     <div
