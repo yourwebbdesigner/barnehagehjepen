@@ -141,7 +141,7 @@ export default function ArsplanSide({ ctx }) {
     const nyPlan = () => { setAp(tomArsplan()); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); nullstillGuard(); setVisning("ny"); };
     const redigerPlan = (p) => { setAp({ ...p, seksjoner:{...p.seksjoner}, arshjul:{...p.arshjul} }); setPlanFeil(""); setAiAktiv(null); setAiTekst(""); nullstillGuard(); setVisning("rediger"); };
     const lesPlan = (p) => { setValgt(p); setVisning("les"); };
-    useEffect(()=>{ if(!preselectPlanId||!lastet||planer.length===0)return; const p=planer.find(p=>p.id===preselectPlanId); if(p){lesPlan(p);setPreselectPlanId?.(null);} // eslint-disable-next-line react-hooks/exhaustive-deps },[preselectPlanId,lastet,planer.length]);
+    useEffect(()=>{ if(!preselectPlanId||!lastet||planer.length===0)return; const p=planer.find(p=>p.id===preselectPlanId); if(p){lesPlan(p);setPreselectPlanId?.(null);} },[preselectPlanId,lastet,planer.length]);
 
     const oppdaterSeksjon = (id, tekst) => { setAp(prev => ({ ...prev, seksjoner: { ...prev.seksjoner, [id]: tekst } })); setHarEndringer(true); };
     const oppdaterArshjul = (maaned, felt, verdi) => setAp(prev => ({ ...prev, arshjul: { ...prev.arshjul, [maaned]: { ...prev.arshjul[maaned], [felt]: verdi } } }));

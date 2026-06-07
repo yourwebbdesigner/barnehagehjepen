@@ -39,7 +39,7 @@ export function MaanedsplanSide({ ctx }) {
       (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsplaner(aktivBruker.id); if(!avbrutt){setPlaner(liste);setLastet(true);} })();
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
-    useEffect(()=>{ if(!preselectPlanId||!lastet||planer.length===0)return; const p=planer.find(p=>p.id===preselectPlanId); if(p){setValgt(p);setVisning("les");setPreselectPlanId?.(null); } // eslint-disable-next-line react-hooks/exhaustive-deps },[preselectPlanId,lastet,planer.length]);
+    useEffect(()=>{ if(!preselectPlanId||!lastet||planer.length===0)return; const p=planer.find(p=>p.id===preselectPlanId); if(p){setValgt(p);setVisning("les");setPreselectPlanId?.(null); } },[preselectPlanId,lastet,planer.length]);
     const lagre=async(liste,tving=false)=>{
       if(!tving){const hk=await sjekkPlanKonflikt(aktivBruker.id,"maanedsplaner",sesjonsStart);if(hk){setMpKonflikt(true);setMpVentende(liste);return false;}}
       const ok=await lagreMaanedsplaner(aktivBruker.id,liste);if(!ok){setMFeil("Kunne ikke lagre");return false;}
@@ -198,7 +198,7 @@ export default function MaanedsbrevSide({ ctx }) {
       (async()=>{ if(!aktivBruker?.id){setLastet(true);return;} const liste=await hentMaanedsbrev(aktivBruker.id); if(!avbrutt){setBrev(liste);setLastet(true);} })();
       return()=>{avbrutt=true;};
     },[aktivBruker?.id]);
-    useEffect(()=>{ if(!preselectPlanId||!lastet||brev.length===0)return; const b=brev.find(b=>b.id===preselectPlanId); if(b){setValgt(b);setVisning("les");setPreselectPlanId?.(null);} // eslint-disable-next-line react-hooks/exhaustive-deps },[preselectPlanId,lastet,brev.length]);
+    useEffect(()=>{ if(!preselectPlanId||!lastet||brev.length===0)return; const b=brev.find(b=>b.id===preselectPlanId); if(b){setValgt(b);setVisning("les");setPreselectPlanId?.(null);} },[preselectPlanId,lastet,brev.length]);
     const lagre=async(liste,tving=false)=>{
       if(!tving){const hk=await sjekkPlanKonflikt(aktivBruker.id,"maanedbrev",sesjonsStart);if(hk){setMbKonflikt(true);setMbVentende(liste);return false;}}
       const ok=await lagreMaanedsbrev(aktivBruker.id,liste);if(!ok){setBFeil("Kunne ikke lagre");return false;}
