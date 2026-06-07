@@ -566,7 +566,7 @@ const CSS = `
   @media (max-width: 820px) {
     .bh-sidebar { transform:translateX(-100%); box-shadow:none; width:260px; height:100vh; height:100dvh; }
     .bh-sidebar.open { transform:translateX(0); box-shadow:0 0 32px rgba(0,0,0,0.4); }
-    .bh-sidebar-bottom { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+    .bh-sidebar-bottom { padding-bottom: max(14px, env(safe-area-inset-bottom)) !important; }
     .bh-sidebar-close { display:flex !important; }
     .bh-main { margin-left:0; padding:64px 14px 18px; max-width:100%; }
     /* Større touch-mål på mobil */
@@ -1190,6 +1190,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
   ];
   // Flat liste for bakoverkompatibilitet med andre steder som bruker nav
   const nav = navGrupper.flatMap(g => g.items);
+  const planSider = ["ukeplan","arsplan","maanedsplan","maanedsbrev","maanedskalender"];
 
   // hilsen og dagensTips er modul-nivå-konstanter (se over Barnehagehjelpen)
   const [hils, hikon, hsub] = hilsen();
@@ -1368,7 +1369,6 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
           </div>
           <nav role="navigation" aria-label="Hovednavigasjon" style={{flex:1,minHeight:0,padding:"8px 9px",overflowY:"auto"}}>
             {navGrupper.map((gruppe, gi) => {
-              const planSider = ["ukeplan","arsplan","maanedsplan","maanedsbrev","maanedskalender"];
               return (
                 <div key={gi} style={{marginBottom: gruppe.label ? 6 : 4}}>
                   {gruppe.label && (
