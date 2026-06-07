@@ -564,8 +564,9 @@ const CSS = `
   .bh-mobile-header { display:none; }
 
   @media (max-width: 820px) {
-    .bh-sidebar { transform:translateX(-100%); box-shadow:none; width:260px; }
+    .bh-sidebar { transform:translateX(-100%); box-shadow:none; width:260px; height:100vh; height:100dvh; }
     .bh-sidebar.open { transform:translateX(0); box-shadow:0 0 32px rgba(0,0,0,0.4); }
+    .bh-sidebar-bottom { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
     .bh-sidebar-close { display:flex !important; }
     .bh-main { margin-left:0; padding:64px 14px 18px; max-width:100%; }
     /* Større touch-mål på mobil */
@@ -1365,7 +1366,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
             </div>
             <button onClick={()=>setSidebarOpen(false)} aria-label="Lukk meny" style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",width:30,height:30,borderRadius:7,cursor:"pointer",fontSize:18,display:"none",alignItems:"center",justifyContent:"center"}} className="bh-sidebar-close">✕</button>
           </div>
-          <nav role="navigation" aria-label="Hovednavigasjon" style={{flex:1,padding:"8px 9px",overflowY:"auto"}}>
+          <nav role="navigation" aria-label="Hovednavigasjon" style={{flex:1,minHeight:0,padding:"8px 9px",overflowY:"auto"}}>
             {navGrupper.map((gruppe, gi) => {
               const planSider = ["ukeplan","arsplan","maanedsplan","maanedsbrev","maanedskalender"];
               return (
@@ -1392,7 +1393,7 @@ function Barnehagehjelpen({ aktivBruker, onLogout, onUserUpdate }) {
               );
             })}
           </nav>
-          <div style={{padding:"0 12px 14px"}}>
+          <div className="bh-sidebar-bottom" style={{padding:"0 12px 14px"}}>
             {/* Mørk modus-bryter */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 11px",marginBottom:7,background:"rgba(255,255,255,0.08)",borderRadius:9}}>
               <span style={{color:"rgba(255,255,255,0.85)",fontSize:12,fontWeight:700}}>
